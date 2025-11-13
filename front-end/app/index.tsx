@@ -7,7 +7,7 @@ export default function Index(){
         <View>
             <Button
                 title='Log In'
-                onPress={() => router.push('./(tabs)')}
+                onPress={() => router.push('./(tabs)/home')}
             />
         </View>
     )
