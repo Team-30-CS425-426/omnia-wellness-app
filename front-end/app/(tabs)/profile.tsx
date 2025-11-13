@@ -5,10 +5,9 @@ export default function ProfilePage(){
     const router = useRouter()
     return(
         <View>
-            <Text>Hello Profile Page</Text>
             <Button
                 title='Log Out'
-                onPress={() => router.push('./..')}
+                onPress={() => router.replace('/')}
             />
         </View>
     )
