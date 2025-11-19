@@ -16,7 +16,7 @@ function ThemedButton({ style, ...props } : ThemedButtonProps) {
 const styles = StyleSheet.create({
   btn: {
     fontSize: 14,
-    backgroundColor: Colors.default.darkBlue,
+    backgroundColor: Colors.default.primaryBlue,
     padding: 18,
     borderRadius: 6,
     marginVertical: 10

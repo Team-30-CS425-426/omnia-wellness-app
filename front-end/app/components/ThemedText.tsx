@@ -11,7 +11,7 @@ interface ThemedTextProps extends TextProps {
 const ThemedText = ({ style, title = false, ...props }: ThemedTextProps) => {
   const theme = Colors.default;
 
-  const textColor = title ? theme.darkBlue : theme.darkGray; 
+  const textColor = title ? theme.primaryBlue : theme.darkGray; 
   
   // 3. Define the style array
   let textStyle = [

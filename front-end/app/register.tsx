@@ -9,7 +9,7 @@ import ThemedTextInput from './components/ThemedTextInput'
 import Spacer from './components/Spacer'
 import ThemedButton from './components/ThemedButton'
 
-const home = () => {
+const register = () => {
     const [email, setEmail] = React.useState('');
     const [password, setPassword] = React.useState('');
     
@@ -24,14 +24,15 @@ const home = () => {
     return (
         <ThemedView style = {[styles.container, {paddingTop : totalTopPadding, paddingBottom: insets.bottom + 150}]}>
             
-            <ThemedText title = {true}>Welcome to Omnia </ThemedText>
+
+            <ThemedText title = {true} > Omnia </ThemedText>
+            <Spacer height={50} />
+
+            <ThemedText style = {[styles.subHeader]}> Create an Account </ThemedText>
             <Spacer height={30} />
 
-            <ThemedText style = {[styles.subHeader]}> Login </ThemedText>
-            <Spacer height={20} />
-
             <ThemedTextInput 
-                placeholder = "Enter Your Email" 
+                placeholder = "Enter a Valid Email" 
                 keyboardType = "email-address"
                 onChangeText = {setEmail}
                 value = {email}
@@ -39,7 +40,15 @@ const home = () => {
             <Spacer height={15} />
 
             <ThemedTextInput 
-                placeholder = "Enter Your Password" 
+                placeholder = "Enter a Valid Password" 
+                secureTextEntry={true}
+                onChangeText = {setPassword}
+                value = {password}
+            />
+
+            <Spacer height={15} />
+            <ThemedTextInput 
+                placeholder = "Confirm Your Password" 
                 secureTextEntry={true}
                 onChangeText = {setPassword}
                 value = {password}
@@ -47,22 +56,19 @@ const home = () => {
 
             <Spacer height={10} />
             <ThemedButton onPress={handleSubmit} >
-                <ThemedText style = {{color : 'white', textAlign : 'center', fontWeight : '600'}}> Sign In </ThemedText>
+                <ThemedText style = {{color : 'white', textAlign : 'center', fontWeight : '600'}}> Sign Up </ThemedText>
             </ThemedButton>
 
-            <Spacer height = {20} />
-            <ThemedText title = {false}>Don't have an account?</ThemedText>
-
-            <Spacer height = {5} />
-            <Link href = "/register">
-                <ThemedText style = {{color : '#005BB5'}}> Register Here </ThemedText>
+             <Spacer height = {20} />
+            <Link href = "/">
+                <ThemedText style = {{color : '#005BB5'}}> Login Instead </ThemedText>
             </Link>
 
         </ThemedView>
     )
 }
 
-export default home
+export default register
 
 const styles = StyleSheet.create({
     container: {
