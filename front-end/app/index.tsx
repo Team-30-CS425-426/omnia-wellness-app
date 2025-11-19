@@ -1,19 +1,54 @@
-import React from 'react'
-import {StyleSheet, Text, View, Button } from 'react-native'
+import React, {useState} from 'react'
+import {StyleSheet, Text, View, Button, TextInput } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import ThemedView from './components/ThemedView'
 import ThemedText from './components/ThemedText'
-const home = () => {
-    const insets = useSafeAreaInsets();
-    const EXTRA_TOP_MARGIN = 100;
+import ThemedTextInput from './components/ThemedTextInput'
+import Spacer from './components/Spacer'
+import ThemedButton from './components/ThemedButton'
 
-    const totalTopPadding = insets.top + EXTRA_TOP_MARGIN;
+const home = () => {
+    const [email, setEmail] = React.useState('');
+    const [password, setPassword] = React.useState('');
+    
+    const handleSubmit = () => {
+        console.log('Email and Password Submitted  :', email, password);
+    }
+
+    const insets = useSafeAreaInsets();
+    
+    const totalTopPadding = insets.top;
 
     return (
-        <ThemedView style = {[styles.container, {paddingTop: totalTopPadding}]}>
-            <ThemedText title = {true}>Welcome to the Omnia Wellness App</ThemedText>
+        <ThemedView style = {[styles.container, {paddingTop : totalTopPadding, paddingBottom: insets.bottom + 150}]}>
             
+            <ThemedText title = {true}>Welcome to Omnia </ThemedText>
+            <Spacer height={30} />
+
+            <ThemedText style = {[styles.subHeader]}> Login </ThemedText>
+            <Spacer height={20} />
+
+            <ThemedTextInput 
+                placeholder = "Enter Your Email" 
+                keyboardType = "email-address"
+                onChangeText = {setEmail}
+                value = {email}
+                />
+            <Spacer height={15} />
+
+            <ThemedTextInput 
+                placeholder = "Enter Your Password" 
+                secureTextEntry={true}
+                onChangeText = {setPassword}
+                value = {password}
+            />
+
+            <Spacer height={10} />
+            <ThemedButton onPress={handleSubmit} >
+                <ThemedText style = {{color : 'white', textAlign : 'center', fontWeight : '600'}}> Sign In </ThemedText>
+            </ThemedButton>
+
         </ThemedView>
     )
 }
@@ -24,15 +59,10 @@ const styles = StyleSheet.create({
     container: {
         flex:1,
         alignItems:'center',
-        justifyContent:'space-between'
+        justifyContent:'center'
     },
-    title: {
-        fontWeight : 'bold',
-        fontSize : 18
+    subHeader:{ 
+        fontWeight : '600',
+        fontSize : 24,
     },
-    link: {
-        marginVertical: 10,
-        borderBottomWidth: 1,
-
-    }
 })
