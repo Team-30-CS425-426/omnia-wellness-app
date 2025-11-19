@@ -1,38 +1,52 @@
-import React from 'react'
-import {StyleSheet, Text, View, Button } from 'react-native'
+import React, {useState} from 'react'
+import { Link } from 'expo-router';
+import {StyleSheet, Text, View, Button, TextInput } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import ThemedView from './components/ThemedView'
 import ThemedText from './components/ThemedText'
-const home = () => {
-    const insets = useSafeAreaInsets();
-    const EXTRA_TOP_MARGIN = 100;
+import ThemedTextInput from './components/ThemedTextInput'
+import Spacer from './components/Spacer'
+import ThemedButton from './components/ThemedButton'
 
-    const totalTopPadding = insets.top + EXTRA_TOP_MARGIN;
+const Home = () => {
+    const insets = useSafeAreaInsets();
+    
+    const totalTopPadding = insets.top;
 
     return (
-        <ThemedView style = {[styles.container, {paddingTop: totalTopPadding}]}>
-            <ThemedText title = {true}>Welcome to the Omnia Wellness App</ThemedText>
-            
+        <ThemedView style = {[styles.container, {paddingTop : totalTopPadding, paddingBottom: insets.bottom + 150}]}>
+
+            <ThemedText title = {true}>Welcome to Omnia </ThemedText>
+            <Spacer height={30} />
+
+            <Link href = "/login">
+                <ThemedText style = {{color : '#005BB5', fontSize: 18}}> Login </ThemedText>
+            </Link>
+
+            <Spacer height = {20} />
+            <ThemedText title = {false}>Don't have an account?</ThemedText>
+
+            <Spacer height = {5} />
+            <Link href = "/register">
+                <ThemedText style = {{color : '#005BB5'}}> Register Here </ThemedText>
+            </Link>
+
         </ThemedView>
     )
 }
 
-export default home
+export default Home
 
 const styles = StyleSheet.create({
     container: {
         flex:1,
         alignItems:'center',
-        justifyContent:'space-between'
+        justifyContent:'center'
     },
-    title: {
-        fontWeight : 'bold',
-        fontSize : 18
+    subHeader:{ 
+        fontWeight : '600',
+        fontSize : 24,
     },
-    link: {
-        marginVertical: 10,
-        borderBottomWidth: 1,
-
-    }
+    
 })

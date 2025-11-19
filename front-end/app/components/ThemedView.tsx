@@ -9,7 +9,7 @@ const ThemedView = ({ style, ...props } : ThemedViewProps) => {
 
   return (
     <View  
-        style={[{backgroundColor: theme.lightGray}, style]}
+        style={[{backgroundColor: theme.white}, style]}
         {...props}
     />
   )
