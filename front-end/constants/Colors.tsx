@@ -6,13 +6,13 @@ export const Colors = {
   white: '#FFFFFF',
   
   // The color for backgrounds, cards, or alternating rows. Should be subtle.
-  lightGray: '#F9F9F9',
+  lightGray: '#f7f7f7ff',
   
   // Primary text color. Dark enough for readability against the light background.
-  darkGray: '#333333',
+  darkGray: '#585858ff',
   
   // Secondary text, placeholders, or subtle dividers.
-  mediumGray: '#AAAAAA',
+  mediumGray: '#c5c5c5ff',
   
   // --- Blue (The Accent/Primary Color) ---
   // A clean, primary blue for buttons, links, active states, and icons.
