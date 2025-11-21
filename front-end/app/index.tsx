@@ -1,7 +1,10 @@
 import React, {useState} from 'react'
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
 import {StyleSheet, Text, View, Button, TextInput } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { onAuthStateChanged, signOut, User } from 'firebase/auth';
+import { auth } from '../config/firebaseConfig';
 
 import ThemedView from './components/ThemedView'
 import ThemedText from './components/ThemedText'
@@ -11,8 +14,10 @@ import ThemedButton from './components/ThemedButton'
 
 const Home = () => {
     const insets = useSafeAreaInsets();
-    
     const totalTopPadding = insets.top;
+
+    const [user, setUser] = useState<User | null>(null);
+    const [loading, setLoading] = useState(true);
 
     return (
         <ThemedView style = {[styles.container, {paddingTop : totalTopPadding, paddingBottom: insets.bottom + 150}]}>
@@ -21,7 +26,7 @@ const Home = () => {
             <Spacer height={30} />
 
             <Link href = "/login">
-                <ThemedText style = {{color : '#005BB5'}}> Login </ThemedText>
+                <ThemedText style = {{color : '#005BB5', fontSize : 18}}> Login </ThemedText>
             </Link>
 
             <Spacer height = {20} />
