@@ -1,15 +1,17 @@
-import React, {useState} from 'react'
+import React, {use, useState} from 'react'
 import { Link, router } from 'expo-router';
 import {StyleSheet, Alert, ActivityIndicator } from 'react-native'
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../config/firebaseConfig';
+import { auth } from '../../config/firebaseConfig';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import ThemedView from './components/ThemedView'
-import ThemedText from './components/ThemedText'
-import ThemedTextInput from './components/ThemedTextInput'
-import Spacer from './components/Spacer'
-import ThemedButton from './components/ThemedButton'
+import { getAuthErrorMessage } from '../utils/authErrors';
+
+import ThemedView from '../components/ThemedView'
+import ThemedText from '../components/ThemedText'
+import ThemedTextInput from '../components/ThemedTextInput'
+import Spacer from '../components/Spacer'
+import ThemedButton from '../components/ThemedButton'
 
 const Register = () => {
     const [email, setEmail] = React.useState('');
@@ -37,35 +39,13 @@ const Register = () => {
             // 3. Talk to Firebase
             await createUserWithEmailAndPassword(auth, email, password);
             
-            // 4. Success! Navigate to Home (or Login)
-            Alert.alert('Success', 'Account created successfully!');
-            router.replace('/'); // Goes to your Home/Index screen
-            
         } catch (error: any) {
             // 5. Handle Errors (e.g., "Email already in use")
-            let errorMessage = error.message;
+            console.log(error.code); // Helpful for debugging
+                        
+            const message = getAuthErrorMessage(error.code);
+            Alert.alert('Registration Failed', message);
 
-            switch (error.code) {
-        case 'auth/email-already-in-use':
-            errorMessage = 'This email is already in use. Login instead?';
-            break;
-        case 'auth/invalid-email':
-            errorMessage = 'Please enter a valid email address.';
-            break;
-        case 'auth/weak-password':
-            errorMessage = 'Password must be at least 6 characters.';
-            break;
-        case 'auth/network-request-failed':
-            errorMessage = 'Network error. Check your internet connection.';
-            break;
-        case 'auth/missing-email':
-            errorMessage = 'Please enter an email address.';
-            break;
-        default:
-            // Shows the raw error message for weird edge cases
-            errorMessage = error.message;
-            }
-            Alert.alert('Registration Failed', errorMessage);
         } finally {
             setLoading(false); // Stop spinner
         }
