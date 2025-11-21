@@ -9,9 +9,10 @@ import ThemedTextInput from './components/ThemedTextInput'
 import Spacer from './components/Spacer'
 import ThemedButton from './components/ThemedButton'
 
-const register = () => {
+const Register = () => {
     const [email, setEmail] = React.useState('');
     const [password, setPassword] = React.useState('');
+    const [confirmPassword, setConfirmPassword] = React.useState('');
     
     const handleSubmit = () => {
         console.log('Email and Password Submitted  :', email, password);
@@ -25,8 +26,8 @@ const register = () => {
         <ThemedView style = {[styles.container, {paddingTop : totalTopPadding, paddingBottom: insets.bottom + 150}]}>
             
 
-            <ThemedText title = {true} > Omnia </ThemedText>
-            <Spacer height={50} />
+            <ThemedText style = {[{paddingTop : totalTopPadding}]} title = {true} > Omnia </ThemedText>
+            <Spacer height={30} />
 
             <ThemedText style = {[styles.subHeader]}> Create an Account </ThemedText>
             <Spacer height={30} />
@@ -50,8 +51,8 @@ const register = () => {
             <ThemedTextInput 
                 placeholder = "Confirm Your Password" 
                 secureTextEntry={true}
-                onChangeText = {setPassword}
-                value = {password}
+                onChangeText = {setConfirmPassword}
+                value = {confirmPassword}
             />
 
             <Spacer height={10} />
@@ -60,7 +61,7 @@ const register = () => {
             </ThemedButton>
 
              <Spacer height = {20} />
-            <Link href = "/">
+            <Link href = "/login">
                 <ThemedText style = {{color : '#005BB5'}}> Login Instead </ThemedText>
             </Link>
 
@@ -68,7 +69,7 @@ const register = () => {
     )
 }
 
-export default register
+export default Register
 
 const styles = StyleSheet.create({
     container: {
