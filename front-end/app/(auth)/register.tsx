@@ -1,11 +1,10 @@
-import React, {use, useState} from 'react'
-import { Link, router } from 'expo-router';
+import React from 'react'
+import { Link} from 'expo-router';
 import {StyleSheet, Alert, ActivityIndicator } from 'react-native'
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../../config/firebaseConfig';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getAuthErrorMessage } from '../utils/authErrors';
+import { useUser } from '../../contexts/UserContext';
 
 import ThemedView from '../components/ThemedView'
 import ThemedText from '../components/ThemedText'
@@ -19,6 +18,7 @@ const Register = () => {
     const [confirmPassword, setConfirmPassword] = React.useState('');
     const [loading, setLoading] = React.useState(false);
 
+    const { register } = useUser();
 
     const handleSubmit = async () => {
         // 1. Validation: Check for empty fields
@@ -32,22 +32,18 @@ const Register = () => {
             Alert.alert('Error', 'Passwords do not match');
             return;
         }
-
-        setLoading(true); // Start spinner
+        setLoading(true);
 
         try {
-            // 3. Talk to Firebase
-            await createUserWithEmailAndPassword(auth, email, password);
+            await register(email, password);
             
         } catch (error: any) {
-            // 5. Handle Errors (e.g., "Email already in use")
-            console.log(error.code); // Helpful for debugging
-                        
+            console.log(error.code);           
             const message = getAuthErrorMessage(error.code);
             Alert.alert('Registration Failed', message);
 
         } finally {
-            setLoading(false); // Stop spinner
+            setLoading(false); 
         }
     };
 
