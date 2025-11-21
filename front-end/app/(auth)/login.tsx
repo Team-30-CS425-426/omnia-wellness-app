@@ -1,9 +1,7 @@
-import React, {useState} from 'react'
+import React from 'react'
 import { Link, router } from 'expo-router';
-import {StyleSheet, Alert, ActivityIndicator, View } from 'react-native'
+import {StyleSheet, Alert, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../../config/firebaseConfig';
 
 import { useUser } from '../../contexts/UserContext';
 import { getAuthErrorMessage } from '../utils/authErrors';
@@ -27,13 +25,12 @@ const Login = () => {
             Alert.alert('Error', 'Please enter both email and password');
             return;
         }
-
         setLoading(true);
 
         try {
             // 2. Attempt to Sign In
             await login(email, password);
-            console.log("Login successful");
+            router.push('/dashboard');
         } catch (error: any) {
             console.log(error.code); // Helpful for debugging
             

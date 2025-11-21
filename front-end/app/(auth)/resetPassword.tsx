@@ -1,4 +1,4 @@
-import React, { useState } from 'react'; // clean up imports
+import React from 'react'; // clean up imports
 import { Link, router } from 'expo-router';
 import { StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { sendPasswordResetEmail } from 'firebase/auth';
