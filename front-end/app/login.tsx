@@ -9,20 +9,46 @@ import ThemedTextInput from './components/ThemedTextInput'
 import Spacer from './components/Spacer'
 import ThemedButton from './components/ThemedButton'
 
-const Home = () => {
+const Login = () => {
+    const [email, setEmail] = React.useState('');
+    const [password, setPassword] = React.useState('');
+    
+    const handleSubmit = () => {
+        console.log('Email and Password Submitted  :', email, password);
+    }
+
     const insets = useSafeAreaInsets();
     
     const totalTopPadding = insets.top;
 
     return (
         <ThemedView style = {[styles.container, {paddingTop : totalTopPadding, paddingBottom: insets.bottom + 150}]}>
-
-            <ThemedText title = {true}>Welcome to Omnia </ThemedText>
+            
+            <ThemedText title = {true}>Omnia </ThemedText>
             <Spacer height={30} />
 
-            <Link href = "/login">
-                <ThemedText style = {{color : '#005BB5'}}> Login </ThemedText>
-            </Link>
+            <ThemedText style = {[styles.subHeader]}> Login </ThemedText>
+            <Spacer height={20} />
+
+            <ThemedTextInput 
+                placeholder = "Enter Your Email" 
+                keyboardType = "email-address"
+                onChangeText = {setEmail}
+                value = {email}
+                />
+            <Spacer height={15} />
+
+            <ThemedTextInput 
+                placeholder = "Enter Your Password" 
+                secureTextEntry={true}
+                onChangeText = {setPassword}
+                value = {password}
+            />
+
+            <Spacer height={10} />
+            <ThemedButton onPress={handleSubmit} >
+                <ThemedText style = {{color : 'white', textAlign : 'center', fontWeight : '600'}}> Sign In </ThemedText>
+            </ThemedButton>
 
             <Spacer height = {20} />
             <ThemedText title = {false}>Don't have an account?</ThemedText>
@@ -36,7 +62,7 @@ const Home = () => {
     )
 }
 
-export default Home
+export default Login
 
 const styles = StyleSheet.create({
     container: {
