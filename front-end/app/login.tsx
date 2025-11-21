@@ -1,7 +1,9 @@
 import React, {useState} from 'react'
-import { Link } from 'expo-router';
-import {StyleSheet, Text, View, Button, TextInput } from 'react-native'
+import { Link, router } from 'expo-router';
+import {StyleSheet, Alert, ActivityIndicator } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../config/firebaseConfig';
 
 import ThemedView from './components/ThemedView'
 import ThemedText from './components/ThemedText'
@@ -12,10 +14,49 @@ import ThemedButton from './components/ThemedButton'
 const Login = () => {
     const [email, setEmail] = React.useState('');
     const [password, setPassword] = React.useState('');
+    const [loading, setLoading] = React.useState(false);
     
-    const handleSubmit = () => {
-        console.log('Email and Password Submitted  :', email, password);
-    }
+    const handleLogin = async () => {
+        // 1. Basic Validation
+        if (!email || !password) {
+            Alert.alert('Error', 'Please enter both email and password');
+            return;
+        }
+
+        setLoading(true);
+
+        try {
+            // 2. Attempt to Sign In
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            const user = userCredential.user;
+
+            console.log('User logged in:', user.email);
+            
+            // 3. Success! Navigate to Home
+            // replace() prevents them from hitting "Back" to go back to login
+            router.push('/dashboard'); 
+
+        } catch (error: any) {
+            console.log(error.code); // Helpful for debugging
+            
+            // 4. Handle specific errors nicely
+            let errorMessage = 'Something went wrong.';
+            
+            if (error.code === 'auth/invalid-credential') {
+                errorMessage = 'Invalid email or password.';
+            } else if (error.code === 'auth/user-not-found') {
+                errorMessage = 'No account found with this email.';
+            } else if (error.code === 'auth/wrong-password') {
+                errorMessage = 'Incorrect password.';
+            } else if (error.code === 'auth/too-many-requests') {
+                errorMessage = 'Too many failed attempts. Try again later.';
+            }
+
+            Alert.alert('Login Failed', errorMessage);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const insets = useSafeAreaInsets();
     
@@ -46,7 +87,7 @@ const Login = () => {
             />
 
             <Spacer height={10} />
-            <ThemedButton onPress={handleSubmit} >
+            <ThemedButton onPress={handleLogin} >
                 <ThemedText style = {{color : 'white', textAlign : 'center', fontWeight : '600'}}> Sign In </ThemedText>
             </ThemedButton>
 
