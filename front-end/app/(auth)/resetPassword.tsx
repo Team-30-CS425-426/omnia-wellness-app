@@ -5,7 +5,7 @@ import { sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../../config/firebaseConfig';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { getAuthErrorMessage } from '../utils/authErrors';
+import { getAuthErrorMessage } from '../../utils/authErrors';
 
 import ThemedView from '../components/ThemedView';
 import ThemedText from '../components/ThemedText';

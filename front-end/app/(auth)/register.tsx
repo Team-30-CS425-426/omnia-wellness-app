@@ -3,7 +3,7 @@ import { Link} from 'expo-router';
 import {StyleSheet, Alert, ActivityIndicator } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { getAuthErrorMessage } from '../utils/authErrors';
+import { getAuthErrorMessage } from '../../utils/authErrors';
 import { useUser } from '../../contexts/UserContext';
 
 import ThemedView from '../components/ThemedView'
