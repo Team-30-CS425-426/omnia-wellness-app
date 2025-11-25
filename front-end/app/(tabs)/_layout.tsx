@@ -5,13 +5,13 @@ import ProfileScreen from './profile'; //import the Profile screen component
 import AddMenuScreen from './add'; //import the Add Menu screen component
 import AddMenuButton from '../components/Modal'; //import the custom Add Menu Button component for modal
 import { MaterialIcons } from '@expo/vector-icons';
-
+import { Colors } from '../../constants/Colors';
 //create a navigator object, use to define screens
 const Tab = createBottomTabNavigator();
 
 const COLORS = {
-  tabIconSelected: '#003cffff',
-  tabIconDefault: '#aaaaaa',
+  tabIconSelected: Colors.default.primaryBlue,
+  tabIconDefault: Colors.default.darkGray,
 };
 
 const TabsLayout = () => {

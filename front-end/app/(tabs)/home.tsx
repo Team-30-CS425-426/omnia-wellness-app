@@ -1,4 +1,17 @@
-import { Text, View } from "react-native";
+import React from 'react'
+import { Link, router } from 'expo-router';
+import {StyleSheet, Alert, View } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { useUser } from '../../contexts/UserContext';
+import { getAuthErrorMessage } from '../../utils/authErrors';
+
+import ThemedView from '../components/ThemedView'
+import ThemedText from '../components/ThemedText'
+import ThemedTextInput from '../components/ThemedTextInput'
+import Spacer from '../components/Spacer'
+import ThemedButton from '../components/ThemedButton'
+
 
 /*
 Currently a minimalistic HomePage with placeholders
@@ -6,17 +19,17 @@ Currently a minimalistic HomePage with placeholders
 
 export default function HomePage() {
     return (
-        <View>
+        <ThemedView>
             <Title/>
             <WellnessDashboards/>
-        </View>
+        </ThemedView>
     );
 }
 
 function WellnessDashboards() {
     return (
         <>
-            <Text>Wellness Dashboards</Text>
+            <ThemedText>Wellness Dashboards</ThemedText>
             <Metrics/>
             <KeyStats/>
             <Insights/>
@@ -26,7 +39,7 @@ function WellnessDashboards() {
 
 function Title() {
     return (
-        <Text>Omnia</Text>
+        <ThemedText>Omnia</ThemedText>
     )
 }
 
@@ -45,7 +58,7 @@ function Metrics() {
 function KeyStats() {
     return (
         <>
-            <Text>Key Stats</Text>
+            <ThemedText>Key Stats</ThemedText>
             <SleepQuality/>
             <Steps/>
             <Mood/>
@@ -59,8 +72,8 @@ function KeyStats() {
 function Insights() {
     return (
         <>
-            <Text>Protein Intake is very low - Try adding a high protein snack</Text>
-            <Text>Reduced deep sleep last night may affect your endurance today. Consider lighter training.</Text>
+            <ThemedText>Protein Intake is very low - Try adding a high protein snack</ThemedText>
+            <ThemedText>Reduced deep sleep last night may affect your endurance today. Consider lighter training.</ThemedText>
         </>
     )
 }
@@ -68,7 +81,7 @@ function Insights() {
 function DateDropDown() {
     return (
         <>
-            <Text>Oct 30, 2025</Text>
+            <ThemedText>Oct 30, 2025</ThemedText>
         </>
     )
 }
@@ -76,8 +89,8 @@ function DateDropDown() {
 function Sleep() {
     return (
         <>
-            <Text>6h</Text>
-            <Text>Sleep</Text>
+            <ThemedText>6h</ThemedText>
+            <ThemedText>Sleep</ThemedText>
         </>
     )
 }
@@ -85,8 +98,8 @@ function Sleep() {
 function Activity() {
     return (
         <>
-            <Text>45</Text>
-            <Text>Activity</Text>
+            <ThemedText>45</ThemedText>
+            <ThemedText>Activity</ThemedText>
         </>
     )
 }
@@ -94,8 +107,8 @@ function Activity() {
 function Nutrition() {
     return (
         <>
-            <Text>1,450</Text>
-            <Text>Nutrition</Text>
+            <ThemedText>1,450</ThemedText>
+            <ThemedText>Nutrition</ThemedText>
         </>
     )
 }
@@ -103,8 +116,8 @@ function Nutrition() {
 function MoodStress(){
     return (
         <>
-            <Text>8.2</Text>
-            <Text>Mood/Stress</Text>
+            <ThemedText>8.2</ThemedText>
+            <ThemedText>Mood/Stress</ThemedText>
         </>
     )
 }
@@ -112,8 +125,8 @@ function MoodStress(){
 function SleepQuality() {
     return (
         <>
-            <Text>Sleep Quality</Text>
-            <Text>6 hours</Text>
+            <ThemedText>Sleep Quality</ThemedText>
+            <ThemedText>6 hours</ThemedText>
         </>
     )
 }
@@ -121,8 +134,8 @@ function SleepQuality() {
 function Steps() {
     return (
         <>
-            <Text>Steps</Text>
-            <Text>5,340</Text>
+            <ThemedText>Steps</ThemedText>
+            <ThemedText>5,340</ThemedText>
         </>
     )
 }
@@ -130,8 +143,8 @@ function Steps() {
 function Mood() {
     return (
         <>
-            <Text>Mood</Text>
-            <Text>Low</Text>
+            <ThemedText>Mood</ThemedText>
+            <ThemedText>Low</ThemedText>
         </>
     )
 }
@@ -139,8 +152,8 @@ function Mood() {
 function Habits() {
     return (
         <>
-            <Text>Habits</Text>
-            <Text>3 of 4</Text>
+            <ThemedText>Habits</ThemedText>
+            <ThemedText>3 of 4</ThemedText>
         </>
     )
 }
@@ -148,8 +161,8 @@ function Habits() {
 function Calories() {
     return (
         <>
-            <Text>Calories</Text>
-            <Text>1,450</Text>
+            <ThemedText>Calories</ThemedText>
+            <ThemedText>1,450</ThemedText>
         </>
     )
 }

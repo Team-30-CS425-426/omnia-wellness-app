@@ -30,7 +30,7 @@ const Login = () => {
         try {
             // 2. Attempt to Sign In
             await login(email, password);
-            router.push('/dashboard');
+            router.push('/home');
         } catch (error: any) {
             console.log(error.code); // Helpful for debugging
             
