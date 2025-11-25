@@ -44,8 +44,10 @@ export function UserProvider({ children }: UserProviderProps) {
     }
   };
 
-  async function logout() {
-      // logic here
+  const logout = async () => {
+      await auth.signOut();
+      setUser(null)
+      
   }
 
   const register = async (email: string, password: string) => {
@@ -62,6 +64,7 @@ export function UserProvider({ children }: UserProviderProps) {
     </UserContext.Provider>
   );
 }
+
 
 // 4. Create a custom hook to use this context easily
 // This prevents you from having to check for "undefined" in every component

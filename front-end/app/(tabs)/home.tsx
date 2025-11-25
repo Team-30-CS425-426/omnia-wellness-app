@@ -1,25 +1,33 @@
 import React from 'react'
-import { Link, router } from 'expo-router';
-import {StyleSheet, Alert, View } from 'react-native'
+import {Redirect } from 'expo-router';
+import {StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useUser } from '../../contexts/UserContext';
-import { getAuthErrorMessage } from '../../utils/authErrors';
 
 import ThemedView from '../components/ThemedView'
 import ThemedText from '../components/ThemedText'
-import ThemedTextInput from '../components/ThemedTextInput'
-import Spacer from '../components/Spacer'
-import ThemedButton from '../components/ThemedButton'
-
 
 /*
 Currently a minimalistic HomePage with placeholders
 */
 
 export default function HomePage() {
+
+    const {user, loading} = useUser();
+    if (loading){
+        return <ThemedText>Loading...</ThemedText>
+    }
+
+    if (!user){
+        return <Redirect href = "/" />
+    }
+
+    const insets = useSafeAreaInsets();
+    const totalTopPadding = insets.top + 20;
+   
     return (
-        <ThemedView>
+        <ThemedView style = {[styles.container, {paddingTop : totalTopPadding, paddingBottom: insets.bottom + 20}]} >
             <Title/>
             <WellnessDashboards/>
         </ThemedView>
@@ -167,3 +175,15 @@ function Calories() {
     )
 }
 
+const styles = StyleSheet.create({
+    container: {
+        flex:1,
+        alignItems:'center',
+        justifyContent:'center'
+    },
+    subHeader:{ 
+        fontWeight : '600',
+        fontSize : 24,
+    },
+    
+})
