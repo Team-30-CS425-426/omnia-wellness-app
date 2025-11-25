@@ -17,14 +17,14 @@ const COLORS = {
 const TabsLayout = () => {
   return (
     <Tab.Navigator
-      initialRouteName="home"
+      initialRouteName="Home"
       screenOptions={{
         tabBarActiveTintColor: COLORS.tabIconSelected,
         tabBarInactiveTintColor: COLORS.tabIconDefault,
       }}
     >
       <Tab.Screen
-        name="home"
+        name="Home"
         component={HomeScreen}
         options={{
           tabBarLabel: 'Home',
@@ -38,14 +38,14 @@ const TabsLayout = () => {
         }}
       />
       <Tab.Screen
-        name="add"
+        name="Add"
         component={AddMenuScreen} // empty screen
         options={{
           tabBarButton: () => <AddMenuButton />,
         }}
       />
       <Tab.Screen
-        name="profile"
+        name="Profile"
         component={ProfileScreen}
         options={{
           tabBarLabel: 'Profile',
