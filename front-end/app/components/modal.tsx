@@ -54,7 +54,7 @@ const AddMenuButton = () => {
             <TouchableOpacity
               key={0}
               style={styles.gridItem}
-              onPress={() => navigate('../screens/workout')}
+              onPress={() => navigate('../entry/workout')}
             >
               <Ionicons name={OPTIONS[0].icon} size={32} color='#007AFF' />
               <Text style={styles.gridLabel}>{OPTIONS[0].label}</Text>
@@ -62,7 +62,7 @@ const AddMenuButton = () => {
             <TouchableOpacity
               key={1}
               style={styles.gridItem}
-              onPress={() => navigate('../screens/moodstress')}
+              onPress={() => navigate('../entry/moodstress')}
             >
               <Ionicons name={OPTIONS[1].icon} size={32} color='#007AFF' />
               <Text style={styles.gridLabel}>{OPTIONS[1].label}</Text>
