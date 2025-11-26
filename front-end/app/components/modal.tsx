@@ -3,6 +3,7 @@ import { StyleSheet, View, TouchableOpacity } from 'react-native'; //import Reac
 import { Text } from 'react-native-elements'; //import the Text component from React Native Elements to display styled text
 import Modal from 'react-native-modal'; //Import Modal component to show pop-up windows
 import { MaterialIcons, Ionicons } from '@expo/vector-icons'; //bring in icons from Expo to show symbols in the UI
+import { navigate } from 'expo-router/build/global-state/routing';
 
 //create a TypeScript type (label) for the names of Ionicons icons
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
@@ -54,16 +55,22 @@ const AddMenuButton = () => {
 
           {/* Grid of options */}
           <View style={styles.grid}>
-            {OPTIONS.map((item, index) => (
-              <TouchableOpacity
-                key={index}
-                style={styles.gridItem}
-                onPress={() => console.log(item.label)}
-              >
-                <Ionicons name={item.icon} size={32} color="#007AFF" />
-                <Text style={styles.gridLabel}>{item.label}</Text>
-              </TouchableOpacity>
-            ))}
+            <TouchableOpacity
+              key={0}
+              style={styles.gridItem}
+              onPress={() => navigate('../screens/workout')}
+            >
+              <Ionicons name={OPTIONS[0].icon} size={32} color='#007AFF' />
+              <Text style={styles.gridLabel}>{OPTIONS[0].label}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              key={1}
+              style={styles.gridItem}
+              onPress={() => navigate('../screens/moodstress')}
+            >
+              <Ionicons name={OPTIONS[1].icon} size={32} color='#007AFF' />
+              <Text style={styles.gridLabel}>{OPTIONS[1].label}</Text>
+            </TouchableOpacity>
           </View>
 
         </View>
