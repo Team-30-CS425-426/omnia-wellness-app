@@ -3,7 +3,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'; //impo
 import HomeScreen from './home'; //import the Home screen component for the main tab navigation
 import ProfileScreen from './profile'; //import the Profile screen component
 import AddMenuScreen from './add'; //import the Add Menu screen component
-import AddMenuButton from '../components/Modal'; //import the custom Add Menu Button component for modal
+import AddMenuButton from '../components/modal'; //import the custom Add Menu Button component for modal
 import { MaterialIcons } from '@expo/vector-icons';
 
 //create a navigator object, use to define screens
