@@ -1,6 +1,6 @@
 import 'dotenv/config';
 
-require('dotenv').config();
+require('dotenv').config({ path: './utils/.env.local' });
 
 export default{
   "expo": {
