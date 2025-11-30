@@ -13,7 +13,8 @@ export default{
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.anonymous.front-end"
     },
     "android": {
       "adaptiveIcon": {
@@ -42,7 +43,8 @@ export default{
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      "react-native-health"
     ],
     "experiments": {
       "typedRoutes": true,
