@@ -1,25 +1,36 @@
-import React, {useEffect} from 'react'; //import React and useEffect hook for side effects
-import { Stack, router } from 'expo-router'; //import the Stack navigator from Expo Router
-import { StatusBar} from 'expo-status-bar'; //import StatusBar to control the appearance of the status bar
-import {useUser} from '../../contexts/UserContext'; //import the custom UserContext to access user authentication state
+// app/_layout.tsx (or wherever your AuthLayout is)
+
+import React, { useEffect } from 'react';
+import { Stack, router, useSegments } from 'expo-router'; 
+import { StatusBar } from 'expo-status-bar';
+import { useUser } from '../../contexts/UserContext';
 
 export default function AuthLayout() {
+    const { user, loading } = useUser();
+    const segments = useSegments(); 
 
-    const {user} = useUser();
-    console.log(user)
+    useEffect(() => {
+        if (loading) return; 
 
-    useEffect (() => {
-        if (user) {
-            // If user is logged in, redirect to the main app
-            console.log("User is logged in, redirecting to /home");
+        const inAuthGroup = segments[0] === '(auth)';
+        
+        // 🛠️ FIX: Convert segments to a string to avoid the TypeScript error
+        // This checks if "reset-password" exists anywhere in the current URL path
+        const currentPath = segments.join('/');
+        const isResettingPassword = currentPath.includes('reset-password');
+
+        if (user && !isResettingPassword) {
+            // Only redirect to Home if they are logged in AND NOT resetting password
             router.replace('/home');
+        } else if (!user && !inAuthGroup) {
+            router.replace('/login');
         }
-    }, [user]);
+    }, [user, loading, segments]);
 
     return (
         <>
-            <StatusBar style = "auto" />
-            <Stack screenOptions={{headerShown: false, animation: "none"}}/>
+            <StatusBar style="auto" />
+            <Stack screenOptions={{ headerShown: false, animation: "none" }} />
         </>
-    )
+    );
 }

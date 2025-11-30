@@ -1,11 +1,10 @@
-import React from 'react'; // clean up imports
+import React from 'react'; 
 import { Link, router } from 'expo-router';
 import { StyleSheet, Alert, ActivityIndicator } from 'react-native';
-import { sendPasswordResetEmail } from 'firebase/auth';
-import { auth } from '../../config/firebaseConfig';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { getAuthErrorMessage } from '../../utils/authErrors';
+// 1. CHANGE IMPORT: Use your Context, not Supabase directly
+import { useUser } from '../../contexts/UserContext'; 
 
 import ThemedView from '../components/ThemedView';
 import ThemedText from '../components/ThemedText';
@@ -14,12 +13,13 @@ import Spacer from '../components/Spacer';
 import ThemedButton from '../components/ThemedButton';
 
 const ForgotPassword = () => {
-    // 1. Cleanup: Removed password/confirmPassword state (not needed here)
     const [email, setEmail] = React.useState('');
     const [loading, setLoading] = React.useState(false);
 
+    // 2. GET THE FUNCTION: This pulls the smart logic (with Linking) from your Context
+    const { resetPassword } = useUser();
+
     const handleSubmit = async () => {
-        // Validation
         if (!email) {
             Alert.alert('Error', 'Please enter your email address');
             return;
@@ -28,10 +28,9 @@ const ForgotPassword = () => {
         setLoading(true); 
 
         try {
-            // Talk to Firebase
-            await sendPasswordResetEmail(auth, email);
+            // 3. CALL THE CONTEXT: No need to pass redirect URLs here, the Context handles it
+            await resetPassword(email);
             
-            // Success!
             Alert.alert(
                 'Check Your Email', 
                 'A link has been sent to reset your password.',
@@ -41,11 +40,10 @@ const ForgotPassword = () => {
             );
 
         } catch (error: any) {
-            console.log(error.code); // Helpful for debugging
-                        
-            const message = getAuthErrorMessage(error.code);
+            const message = error.message || 'Failed to send reset email';
             Alert.alert('Reset Failed', message);
-            } finally {
+
+        } finally {
             setLoading(false);
         }
     };
@@ -55,14 +53,13 @@ const ForgotPassword = () => {
 
     return (
         <ThemedView style={[styles.container, { paddingTop: totalTopPadding + 100, paddingBottom: insets.bottom + 50 }]}>
-            
             <ThemedText style={[styles.subHeader]}> Reset Your Password </ThemedText>
             <Spacer height={30} />
 
             <ThemedTextInput 
                 placeholder="Enter your account email" 
                 keyboardType="email-address"
-                autoCapitalize="none" // Important for emails
+                autoCapitalize="none"
                 onChangeText={setEmail}
                 value={email}
             />
@@ -94,7 +91,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         alignItems: 'center',
-        justifyContent: 'center' // I added this back so it centers vertically
+        justifyContent: 'center' 
     },
     subHeader: { 
         fontWeight: '600',

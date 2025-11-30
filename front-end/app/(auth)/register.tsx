@@ -35,16 +35,29 @@ const Register = () => {
         setLoading(true);
 
         try {
-            await register(email, password);
-            
-        } catch (error: any) {
-            console.log(error.code);           
-            const message = getAuthErrorMessage(error.code);
-            Alert.alert('Registration Failed', message);
+        await register(email, password);
+        
+        // Optional: If you have "Confirm Email" turned OFF in Supabase, 
+        // AuthLayout will automatically redirect them to Home.
+        
+        // If "Confirm Email" is ON, you should tell them:
+        // Alert.alert('Success', 'Please check your email to confirm your account.');
 
-        } finally {
-            setLoading(false); 
-        }
+    } catch (error: any) {
+        // --- ⬇️ CHANGE THIS SECTION ⬇️ ---
+        
+        // Supabase provides a readable message directly
+        const message = error.message || 'Registration failed';
+        
+        // Remove the old Firebase helper
+        Alert.alert('Registration Failed', message);
+
+        // --- ⬆️ END OF CHANGE ⬆️ ---
+
+    } finally {
+        setLoading(false);
+        Alert.alert('Success', 'Account created! Please log in.');
+    }
     };
 
     const insets = useSafeAreaInsets();

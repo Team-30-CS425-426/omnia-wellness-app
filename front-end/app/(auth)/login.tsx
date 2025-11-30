@@ -28,18 +28,26 @@ const Login = () => {
         setLoading(true);
 
         try {
-            // 2. Attempt to Sign In
-            await login(email, password);
-            router.push('/home');
-        } catch (error: any) {
-            console.log(error.code); // Helpful for debugging
-            
-            const message = getAuthErrorMessage(error.code);
-            Alert.alert('Login Failed', message);
+        // 2. Attempt to Sign In
+        await login(email, password);
+        // Optional: You can remove this router.push if your AuthLayout 
+        // automatically redirects users when they log in.
+        router.push('/home'); 
 
-        } finally {
-            setLoading(false);
-        }
+    } catch (error: any) {
+        // --- ⬇️ CHANGE THIS SECTION ⬇️ ---
+        
+        // Supabase errors usually come with a readable 'message' property
+        const message = error.message || 'An unknown error occurred';
+        
+        // You no longer need 'getAuthErrorMessage(error.code)'
+        Alert.alert('Login Failed', message);
+        
+        // --- ⬆️ END OF CHANGE ⬆️ ---
+
+    } finally {
+        setLoading(false);
+    }
     };
 
     const insets = useSafeAreaInsets();
