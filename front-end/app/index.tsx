@@ -25,7 +25,7 @@ const Home = () => {
             <ThemedText title = {true}>Welcome to Omnia </ThemedText>
             <Spacer height={30} />
 
-            <Link href = "/login">
+            <Link href = {"/login" as any}>
                 <ThemedText style = {{color : '#005BB5', fontSize : 18}}> Login </ThemedText>
             </Link>
 
@@ -33,7 +33,7 @@ const Home = () => {
             <ThemedText title = {false}>Don't have an account?</ThemedText>
 
             <Spacer height = {5} />
-            <Link href = "/register">
+            <Link href = {"/register" as any}>
                 <ThemedText style = {{color : '#005BB5'}}> Register Here </ThemedText>
             </Link>
 
