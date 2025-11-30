@@ -13,7 +13,8 @@ export default{
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.omnia.wellness"
     },
     "android": {
       "adaptiveIcon": {
@@ -52,7 +53,7 @@ export default{
       supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
       supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
       eas: {
-        projectId: "your-project-id-if-you-have-one"
+        projectId: "8c8c7da2-c0ef-4d51-a244-cd539683b50c"
       }
     }
   }
