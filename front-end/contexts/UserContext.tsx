@@ -126,9 +126,21 @@ export function UserProvider({ children }: UserProviderProps) {
   };
 
   const register = async (email: string, password: string): Promise<void> => {
+    if (!email || !password) {
+      throw new Error('Email and password are required for registration.');
+    }
+    if (password.length < 6) {
+      throw new Error('Password must be at least 6 characters long.');
+    }
+
+    const redirectUrl = Linking.createURL('/email-verified');
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
+      options:{
+        emailRedirectTo: redirectUrl,
+      }
     });
     if (error) throw error;
   };
