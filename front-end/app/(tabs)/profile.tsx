@@ -24,7 +24,6 @@ const ProfilePage = () =>{
         router.replace('/');
     }
 
-
     return (
         <ThemedView style = {[styles.container, {paddingTop : totalTopPadding, paddingBottom: insets.bottom + 150}]}>
             
@@ -56,6 +55,5 @@ const styles = StyleSheet.create({
     subHeader:{ 
         fontWeight : '600',
         fontSize : 24,
-    },
-    
+    },    
 })
