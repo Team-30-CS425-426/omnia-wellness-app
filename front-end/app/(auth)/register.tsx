@@ -1,5 +1,5 @@
 import React from 'react'
-import { Link} from 'expo-router';
+import { Link, router} from 'expo-router';
 import {StyleSheet, Alert, ActivityIndicator } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -37,6 +37,8 @@ const Register = () => {
         try {
         await register(email, password);
         
+        Alert.alert('Success', 'Account created! Please log in.');
+        router.replace('/login');
         // Optional: If you have "Confirm Email" turned OFF in Supabase, 
         // AuthLayout will automatically redirect them to Home.
         
@@ -56,7 +58,6 @@ const Register = () => {
 
     } finally {
         setLoading(false);
-        Alert.alert('Success', 'Account created! Please log in.');
     }
     };
 
@@ -79,6 +80,10 @@ const Register = () => {
                 keyboardType = "email-address"
                 onChangeText = {setEmail}
                 value = {email}
+                textContentType="oneTimeCode"
+                autoComplete='off'
+                autoCorrect={false}
+                spellCheck={false}
                 />
             <Spacer height={15} />
 
@@ -87,6 +92,10 @@ const Register = () => {
                 secureTextEntry={true}
                 onChangeText = {setPassword}
                 value = {password}
+                textContentType="oneTimeCode"
+                autoComplete='off'
+                autoCorrect={false}
+                spellCheck={false}
             />
 
             <Spacer height={15} />
@@ -95,6 +104,10 @@ const Register = () => {
                 secureTextEntry={true}
                 onChangeText = {setConfirmPassword}
                 value = {confirmPassword}
+                textContentType="none"
+                autoComplete='off'
+                autoCorrect={false}
+                spellCheck={false}
             />
 
             <Spacer height={10} />
