@@ -1,30 +1,27 @@
-import React, { useState } from 'react'; //bring in React to build UI and useState to keep track of changing data
-import { StyleSheet, View, TouchableOpacity } from 'react-native'; //import React Native tools: StyleSheet for styles, View for Layout, and TouchableOpacity for clickable buttons 
-import { Text } from 'react-native-elements'; //import the Text component from React Native Elements to display styled text
-import Modal from 'react-native-modal'; //Import Modal component to show pop-up windows
-import { MaterialIcons, Ionicons } from '@expo/vector-icons'; //bring in icons from Expo to show symbols in the UI
+import React, { useState } from 'react';
+import { StyleSheet, View, TouchableOpacity } from 'react-native';
+import { Text } from 'react-native-elements';
+import Modal from 'react-native-modal';
+import { MaterialIcons, Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router'; 
 
-//create a TypeScript type (label) for the names of Ionicons icons
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 
 const COLORS = {
-  primary: '#003cffff', //used for floating button
-  tabIconSelected: '#ffffffff', //used for the icon inside the button
+  primary: '#003cffff',
+  tabIconSelected: '#ffffffff',
 };
 
-//defines a typescript interface for the options displayed in the modal
 interface Option {
   label: string;
   icon: IoniconName;
 }
 
-//defines an array of options for the modal, and typescript ensures each object matches the Option interface
 const OPTIONS: Option[] = [
   { label: 'Workout', icon: 'barbell' },
   { label: 'Mood & Stress', icon: 'happy-outline' },
 ];
 
-//define a functional component called AddMenuButton
 const AddMenuButton = () => {
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -58,14 +55,21 @@ const AddMenuButton = () => {
               <TouchableOpacity
                 key={index}
                 style={styles.gridItem}
-                onPress={() => console.log(item.label)}
+                onPress={() => {
+                  setModalVisible(false);
+
+                  if (item.label === 'Workout') {
+                    router.push('/screens/workout');
+                  } else {
+                    router.push('/screens/moodStress');
+                  }
+                }}
               >
                 <Ionicons name={item.icon} size={32} color="#007AFF" />
                 <Text style={styles.gridLabel}>{item.label}</Text>
               </TouchableOpacity>
             ))}
           </View>
-
         </View>
       </Modal>
     </>
