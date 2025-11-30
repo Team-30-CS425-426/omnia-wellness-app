@@ -1,4 +1,8 @@
-{
+import 'dotenv/config';
+
+require('dotenv').config();
+
+export default{
   "expo": {
     "name": "front-end",
     "slug": "front-end",
@@ -43,6 +47,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    extra: {
+      supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
+      supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      eas: {
+        projectId: "your-project-id-if-you-have-one"
+      }
     }
   }
 }
