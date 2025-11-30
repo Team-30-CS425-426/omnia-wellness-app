@@ -134,6 +134,7 @@ export function UserProvider({ children }: UserProviderProps) {
     }
 
     const redirectUrl = Linking.createURL('/email-verified');
+    console.log('Redirect URL sent to Supabase during registration:', redirectUrl);
 
     const { error } = await supabase.auth.signUp({
       email,
