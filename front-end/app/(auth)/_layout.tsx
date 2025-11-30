@@ -18,8 +18,9 @@ export default function AuthLayout() {
         // This checks if "reset-password" exists anywhere in the current URL path
         const currentPath = segments.join('/');
         const isResettingPassword = currentPath.includes('reset-password');
+        const isVerifyingEmail = currentPath.includes('email-verified');
 
-        if (user && !isResettingPassword) {
+        if (user && !isResettingPassword && !isVerifyingEmail) {
             // Only redirect to Home if they are logged in AND NOT resetting password
             router.replace('/home');
         } else if (!user && !inAuthGroup) {
