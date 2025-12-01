@@ -3,7 +3,6 @@ import { Link, router } from 'expo-router';
 import { StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-// 1. CHANGE IMPORT: Use your Context, not Supabase directly
 import { useUser } from '../../contexts/UserContext'; 
 
 import ThemedView from '../components/ThemedView';
@@ -16,9 +15,10 @@ const ForgotPassword = () => {
     const [email, setEmail] = React.useState('');
     const [loading, setLoading] = React.useState(false);
 
-    // 2. GET THE FUNCTION: This pulls the smart logic (with Linking) from your Context
+    // CALL THE CONTEXT
     const { resetPassword } = useUser();
 
+    // Basic validation and submission after clicking submit
     const handleSubmit = async () => {
         if (!email) {
             Alert.alert('Error', 'Please enter your email address');
@@ -28,7 +28,7 @@ const ForgotPassword = () => {
         setLoading(true); 
 
         try {
-            // 3. CALL THE CONTEXT: No need to pass redirect URLs here, the Context handles it
+            // Sends an email to reset password
             await resetPassword(email);
             
             Alert.alert(
@@ -56,6 +56,8 @@ const ForgotPassword = () => {
             <ThemedText style={[styles.subHeader]}> Reset Your Password </ThemedText>
             <Spacer height={30} />
 
+
+            {/* Email Input */}
             <ThemedTextInput 
                 placeholder="Enter your account email" 
                 keyboardType="email-address"
@@ -65,6 +67,7 @@ const ForgotPassword = () => {
             />
             <Spacer height={15} />
 
+            {/* Submit Button */}
             <Spacer height={10} />
             <ThemedButton onPress={handleSubmit} disabled={loading}>
                 {loading ? (
@@ -76,6 +79,7 @@ const ForgotPassword = () => {
                 )}
             </ThemedButton>
 
+            {/* Login Button */}
              <Spacer height={20} />
             <Link href="/login">
                 <ThemedText style={{ color: '#005BB5' }}> Login </ThemedText>

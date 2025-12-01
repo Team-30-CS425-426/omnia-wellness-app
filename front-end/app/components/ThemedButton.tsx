@@ -1,9 +1,11 @@
 import { Pressable, StyleSheet , PressableProps} from 'react-native'
 import { Colors } from '../../constants/Colors'
 
+// Define the props for ThemedButton component
 interface ThemedButtonProps extends PressableProps {
     style?: object;
 }
+// ThemedButton component for consistent button styling
 function ThemedButton({ style, ...props } : ThemedButtonProps) {
 
   return (

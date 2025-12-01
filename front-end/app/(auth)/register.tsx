@@ -18,47 +18,37 @@ const Register = () => {
     const [confirmPassword, setConfirmPassword] = React.useState('');
     const [loading, setLoading] = React.useState(false);
 
-    const { register } = useUser();
+    const { register, logout } = useUser();
 
+    //basic validation and submission after clicking submit
     const handleSubmit = async () => {
-        // 1. Validation: Check for empty fields
-        if (!email || !password || !confirmPassword) {
-            Alert.alert('Error', 'Please fill in all fields');
-            return;
-        }
+    if (!email || !password || !confirmPassword) {
+        Alert.alert('Error', 'Please fill in all fields');
+        return;
+    }
 
-        // 2. Validation: Check if passwords match
-        if (password !== confirmPassword) {
-            Alert.alert('Error', 'Passwords do not match');
-            return;
-        }
+    if (password !== confirmPassword) {
+        Alert.alert('Error', 'Passwords do not match');
+        return;
+    }
         setLoading(true);
 
-        try {
+    try {
         await register(email, password);
+        
+        // Sign out immediately after registration, to go back to log in page
+        await logout(); 
         
         Alert.alert('Success', 'Account created! Please log in.');
         router.replace('/login');
-        // Optional: If you have "Confirm Email" turned OFF in Supabase, 
-        // AuthLayout will automatically redirect them to Home.
-        
-        // If "Confirm Email" is ON, you should tell them:
-        // Alert.alert('Success', 'Please check your email to confirm your account.');
 
-    } catch (error: any) {
-        // --- ⬇️ CHANGE THIS SECTION ⬇️ ---
-        
-        // Supabase provides a readable message directly
-        const message = error.message || 'Registration failed';
-        
-        // Remove the old Firebase helper
-        Alert.alert('Registration Failed', message);
-
-        // --- ⬆️ END OF CHANGE ⬆️ ---
-
-    } finally {
-        setLoading(false);
-    }
+    } catch (error: any) 
+        {
+            const message = error.message || 'Registration failed';
+            Alert.alert('Registration Failed', message);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const insets = useSafeAreaInsets();
@@ -75,6 +65,7 @@ const Register = () => {
             <ThemedText style = {[styles.subHeader]}> Create an Account </ThemedText>
             <Spacer height={30} />
 
+            {/* Email Input Field */}
             <ThemedTextInput 
                 placeholder = "Enter a Valid Email" 
                 keyboardType = "email-address"
@@ -87,6 +78,7 @@ const Register = () => {
                 />
             <Spacer height={15} />
 
+            {/* Password Input Field */}
             <ThemedTextInput 
                 placeholder = "Enter a Valid Password" 
                 secureTextEntry={true}
@@ -98,6 +90,7 @@ const Register = () => {
                 spellCheck={false}
             />
 
+            {/* Password Confirmation Input Field */}
             <Spacer height={15} />
             <ThemedTextInput 
                 placeholder = "Confirm Your Password" 
@@ -110,22 +103,27 @@ const Register = () => {
                 spellCheck={false}
             />
 
+            {/* Submission Button */}
             <Spacer height={10} />
             <ThemedButton onPress={handleSubmit} disabled={loading}>
                 {loading ? (
                     <ActivityIndicator color="white" />
                 ) : (
-                    <ThemedText style={{ color: 'white', textAlign: 'center', fontWeight: '600' }}>
+                    <ThemedText style={{ 
+                        color: 'white', 
+                        textAlign: 'center', 
+                        fontWeight: '600' 
+                        }}>
                         Sign Up
                     </ThemedText>
                 )}
             </ThemedButton>
 
+            {/* Login Redirect Link */}
              <Spacer height = {20} />
             <Link href = "/login">
                 <ThemedText style = {{color : '#005BB5'}}> Login Instead </ThemedText>
             </Link>
-
         </ThemedView>
     )
 }
