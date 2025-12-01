@@ -3,8 +3,8 @@ import { Link, router } from 'expo-router';
 import {StyleSheet, Text, View, Button, TextInput } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { onAuthStateChanged, signOut, User } from 'firebase/auth';
-import { auth } from '../config/firebaseConfig';
+//import { onAuthStateChanged, signOut, User } from 'firebase/auth';
+//import { auth } from '../config/firebaseConfig';
 
 import ThemedView from './components/ThemedView'
 import ThemedText from './components/ThemedText'
@@ -16,8 +16,8 @@ const Home = () => {
     const insets = useSafeAreaInsets();
     const totalTopPadding = insets.top;
 
-    const [user, setUser] = useState<User | null>(null);
-    const [loading, setLoading] = useState(true);
+    //const [user, setUser] = useState<User | null>(null);
+    //const [loading, setLoading] = useState(true);
 
     return (
         <ThemedView style = {[styles.container, {paddingTop : totalTopPadding, paddingBottom: insets.bottom + 150}]}>
