@@ -3,9 +3,10 @@ import { Link, router} from 'expo-router';
 import {StyleSheet, Alert, ActivityIndicator } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import Constants from 'expo-constants';
 import { getAuthErrorMessage } from '../../utils/authErrors';
 import { useUser } from '../../contexts/UserContext';
-
+import { SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_ANON_KEY_ALT } from '../../config/supabaseConfig';
 import ThemedView from '../components/ThemedView'
 import ThemedText from '../components/ThemedText'
 import ThemedTextInput from '../components/ThemedTextInput'
@@ -19,9 +20,17 @@ const Register = () => {
     const [loading, setLoading] = React.useState(false);
 
     const { register, logout } = useUser();
-
+    
     //basic validation and submission after clicking submit
     const handleSubmit = async () => {
+
+    console.log('SUPABASE_URL:', SUPABASE_URL);
+    console.log('SUPABASE_ANON_KEY exists:', !!SUPABASE_ANON_KEY);
+    console.log('SUPABASE_ANON_KEY length:', SUPABASE_ANON_KEY?.length);
+    console.log('First 30 chars:', SUPABASE_ANON_KEY?.substring(0, 30));
+
+
+    
     if (!email || !password || !confirmPassword) {
         Alert.alert('Error', 'Please fill in all fields');
         return;
@@ -36,6 +45,21 @@ const Register = () => {
     try {
         await register(email, password);
         
+        console.log('Registration successful, attempting to send email...');
+        console.log('Email being sent to:', email);
+
+        const emailResponse = await fetch(`${SUPABASE_URL}/functions/v1/smart-worker`, {
+        method: 'POST',
+        headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY_ALT}` // Your anon key
+        },
+        body: JSON.stringify({ email })
+    });
+        console.log('Email function response status:', emailResponse.status);
+        const emailData = await emailResponse.json();
+        console.log('Email function response data:', emailData);
+
         // Sign out immediately after registration, to go back to log in page
         await logout(); 
         
