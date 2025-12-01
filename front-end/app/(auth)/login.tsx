@@ -13,14 +13,14 @@ import Spacer from '../components/Spacer'
 import ThemedButton from '../components/ThemedButton'
 
 const Login = () => {
-    const { login } = useUser();
 
+    const { login } = useUser();
     const [email, setEmail] = React.useState('');
     const [password, setPassword] = React.useState('');
     const [loading, setLoading] = React.useState(false);
     
     const handleLogin = async () => {
-        // 1. Basic Validation
+        // Basic Validation
         if (!email || !password) {
             Alert.alert('Error', 'Please enter both email and password');
             return;
@@ -28,28 +28,22 @@ const Login = () => {
         setLoading(true);
 
         try {
-        // 2. Attempt to Sign In
+        // Attempt to Sign In
         await login(email, password);
-        // Optional: You can remove this router.push if your AuthLayout 
-        // automatically redirects users when they log in.
+        // On success, navigate to Home
         router.push('/home'); 
 
     } catch (error: any) {
-        // --- ⬇️ CHANGE THIS SECTION ⬇️ ---
-        
-        // Supabase errors usually come with a readable 'message' property
+      
         const message = error.message || 'An unknown error occurred';
-        
-        // You no longer need 'getAuthErrorMessage(error.code)'
         Alert.alert('Login Failed', message);
-        
-        // --- ⬆️ END OF CHANGE ⬆️ ---
 
     } finally {
         setLoading(false);
     }
     };
 
+    // Safe Area Insets for proper padding
     const insets = useSafeAreaInsets();
     
     const totalTopPadding = insets.top;
@@ -63,6 +57,7 @@ const Login = () => {
             <ThemedText style = {[styles.subHeader]}> Login </ThemedText>
             <Spacer height={20} />
 
+            {/* Email Input Field */}
             <ThemedTextInput 
                 placeholder = "Enter Your Email" 
                 keyboardType = "email-address"
@@ -73,31 +68,44 @@ const Login = () => {
 
             <View style={{ width: '80%', alignSelf: 'center' }}> 
     
-                {/* 2. Tell the Input to take up 100% of this wrapper */}
+                {/* Password Entry Field */}
                 <ThemedTextInput 
                     placeholder="Enter Your Password" 
                     secureTextEntry={true}
                     onChangeText={setPassword}
                     value={password}
-                    style={{ width: '100%' }} // Ensure input fills the wrapper
+                    style={{ width: '100%' }} 
                 />
 
-                {/* 3. Now 'flex-end' touches the exact right edge of the input */}
+                {/* Forgot Password Redirect */}
                 <Link href="/resetPassword" style={{ alignSelf: 'flex-end', marginTop: 8 }}>
-                    <ThemedText style={{ color: '#005BB5', fontSize: 12 }}>
+                    <ThemedText style=
+                    {{ 
+                        color: '#005BB5', 
+                        fontSize: 12 
+                    }}>
                         Forgot Password?
                     </ThemedText>
                 </Link>
 
             </View>
 
+            {/* Sign In Button */}
             <Spacer height={10} />
             <ThemedButton onPress={handleLogin} >
-                <ThemedText style = {{color : 'white', textAlign : 'center', fontWeight : '600'}}> Sign In </ThemedText>
+                <ThemedText 
+                    style = {{
+                        color : 'white', 
+                        textAlign : 'center', 
+                        fontWeight : '600'
+                        }}> 
+                        Sign In 
+                </ThemedText>
             </ThemedButton>
 
             <Spacer height = {20} />
             <ThemedText title = {false}>Don't have an account?</ThemedText>
+
 
             <Spacer height = {5} />
             <Link href = "/register">

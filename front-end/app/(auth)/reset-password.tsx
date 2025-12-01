@@ -11,6 +11,7 @@ import ThemedTextInput from '../components/ThemedTextInput';
 import Spacer from '../components/Spacer';
 import ThemedButton from '../components/ThemedButton';
 
+
 const UpdatePassword = () => {
     const router = useRouter();
     const { updateUserPassword } = useUser();
@@ -21,7 +22,7 @@ const UpdatePassword = () => {
     const [loading, setLoading] = useState(false);
 
     const handleUpdate = async () => {
-        // 1. Validation
+        // Validation
         if (!password || !confirmPassword) {
             Alert.alert('Error', 'Please fill in both fields.');
             return;
@@ -38,7 +39,7 @@ const UpdatePassword = () => {
         setLoading(true);
 
         try {
-            // 2. Call the context function
+            // Try to update the user's password
             await updateUserPassword(password);
             
             Alert.alert(
@@ -69,6 +70,7 @@ const UpdatePassword = () => {
             
             <Spacer height={40} />
 
+            {/* New Password Field */}
             <ThemedTextInput 
                 placeholder="New Password" 
                 secureTextEntry={true}
@@ -77,6 +79,7 @@ const UpdatePassword = () => {
             />
             <Spacer height={20} />
 
+            {/* Password Confirmation Fiel */}
             <ThemedTextInput 
                 placeholder="Confirm New Password" 
                 secureTextEntry={true}
@@ -86,6 +89,7 @@ const UpdatePassword = () => {
 
             <Spacer height={40} />
 
+            {/* Update Password Button */}
             <ThemedButton onPress={handleUpdate} disabled={loading}>
                  {loading ? (
                     <ActivityIndicator color="white" />

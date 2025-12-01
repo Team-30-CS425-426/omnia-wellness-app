@@ -1,16 +1,18 @@
 import { TextInput, TextInputProps, StyleSheet } from 'react-native'
 import { Colors } from '../../constants/Colors'
 
+// Define the props for ThemedTextInput component
 interface ThemedTextInputProps extends TextInputProps {
     styleProp?: object;
 }
+// ThemedTextInput component for consistent text input styling
 const ThemedTextInput = ({style, ...restProps} : ThemedTextInputProps) => {
     const theme = Colors.default;
     const defaultStyle = StyleSheet.create({
         input: {
             width: '80%',
             height: 40, 
-            // FIX: Use pure white for input background for maximum brightness and clarity
+           
             backgroundColor: theme.lightGray, 
             color: theme.darkGray, 
             
@@ -27,7 +29,7 @@ const ThemedTextInput = ({style, ...restProps} : ThemedTextInputProps) => {
     <TextInput
         style={[
                 defaultStyle.input,
-                style // Custom style passed in props will override defaults
+                style
             ]}
             placeholderTextColor={theme.mediumGray} 
             {...restProps}
