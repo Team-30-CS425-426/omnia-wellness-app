@@ -1,12 +1,10 @@
 import { useState } from "react";
 import { Platform } from 'react-native';
-
 import AppleHealthKit, { 
     HealthKitPermissions,
     HealthValue,
 } from 'react-native-health';
 const { Permissions } = AppleHealthKit.Constants;
-
 const healthPermissions: HealthKitPermissions = {
     permissions: {
         read: [
@@ -16,18 +14,15 @@ const healthPermissions: HealthKitPermissions = {
         write: [],
     },
 };
-
 const useHealthData = () => {
     const [isAuthorized, setIsAuthorized] = useState(false);
     const [steps7d, setSteps7d] = useState<HealthValue[]>([]);
     const [sleep7d, setSleep7d] = useState<HealthValue[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-
     const connectAndImport = () => {
         setError(null);
         setLoading(true);
-
         const hasInit = 
         Platform.OS === 'ios' &&
         AppleHealthKit && 
@@ -40,11 +35,9 @@ const useHealthData = () => {
             setError(
                 'HealthKit is not available in this dev build. Showing demo data instead.'
             );
-
             //fake data
             const today = new Date();
             const fakeSteps: HealthValue[] = [];
-
             for (let i=0; i<7; i++){
                 const d= new Date(today);
                 d.setDate(today.getDate()-i);
@@ -72,18 +65,15 @@ const useHealthData = () => {
                 importLast7Days();
             }
         );
-
     };
     const importLast7Days = () => {
         const end = new Date ();
         const start = new Date();
         start.setDate(end.getDate() - 7);
-        
         const options = {
             startDate: start.toISOString(),
             endDate: end.toISOString(),
         };
-        
         (AppleHealthKit as any).getDailyStepCountSamples(
             options, 
             (err: any, results: HealthValue[])=> {
@@ -94,7 +84,6 @@ const useHealthData = () => {
                 }
                 const samples = results || [];
                 const byDate: Record<string, number> = {};
-
                 samples.forEach((sample: any) =>{
                     const dateKey = sample.startDate.slice(0,10);
                     const rawValue = sample.value;
@@ -104,7 +93,6 @@ const useHealthData = () => {
                         : Number (rawValue) || 0;
                     byDate[dateKey]=(byDate[dateKey] || 0) + value;
                 });
-
                 const aggregated: HealthValue[] = Object.keys(byDate)
                 .sort ((a,b) => (a < b ? 1 : -1))
                 .map ((dateKey)=>
