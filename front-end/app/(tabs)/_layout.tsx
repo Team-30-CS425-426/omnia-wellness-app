@@ -4,6 +4,7 @@ import HomeScreen from './home'; //import the Home screen component for the main
 import ProfileScreen from './profile'; //import the Profile screen component
 import AddMenuScreen from './add'; //import the Add Menu screen component
 import AddMenuButton from '../components/Modal'; //import the custom Add Menu Button component for modal
+import SettingsScreen from './settings';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Colors } from '../../constants/Colors';
 //create a navigator object, use to define screens
@@ -58,8 +59,21 @@ const TabsLayout = () => {
           ),
         }}
       />
+      <Tab.Screen
+      name= "Settings"
+      component={SettingsScreen}
+      options = {{
+        tabBarLabel: 'Settings',
+        tabBarIcon: ({ focused }) => (
+          <MaterialIcons
+          name = "settings"
+          size = {28}
+          color = { focused ? COLORS.tabIconSelected: COLORS.tabIconDefault}
+          />
+        ),
+      }}
+      />
     </Tab.Navigator>
   );
 };
-
 export default TabsLayout;
