@@ -1,8 +1,7 @@
 // app/_layout.tsx
-
-import React, { useEffect } from 'react';
-import { Stack, router, useSegments } from 'expo-router'; 
+import { Stack, router, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import React, { useEffect } from 'react';
 import { useUser } from '../../contexts/UserContext';
 
 export default function AuthLayout() {
