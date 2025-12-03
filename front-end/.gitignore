@@ -43,7 +43,4 @@ app-example
 /ios
 /android
 
-#env
-.env.local
-
 # @end expo-cli
