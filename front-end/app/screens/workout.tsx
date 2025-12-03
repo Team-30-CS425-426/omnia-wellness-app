@@ -10,9 +10,10 @@ import {
 } from 'react-native';
 import { Text } from 'react-native-elements';
 import { Dropdown } from 'react-native-element-dropdown';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 
 const WorkoutScreen = () => {
+  const router = useRouter()
   const [workoutType, setWorkoutType] = useState<string | null>(null);
   const [customWorkout, setCustomWorkout] = useState(''); // Custom field if "Other"
   const [duration, setDuration] = useState('');
@@ -156,7 +157,7 @@ const WorkoutScreen = () => {
           />
 
           {/* Save Button */}
-          <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+          <TouchableOpacity style={styles.saveButton} onPress={() => router.replace('/home')}>
             <Text style={styles.saveButtonText}>Save Workout</Text>
           </TouchableOpacity>
 
