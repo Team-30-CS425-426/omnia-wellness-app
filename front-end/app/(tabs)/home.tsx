@@ -1,4 +1,4 @@
-import { StyleProp, Text, View, ViewStyle, StyleSheet } from "react-native";
+import { StyleProp, Text, View, ViewStyle, StyleSheet, ScrollView } from "react-native";
 
 /*
 Currently a minimalistic HomePage with placeholders
@@ -6,20 +6,23 @@ Currently a minimalistic HomePage with placeholders
 
 export default function HomePage() {
     return (
-        <View style={{
+        <ScrollView style={{
             flex: 1,
             paddingHorizontal: '5%',
+            marginTop: '15%'
         }}>
             <Title style={{
                 flex: 1,
                 justifyContent: 'center',
                 alignItems: 'center',
+                paddingVertical: 20
             }}/>
             <WellnessDashboards style={{
                 flex: 9,
-                gap: 20
+                gap: 20,
+                marginBottom: '30%'
             }}/>
-        </View>
+        </ScrollView>
     );
 }
 
@@ -277,6 +280,7 @@ function Insights({ style }: InsightsProps) {
             {/* Body */}
             <View style={{
                 flexDirection: 'row',
+                flexWrap: 'wrap',
                 gap: 20
             }}>
                 <InsightsItem content="Protein Intake is very low - Try adding a high protein snack"/>
