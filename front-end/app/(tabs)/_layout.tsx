@@ -16,7 +16,7 @@ const COLORS = {
 
 const TabsLayout = () => {
   return (
-    <Tab.Navigator
+    <Tab.Navigator 
       initialRouteName="home"
       screenOptions={{
         tabBarActiveTintColor: COLORS.tabIconSelected,
