@@ -1,4 +1,4 @@
-import { Text, View } from "react-native";
+import { StyleProp, Text, View, ViewStyle, StyleSheet } from "react-native";
 
 /*
 Currently a minimalistic HomePage with placeholders
@@ -6,151 +6,317 @@ Currently a minimalistic HomePage with placeholders
 
 export default function HomePage() {
     return (
-        <View>
-            <Title/>
-            <WellnessDashboards/>
+        <View style={{
+            flex: 1,
+            paddingHorizontal: '5%',
+        }}>
+            <Title style={{
+                flex: 1,
+                justifyContent: 'center',
+                alignItems: 'center',
+            }}/>
+            <WellnessDashboards style={{
+                flex: 9,
+                gap: 20
+            }}/>
         </View>
     );
 }
 
-function WellnessDashboards() {
+
+interface TitleProps {
+    style?: StyleProp<ViewStyle>
+}
+
+
+function Title({ style }: TitleProps) {
     return (
-        <>
-            <Text>Wellness Dashboards</Text>
-            <Metrics/>
-            <KeyStats/>
-            <Insights/>
-        </>
+        <View style={style}>
+            <Text style={{
+                fontSize: 30,
+                fontFamily: 'serif'
+            }}>O M N I A</Text>
+        </View>
     )
 }
 
-function Title() {
+
+interface WellnessDashboardsProps {
+    style?: StyleProp<ViewStyle>
+}
+
+
+function WellnessDashboards({ style }: WellnessDashboardsProps) {
     return (
-        <Text>Omnia</Text>
+        <View style={style}>
+            <View>
+                <Text style={{
+                    fontFamily: 'timesnewroman',
+                    fontWeight: 'bold',
+                    fontSize: 20,
+                }}>
+                    Wellness Dashboards
+                </Text>
+            </View>
+            <Metrics style={{
+                gap: 20
+            }}/>
+            <KeyStats style={{
+                gap: 20
+            }}/>
+            <Insights style={{
+                gap: 20
+            }}/>
+        </View>
     )
 }
 
-function Metrics() {
+
+interface MetricsProps {
+    style?: StyleProp<ViewStyle>
+}
+
+
+function Metrics({ style }: MetricsProps) {
     return (
-        <>
+        <View style={style}>
             <DateDropDown/>
-            <Sleep/>
-            <Activity/>
-            <Nutrition/>
-            <MoodStress/>
-        </>
+            <View style={{
+                flexDirection: 'row',
+                borderWidth: 1,
+                backgroundColor: 'lightgrey',
+                padding: '1%',
+                justifyContent: 'space-evenly'
+            }}>
+                <Sleep/>
+                <Activity/>
+                <Nutrition/>
+                <MoodStress/>
+            </View>
+        </View>
     )
 }
 
-function KeyStats() {
+
+interface DateDropDownProps {
+    style?: StyleProp<ViewStyle>
+}
+
+
+function DateDropDown({ style }: DateDropDownProps) {
     return (
-        <>
-            <Text>Key Stats</Text>
-            <SleepQuality/>
-            <Steps/>
-            <Mood/>
-            <Habits/>
-            <Calories/>
-        </>
+        <View style={style}>
+            <Text style={{
+                fontFamily: 'times',
+                fontSize: 20,
+            }}>Oct 30, 2025</Text>
+        </View>
+    )
+}
+
+
+interface MetricItemProps {
+    circleLabel: string,
+    label: string,
+    color?: string
+}
+
+
+function MetricItem({ circleLabel, label, color }: MetricItemProps) {
+    return (
+        <View style={{
+            alignItems: 'center'
+        }}>
+            <View style={[styles.circle, {
+                borderColor: color
+            }]}>
+                <Text style={{
+                    fontSize: 17
+                }}>
+                    {circleLabel}
+                </Text>
+            </View>
+            <Text style={{
+                fontSize: 17
+            }}>
+                {label}
+            </Text>
+        </View>
+    )
+}
+
+
+function Sleep() {
+    return (
+        <MetricItem circleLabel="6h" label="Sleep" color="blue"/>
+    )
+}
+
+
+function Activity() {
+    return (
+        <MetricItem circleLabel="45" label="Activity" color="green"/>
+    )
+}
+
+
+function Nutrition() {
+    return (
+        <MetricItem circleLabel="1450" label="Nutrition" color="orange"/>
+    )
+}
+
+
+function MoodStress(){
+    return (
+        <MetricItem circleLabel="8.2" label="Mood/Stress" color="red"/>
+    )
+}
+
+
+interface KeyStatsProps {
+    style?: StyleProp<ViewStyle>
+}
+
+
+function KeyStats({ style }: KeyStatsProps) {
+    return (
+        <View style={style}>
+            <Text style={{
+                fontFamily: 'times',
+                fontSize: 20
+            }}>
+                Key Stats
+            </Text>
+            <View style={{
+                flexDirection: 'row',
+                flexWrap: 'wrap',
+                gap: 20
+            }}>
+                <SleepQuality/>
+                <Steps/>
+                <Mood/>
+                <Habits/>
+                <Calories/>
+            </View>
+        </View>
         
     )
 }
 
-function Insights() {
-    return (
-        <>
-            <Text>Protein Intake is very low - Try adding a high protein snack</Text>
-            <Text>Reduced deep sleep last night may affect your endurance today. Consider lighter training.</Text>
-        </>
-    )
+
+interface KeyStatsItemProps {
+    label?: string,
+    content?: string
 }
 
-function DateDropDown() {
-    return (
-        <>
-            <Text>Oct 30, 2025</Text>
-        </>
-    )
-}
 
-function Sleep() {
+function KeyStatsItem({ label, content }: KeyStatsItemProps) {
     return (
-        <>
-            <Text>6h</Text>
-            <Text>Sleep</Text>
-        </>
-    )
-}
-
-function Activity() {
-    return (
-        <>
-            <Text>45</Text>
-            <Text>Activity</Text>
-        </>
-    )
-}
-
-function Nutrition() {
-    return (
-        <>
-            <Text>1,450</Text>
-            <Text>Nutrition</Text>
-        </>
-    )
-}
-
-function MoodStress(){
-    return (
-        <>
-            <Text>8.2</Text>
-            <Text>Mood/Stress</Text>
-        </>
+        <View style={{
+            borderWidth: 1,
+            backgroundColor: 'lightgrey',
+            height: 60,
+            width: 120,
+            justifyContent: 'center',
+            alignItems: 'center'
+        }}>
+            <Text style={{fontSize: 16}}>{label}</Text>
+            <Text style={{fontSize: 16}}>{content}</Text>
+        </View>
     )
 }
 
 function SleepQuality() {
     return (
-        <>
-            <Text>Sleep Quality</Text>
-            <Text>6 hours</Text>
-        </>
+        <KeyStatsItem label="Sleep Quality" content="6 hours"/>
     )
 }
 
 function Steps() {
     return (
-        <>
-            <Text>Steps</Text>
-            <Text>5,340</Text>
-        </>
+        <KeyStatsItem label="Steps" content="5340"/>
     )
 }
 
 function Mood() {
     return (
-        <>
-            <Text>Mood</Text>
-            <Text>Low</Text>
-        </>
+        <KeyStatsItem label="Mood" content="Low"/>
     )
 }
 
 function Habits() {
     return (
-        <>
-            <Text>Habits</Text>
-            <Text>3 of 4</Text>
-        </>
+        <KeyStatsItem label="Habits" content="3 of 4"/>
     )
 }
 
 function Calories() {
     return (
-        <>
-            <Text>Calories</Text>
-            <Text>1,450</Text>
-        </>
+        <KeyStatsItem label="Calories" content="1450"/>
     )
 }
 
+
+interface InsightsProps {
+    style?: StyleProp<ViewStyle>
+}
+
+
+function Insights({ style }: InsightsProps) {
+    return (
+        <View style={style}>
+            {/* Insights Title */}
+            <Text style={{
+                fontSize: 20,
+                fontFamily: 'times'
+            }}>
+                Insights
+            </Text>
+
+            {/* Body */}
+            <View style={{
+                flexDirection: 'row',
+                gap: 20
+            }}>
+                <InsightsItem content="Protein Intake is very low - Try adding a high protein snack"/>
+                <InsightsItem content="Reduced deep sleep last night may affect your endurance today. Consider lighter training."/>        
+            </View>
+        </View>
+    )
+}
+
+
+interface InsightsItemProps {
+    content?: string
+}
+
+
+function InsightsItem({ content }: InsightsItemProps) {
+    return (
+        <View style={{
+            borderWidth: 1,
+            backgroundColor: 'lightgrey',
+            width: 200,
+            padding: 10
+        }}>
+            <Text style={{ fontSize: 16 }}>{content}</Text>
+        </View>
+    )
+}
+
+
+const styles = StyleSheet.create({
+    circle: {
+        width: 60, 
+        height: 60,
+        borderRadius: 30, // 80 / 2 = 40
+        borderWidth: 4, 
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'lightgrey', 
+    },
+    circleLabel: {
+        fontSize: 16
+    }
+})
