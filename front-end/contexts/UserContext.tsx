@@ -136,14 +136,37 @@ export function UserProvider({ children }: UserProviderProps) {
     const redirectUrl = Linking.createURL('/email-verified');
     console.log(redirectUrl);
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options:{
         emailRedirectTo: redirectUrl,
+        data: {}
       }
     });
+
     if (error) throw error;
+
+    if (data.user){
+      const {error: userError} = await supabase
+      .from('User')
+      .insert({
+        id: data.user.id,
+        onboarded: false,
+        name: null,
+        email: data.user.email
+      })
+    if (userError){
+        console.error('User record creation error:', userError);
+        throw new Error('Failed to create user profile.');
+      }
+      
+      // ✅ Sign out immediately, BEFORE the auth listener can react
+      const { error: signOutError } = await supabase.auth.signOut();
+      if (signOutError) {
+        console.error('Sign out error:', signOutError);
+      }
+    }
   };
 
   const updateUserPassword = async (password: string) => {

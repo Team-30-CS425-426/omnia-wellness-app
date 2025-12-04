@@ -61,8 +61,6 @@ const Register = () => {
         console.log('Email function response data:', emailData);
 
         // Sign out immediately after registration, to go back to log in page
-        await logout(); 
-        
         Alert.alert('Success', 'Account created! Please log in.');
         router.replace('/login');
 
