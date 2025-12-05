@@ -16,6 +16,7 @@ interface UserContextType {
   hasOnboarded: boolean | null;
   initialLoadFinished: boolean | null;
   setOnboardedStatus: (status: boolean) => void;
+  deleteAccount: (confirmation: string) => void;
 }
 
 // 2. Create the context with an initial undefined value
@@ -232,8 +233,25 @@ export function UserProvider({ children }: UserProviderProps) {
       if (error) throw error;
   };
 
+  const deleteAccount = async (confirmation: string) => {
+    if (!user) throw new Error('No user logged in');
+
+    const {error} = await supabase
+    .from('User')
+    .delete()
+    .eq('id', user.id);
+
+    if (error) throw error;
+
+
+    const { error: authError} = await supabase.auth.admin.deleteUser(user.id);
+    if (authError) throw authError;
+
+    await logout();
+  }
+
   return (
-    <UserContext.Provider value={{ user, loading, login, logout, register, updateUserPassword, resetPassword, hasOnboarded, initialLoadFinished, setOnboardedStatus }}>
+    <UserContext.Provider value={{ user, loading, login, logout, register, updateUserPassword, resetPassword, hasOnboarded, initialLoadFinished, setOnboardedStatus, deleteAccount }}>
       {initialLoadFinished ? children: null} 
     </UserContext.Provider>
   );
