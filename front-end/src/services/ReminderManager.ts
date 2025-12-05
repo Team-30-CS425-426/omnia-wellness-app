@@ -88,3 +88,27 @@ export async function loadReminderSettings(): Promise<ReminderSettings> {
     }
     return { enabled, time };
 }
+
+export async function scheduleOneTimeTestReminder(
+    time: ReminderTime
+): Promise<string | null>{
+    const hasPermission = await requestNotificationPermissionsAsync();
+    if (!hasPermission){
+        return null;
+    }
+    const trigger: Notifications.CalendarTriggerInput = {
+        type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
+        hour: time.hour,
+        minute: time.minute,
+        repeats: false,
+    };
+    const id = await Notifications.scheduleNotificationAsync({
+        content: {
+            title: 'Test check-in reminder',
+            body: 'This is a one-time test notification to make sure reminders are working.',
+            sound: 'default',
+        },
+        trigger,
+    });
+    return id;
+}

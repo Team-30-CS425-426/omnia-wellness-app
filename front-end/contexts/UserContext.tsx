@@ -113,11 +113,14 @@ export function UserProvider({ children }: UserProviderProps) {
   // --- Supabase Authentication Functions ---
 
   const login = async (email: string, password: string): Promise<void> => {
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
-    if (error) throw error; 
+    if (error){
+      console.log('Supabase login error:', error);
+      throw new Error(error.message || 'Login failed. Please try again.'); 
+    } 
   };
 
   const logout = async (): Promise<void> => {
