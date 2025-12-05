@@ -20,6 +20,8 @@ Currently a minimalistic HomePage with placeholders
 */
 
 export default function HomePage() {
+    const insets = useSafeAreaInsets();
+    const totalTopPadding = insets.top + 20;
 
     const {user, loading: userLoading} = useUser();
     const {
@@ -37,9 +39,6 @@ export default function HomePage() {
     if (!user){
         return <Redirect href = "/" />;
     }
-
-    const insets = useSafeAreaInsets();
-    const totalTopPadding = insets.top + 20;
    
     return (
         <ThemedView style = {[

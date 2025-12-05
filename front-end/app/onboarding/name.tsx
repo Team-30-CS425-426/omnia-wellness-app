@@ -4,18 +4,17 @@ import { router } from 'expo-router';
 import { supabase } from '../../config/supabaseConfig'; 
 import { useUser } from '../../contexts/UserContext';
 
-// ⬅️ Import your themed components
 import ThemedView from '../components/ThemedView'; 
 import ThemedText from '../components/ThemedText';
 import ThemedTextInput from '../components/ThemedTextInput';
 import Spacer from '../components/Spacer';
 import ThemedButton from '../components/ThemedButton';
-import { Colors } from '../../constants/Colors';
+
 
 export default function SetupNameScreen() {
   const [name, setName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { user } = useUser();
+  const { user, setOnboardedStatus } = useUser();
 
   const handleSaveName = async () => {
     // 1. Validation Change: Only check for essential data (user existence)
@@ -27,10 +26,13 @@ export default function SetupNameScreen() {
     // We intentionally skip checking if name is empty to allow empty string submission.
 
     setIsSubmitting(true);
+    const userID = user?.id;
+    console.log("UPDATING USER IN SUPABASE")
+    console.log("USERID: ", userID)
+    console.log("➡️ NAME VALUE SENT TO SUPABASE:", name);
 
     try {
-      // 2. Database Update: Use the raw 'name' state, which may be ""
-      const { error } = await supabase
+      const response = await supabase
         .from('User') // ⚠️ Ensure this is your correct table name
         .update({ 
             name: name, // ⬅️ Submitting the raw name string (can be "")
@@ -38,16 +40,21 @@ export default function SetupNameScreen() {
         }) 
         .eq('id', user.id); // Update the correct user profile
 
+      const { error } = response;
+      
+      console.log("UPDATE COMPLETE")
+      
+      console.log("Full Supabase API Response:", response)
+
       if (error) {
         Alert.alert('Error', 'Failed to save profile. Please try again.');
         console.error('Supabase update error:', error);
         return;
       }
-      
-      // 3. Success! Redirect to the main application.
+  
+      setOnboardedStatus(true);
 
-      await supabase.auth.refreshSession()
-      router.replace('/(tabs)/home'); 
+      router.replace('/(tabs)/home')
 
     } catch (e) {
       Alert.alert('Error', 'An unexpected error occurred.');
@@ -92,8 +99,6 @@ export default function SetupNameScreen() {
             </ThemedText>
         )}
       </ThemedButton>
-      
-      {isSubmitting && <ActivityIndicator style={styles.indicator} size="small" color="#005BB5" />}
     </ThemedView>
   );
 }
