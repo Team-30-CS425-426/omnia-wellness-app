@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {StyleSheet, 
         ScrollView,
         View,
@@ -14,6 +14,7 @@ import ThemedView from '../components/ThemedView';
 import ThemedText from '../components/ThemedText';
 
 import useHealthData from '@/src/hooks/useHealthData';
+import { QuoteScreenContent } from '../quote';
 
 /*
 Currently a minimalistic HomePage with placeholders
@@ -30,6 +31,10 @@ export default function HomePage() {
         connectAndImport,
     } = useHealthData();
 
+    const [showQuoteSplash, setShowQuoteSplash] = useState(true);
+    const insets = useSafeAreaInsets();
+    const totalTopPadding = insets.top + 20;
+
     if (userLoading){
         return <ThemedText>Loading...</ThemedText>;
     }
@@ -38,8 +43,15 @@ export default function HomePage() {
         return <Redirect href = "/" />;
     }
 
-    const insets = useSafeAreaInsets();
-    const totalTopPadding = insets.top + 20;
+    if (showQuoteSplash) {
+        return (
+            <QuoteScreenContent
+            onDone={() => {
+                setShowQuoteSplash(false);
+            }}
+            />
+        );
+    }
    
     return (
         <ThemedView style = {[
