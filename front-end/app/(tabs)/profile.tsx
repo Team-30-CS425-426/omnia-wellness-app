@@ -38,7 +38,12 @@ const ProfilePage = () =>{
 
             <ThemedButton onPress={handleLogout}>  
                 <ThemedText style={{color: Colors.default.white}} > Logout </ThemedText>
-            </ThemedButton>           
+            </ThemedButton>    
+            <Spacer height={30} />
+
+            <ThemedButton onPress={handleLogout}>  
+                <ThemedText style={{color: Colors.default.white}} > Delete Account </ThemedText>
+            </ThemedButton>         
 
         </ThemedView>
     )

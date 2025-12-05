@@ -24,12 +24,10 @@ const Register = () => {
     //basic validation and submission after clicking submit
     const handleSubmit = async () => {
 
-    console.log('SUPABASE_URL:', SUPABASE_URL);
-    console.log('SUPABASE_ANON_KEY exists:', !!SUPABASE_ANON_KEY);
-    console.log('SUPABASE_ANON_KEY length:', SUPABASE_ANON_KEY?.length);
-    console.log('First 30 chars:', SUPABASE_ANON_KEY?.substring(0, 30));
-
-
+    // console.log('SUPABASE_URL:', SUPABASE_URL);
+    // console.log('SUPABASE_ANON_KEY exists:', !!SUPABASE_ANON_KEY);
+    // console.log('SUPABASE_ANON_KEY length:', SUPABASE_ANON_KEY?.length);
+    // console.log('First 30 chars:', SUPABASE_ANON_KEY?.substring(0, 30));
     
     if (!email || !password || !confirmPassword) {
         Alert.alert('Error', 'Please fill in all fields');
@@ -61,8 +59,8 @@ const Register = () => {
         console.log('Email function response data:', emailData);
 
         // Sign out immediately after registration, to go back to log in page
-        Alert.alert('Success', 'Account created! Please log in.');
-        router.replace('/login');
+        //Alert.alert('Success', 'Account created! Please log in.');
+        //router.replace('/login');
 
     } catch (error: any) 
         {
@@ -81,10 +79,10 @@ const Register = () => {
         <ThemedView style = {[styles.container, {paddingTop : totalTopPadding, paddingBottom: insets.bottom + 150}]}>
             
 
-            <ThemedText style = {[{paddingTop : totalTopPadding}]} title = {true} > Omnia </ThemedText>
+            <ThemedText style = {[{paddingTop : totalTopPadding}]} title = {true} >Omnia </ThemedText>
             <Spacer height={30} />
 
-            <ThemedText style = {[styles.subHeader]}> Create an Account </ThemedText>
+            <ThemedText style = {[styles.subHeader]}>Create an Account </ThemedText>
             <Spacer height={30} />
 
             {/* Email Input Field */}
