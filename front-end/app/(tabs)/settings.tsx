@@ -1,13 +1,15 @@
-import React, { useEffect, useState } from 'react';
-import { View, Switch, Button, Alert, StyleSheet } from 'react-native';
-import ThemedText from '../components/ThemedText';
-import ThemedView from '../components/ThemedView';
-import{
+import {
     ReminderTime,
+    disableDailyCheckInReminder,
     loadReminderSettings,
     scheduleDailyCheckInReminder,
-    disableDailyCheckInReminder,
+    scheduleOneTimeTestReminder,
 } from '@/src/services/ReminderManager';
+import React, { useEffect, useState } from 'react';
+import { Alert, Button, StyleSheet, Switch, TextInput, View, Keyboard, 
+        TouchableWithoutFeedback, KeyboardAvoidingView, Platform, } from 'react-native';
+import ThemedText from '../components/ThemedText';
+import ThemedView from '../components/ThemedView';
 
 type PresetKey = 'morning' | 'afternoon' | 'evening';
 const PRESET_TIMES: Record<PresetKey, ReminderTime> = {
@@ -20,6 +22,10 @@ export default function SettingsScreen(){
     const [enabled, setEnabled] = useState(false);
     const [selectedPreset, setSelectedPreset] = useState<PresetKey>('evening');
     const [loading, setLoading] = useState(true);
+
+    const [testHour, setTestHour] = useState('10');
+    const [testMinute, settestMinute] = useState('00');
+    const [testAmPm, setTestAmPm] = useState<'AM' | 'PM'>('PM');
 
     useEffect (() => {
         (async () => {
@@ -84,6 +90,43 @@ export default function SettingsScreen(){
             }
         }
     };
+    const handleCustomTimeTestReminder = async () => {
+        const hourNum = parseInt(testHour, 10);
+        const minuteNum = parseInt(testMinute, 10);
+        if(
+            isNaN(hourNum) ||
+            isNaN(minuteNum) ||
+            hourNum < 1 ||
+            hourNum > 12 ||
+            minuteNum < 0 ||
+            minuteNum > 59
+        ){
+            Alert.alert('Invalid time', 'Please enter a valid time');
+            return;
+        }
+        let hour24 = hourNum;
+        if (testAmPm === 'PM' && hour24 < 12){
+            hour24 += 12;
+        }else if (testAmPm === 'AM' && hour24 === 12 ){
+            hour24 = 0;
+        }
+        const reminderTime: ReminderTime = {
+            hour: hour24,
+            minute: minuteNum,
+        };
+        const id = await scheduleOneTimeTestReminder(reminderTime);
+        if (!id){
+            Alert.alert(
+                'Notifications disabled',
+                'We could not get permission to send notifications. Please enable notifications in Settings.',
+            );
+        }else {
+            Alert.alert(
+                'Test reminder scheduled',
+                `We will send a one-time test reminder at about ${formatTime(reminderTime)}.`,
+            );
+        }
+    };
     const formatTime = (time: ReminderTime): string => {
         let hour = time.hour;
         const minute = time.minute.toString().padStart(2,'0');
@@ -101,6 +144,11 @@ export default function SettingsScreen(){
         );
     }
     return (
+        <KeyboardAvoidingView
+        style = {{flex: 1}}
+        behavior = {Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+            <TouchableWithoutFeedback onPress = {Keyboard.dismiss} accessible = {false}>
         <ThemedView style = {styles.container}>
             <ThemedText style = {styles.title}>Daily Check-In Reminder</ThemedText>
 
@@ -137,7 +185,53 @@ export default function SettingsScreen(){
                 color = {selectedPreset === 'evening' ? '#4CAF50' : undefined }
                 />
             </View>
+
+            <ThemedText style={styles.sectionTitle}>
+                Test reminder (one-time)
+            </ThemedText>
+            <ThemedText style={styles.helper}>
+                Set a one-time reminder at a specific time to test your notification sound.
+            </ThemedText>
+            <View style={styles.customTimeRow}>
+                <TextInput
+                    style={styles.timeInput}
+                    keyboardType="numeric"
+                    placeholder='HH'
+                    maxLength={2}
+                    value={testHour}
+                    onChangeText={setTestHour}
+                />
+                <ThemedText style = {styles.timeSeparator}>:</ThemedText>  
+                <TextInput
+                    style ={styles.timeInput}
+                    keyboardType = "numeric"
+                    placeholder="MM"
+                    maxLength={2}
+                    value={testMinute}
+                    onChangeText={settestMinute}
+                />  
+                <View style={styles.ampmRow}>
+                    <Button
+                        title="AM"
+                        onPress={() => setTestAmPm('AM')}
+                        color={testAmPm === 'AM' ? '#4CAF50' : undefined}
+                    />
+                    <Button
+                        title='PM'
+                        onPress={() => setTestAmPm('PM')}
+                        color={testAmPm === 'PM'? '#4CAF50' : undefined }
+                    />
+                </View>  
+            </View>
+            <View style = {styles.buttonRow}>
+                <Button
+                    title="Schedule test reminder at this time"
+                    onPress={handleCustomTimeTestReminder}
+                />
+            </View>
         </ThemedView>
+        </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
     );
 }
 const styles = StyleSheet.create ({
@@ -171,5 +265,27 @@ const styles = StyleSheet.create ({
     },
     buttonRow: {
         marginVertical: 4,
+    },
+    customTimeRow:{
+        flexDirection:'row',
+        alignItems: 'center',
+        marginTop: 8,
+        marginBottom: 4,
+    },
+    timeInput: {
+        borderWidth: 1,
+        borderColor: '#ccc',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        width: 50,
+        borderRadius: 4,
+    },
+    timeSeparator:{
+        marginHorizontal: 4,
+        fontSize: 18,
+    },
+    ampmRow: {
+        flexDirection: 'row',
+        marginLeft: 8,
     },
 });
