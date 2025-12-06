@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { Text } from 'react-native-elements';
 import { Ionicons } from '@expo/vector-icons';
-import { Stack } from 'expo-router';   
+import { router, Stack, useRouter } from 'expo-router';   
 
 const MOODS = [
   { label: 'Very Low', emoji: '😞' },
@@ -24,6 +24,7 @@ const MoodStressScreen = () => {
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [stressLevel, setStressLevel] = useState(5);
   const [notes, setNotes] = useState('');
+  const router = useRouter()
 
   const handleSave = () => {
     if (!selectedMood) {
@@ -101,7 +102,7 @@ const MoodStressScreen = () => {
           />
 
           {/* Save Button */}
-          <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+          <TouchableOpacity style={styles.saveButton} onPress={() => router.replace('/home')}>
             <Text style={styles.saveButtonText}>Save</Text>
           </TouchableOpacity>
         </View>

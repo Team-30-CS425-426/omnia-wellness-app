@@ -7,6 +7,7 @@ import AddMenuButton from '../components/Modal'; //import the custom Add Menu Bu
 import SettingsScreen from './settings';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Colors } from '../../constants/Colors';
+import HomePageStyled from './homeStyled';
 //create a navigator object, use to define screens
 const Tab = createBottomTabNavigator();
 
@@ -28,7 +29,23 @@ const TabsLayout = () => {
         name="Home"
         component={HomeScreen}
         options={{
+          headerShown: false,
           tabBarLabel: 'Home',
+          tabBarIcon: ({ focused }) => (
+            <MaterialIcons
+              name="home"
+              size={28}
+              color={focused ? COLORS.tabIconSelected : COLORS.tabIconDefault}
+            />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="HomeStyled"
+        component={HomePageStyled}
+        options={{
+          headerShown: false,
+          tabBarLabel: 'HomeStyled',
           tabBarIcon: ({ focused }) => (
             <MaterialIcons
               name="home"
