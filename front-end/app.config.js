@@ -1,4 +1,8 @@
-{
+import 'dotenv/config';
+
+require('dotenv').config({ path: './utils/.env.local' });
+
+export default{
   "expo": {
     "name": "front-end",
     "slug": "front-end",
@@ -9,7 +13,8 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.omnia.wellness"
     },
     "android": {
       "adaptiveIcon": {
@@ -27,6 +32,7 @@
     },
     "plugins": [
       "expo-router",
+      "expo-notifications",
       [
         "expo-splash-screen",
         {
@@ -38,11 +44,20 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      "react-native-health"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    extra: {
+      supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
+      supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      supabaseAnonKey: process.env.NEXT_ANON_SUPABASE_KEY,
+      eas: {
+        projectId: "8c8c7da2-c0ef-4d51-a244-cd539683b50c"
+      }
     }
   }
 }
