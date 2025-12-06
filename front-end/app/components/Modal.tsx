@@ -3,14 +3,13 @@ import { StyleSheet, View, TouchableOpacity } from 'react-native'; //import Reac
 import { Text } from 'react-native-elements'; //import the Text component from React Native Elements to display styled text
 import Modal from 'react-native-modal'; //Import Modal component to show pop-up windows
 import { MaterialIcons, Ionicons } from '@expo/vector-icons'; //bring in icons from Expo to show symbols in the UI
-import { navigate } from 'expo-router/build/global-state/routing';
-
+import {Colors} from '../../constants/Colors'; //import color constants for consistent theming
 //create a TypeScript type (label) for the names of Ionicons icons
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 
 const COLORS = {
-  primary: '#003cffff', //used for floating button
-  tabIconSelected: '#ffffffff', //used for the icon inside the button
+  primary: Colors.default.primaryBlue, //used for floating button
+  tabIconSelected: Colors.default.white, //used for the icon inside the button
 };
 
 //defines a typescript interface for the options displayed in the modal
@@ -55,22 +54,16 @@ const AddMenuButton = () => {
 
           {/* Grid of options */}
           <View style={styles.grid}>
-            <TouchableOpacity
-              key={0}
-              style={styles.gridItem}
-              onPress={() => navigate('../entry/workout')}
-            >
-              <Ionicons name={OPTIONS[0].icon} size={32} color='#007AFF' />
-              <Text style={styles.gridLabel}>{OPTIONS[0].label}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              key={1}
-              style={styles.gridItem}
-              onPress={() => navigate('../entry/moodstress')}
-            >
-              <Ionicons name={OPTIONS[1].icon} size={32} color='#007AFF' />
-              <Text style={styles.gridLabel}>{OPTIONS[1].label}</Text>
-            </TouchableOpacity>
+            {OPTIONS.map((item, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.gridItem}
+                onPress={() => console.log(item.label)}
+              >
+                <Ionicons name={item.icon} size={32} color="#007AFF" />
+                <Text style={styles.gridLabel}>{item.label}</Text>
+              </TouchableOpacity>
+            ))}
           </View>
 
         </View>
