@@ -12,6 +12,9 @@ Notifications.setNotificationHandler({
         shouldShowList: true,
     }),
 });
+// At the top of your root layout
+import { LogBox } from 'react-native';
+LogBox.ignoreLogs(['Text strings must be rendered within a <Text> component']);
 
 const RootLayout = () => {
 

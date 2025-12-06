@@ -17,7 +17,7 @@ const ProfilePage = () =>{
     const insets = useSafeAreaInsets();
     const totalTopPadding = insets.top;
 
-    const { logout, user } = useUser();
+    const { logout, user, deleteAccount } = useUser();
 
     const handleLogout = async () => {
         await logout();
@@ -38,8 +38,9 @@ const ProfilePage = () =>{
 
             <ThemedButton onPress={handleLogout}>  
                 <ThemedText style={{color: Colors.default.white}} > Logout </ThemedText>
-            </ThemedButton>           
-
+            </ThemedButton>    
+            <Spacer height={30} />
+        
         </ThemedView>
     )
 }
