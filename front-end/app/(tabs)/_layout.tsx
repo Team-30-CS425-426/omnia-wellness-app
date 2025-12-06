@@ -27,6 +27,7 @@ const TabsLayout = () => {
         name="home"
         component={HomeScreen}
         options={{
+          headerShown: false,
           tabBarLabel: 'Home',
           tabBarIcon: ({ focused }) => (
             <MaterialIcons
