@@ -13,6 +13,10 @@ interface UserContextType {
   register: (email: string, password: string) => Promise<void>;
   updateUserPassword: (password: string) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
+  hasOnboarded: boolean | null;
+  initialLoadFinished: boolean | null;
+  setOnboardedStatus: (status: boolean) => void;
+  deleteAccount: (confirmation: string) => void;
 }
 
 // 2. Create the context with an initial undefined value
@@ -45,6 +49,44 @@ export function UserProvider({ children }: UserProviderProps) {
   // State now holds the Supabase User object
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [hasOnboarded, setHasOnboarded] = useState<boolean | null>(null);
+  const [initialLoadFinished, setInitialLoadFinished] = useState(false);
+
+  const setOnboardedStatus = (status: boolean) => {
+    setHasOnboarded(status);
+  };
+
+  const fetchProfileData = async (userID: string) => {
+    setLoading(true);
+    try{
+      const {data: profile, error} = await supabase
+        .from('User')
+        .select('onboarded')
+        .eq('id', userID)
+        .single()
+
+      if (error && error.code !== 'PGRST116'){
+        console.error('Error fetching profile onboarding status:', error);
+        setHasOnboarded(false);
+      } else if (profile){
+        setHasOnboarded(profile.onboarded);
+      } else {
+        setHasOnboarded(false);
+      }
+    } catch (e) {
+      console.error('Exception:', e);
+      setHasOnboarded(false);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    supabase.auth.getUser().then(() => {
+      setInitialLoadFinished(true);
+    });
+  }, []);
+
 
   // --- 1. Session & Auth State Listener ---
   useEffect(() => {
@@ -52,12 +94,17 @@ export function UserProvider({ children }: UserProviderProps) {
     const fetchSession = async () => {
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error && error.message !== 'Auth session missing!') {
-             console.log("Session fetch error:", error); 
         }
         
-        // The user object is within the session
-        setUser(session?.user ?? null);
-        setLoading(false);
+        const currentUser = session?.user ?? null;
+        setUser(currentUser)
+
+        if (currentUser){
+          fetchProfileData(currentUser.id)
+        } else{
+          setHasOnboarded(null);
+          setLoading(false);
+        }
     }
     
     fetchSession();
@@ -65,8 +112,16 @@ export function UserProvider({ children }: UserProviderProps) {
     // B. Subscribe to auth changes (login, logout, auto-refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        setUser(session?.user ?? null); 
-        setLoading(false);
+        const currentUser = session?.user ?? null
+        setUser(currentUser);
+
+        if (currentUser){
+          fetchProfileData(currentUser.id);
+        } else {
+          setHasOnboarded(null);
+          setLoading(false)
+        }
+
       }
     );
 
@@ -83,7 +138,6 @@ export function UserProvider({ children }: UserProviderProps) {
       // Check if the URL contains a Supabase token (reset password flow)
       // Supabase puts tokens in the hash fragment (#)
       if (url.includes('access_token') && url.includes('refresh_token')) {
-          console.log("Deep link with tokens detected!");
           const params = extractParamsFromUrl(url);
           
           if (params.access_token && params.refresh_token) {
@@ -137,16 +191,33 @@ export function UserProvider({ children }: UserProviderProps) {
     }
 
     const redirectUrl = Linking.createURL('/email-verified');
-    console.log(redirectUrl);
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options:{
         emailRedirectTo: redirectUrl,
+        data: {}
       }
     });
+
     if (error) throw error;
+
+    if (data.user){
+      const {error: userError} = await supabase
+      .from('User')
+      .insert({
+        id: data.user.id,
+        onboarded: false,
+        name: null,
+        email: data.user.email
+      })
+    if (userError){
+        console.error('User record creation error:', userError);
+        throw new Error('Failed to create user profile.');
+      }
+     
+    }
   };
 
   const updateUserPassword = async (password: string) => {
@@ -158,7 +229,6 @@ export function UserProvider({ children }: UserProviderProps) {
   const resetPassword = async (email: string): Promise<void> => {
       // 1. Generate the correct link for your specific device/environment
       const redirectUrl = Linking.createURL('/reset-password');
-      console.log('Redirect URL sent to Supabase:', redirectUrl); 
 
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: redirectUrl, // ⬅️ Use the generated URL
@@ -166,9 +236,26 @@ export function UserProvider({ children }: UserProviderProps) {
       if (error) throw error;
   };
 
+  const deleteAccount = async (confirmation: string) => {
+    if (!user) throw new Error('No user logged in');
+
+    const {error} = await supabase
+    .from('User')
+    .delete()
+    .eq('id', user.id);
+
+    if (error) throw error;
+
+
+    const { error: authError} = await supabase.auth.admin.deleteUser(user.id);
+    if (authError) throw authError;
+
+    await logout();
+  }
+
   return (
-    <UserContext.Provider value={{ user, loading, login, logout, register, updateUserPassword, resetPassword }}>
-      {!loading && children} 
+    <UserContext.Provider value={{ user, loading, login, logout, register, updateUserPassword, resetPassword, hasOnboarded, initialLoadFinished, setOnboardedStatus, deleteAccount }}>
+      {initialLoadFinished ? children: null} 
     </UserContext.Provider>
   );
 }

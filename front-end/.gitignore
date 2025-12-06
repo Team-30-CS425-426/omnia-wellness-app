@@ -31,9 +31,6 @@ yarn-error.*
 .DS_Store
 *.pem
 
-# local env files
-.env*.local
-
 # typescript
 *.tsbuildinfo
 
@@ -43,7 +40,5 @@ app-example
 /ios
 /android
 
-#env
-.env.local
 
 # @end expo-cli
