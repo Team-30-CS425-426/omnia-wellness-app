@@ -1,25 +1,29 @@
-import React from 'react';
-import {StyleSheet, 
-        ScrollView,
-        View,
-        Button,
-        ActivityIndicator,
+import { Redirect } from 'expo-router';
+import React, { useState } from 'react';
+import {
+    ActivityIndicator,
+    Button,
+    ScrollView,
+    StyleSheet,
+    View,
 } from 'react-native';
-import {Redirect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useUser } from '../../contexts/UserContext';
 
-import ThemedView from '../components/ThemedView';
 import ThemedText from '../components/ThemedText';
+import ThemedView from '../components/ThemedView';
 
 import useHealthData from '@/src/hooks/useHealthData';
+import { QuoteScreenContent } from '../quote';
 
 /*
 Currently a minimalistic HomePage with placeholders
 */
 
 export default function HomePage() {
+    const insets = useSafeAreaInsets();
+    const totalTopPadding = insets.top + 20;
 
     const {user, loading: userLoading} = useUser();
     const {
@@ -28,7 +32,10 @@ export default function HomePage() {
         steps7d,
         sleep7d,
         connectAndImport,
+        exportToCsv,
     } = useHealthData();
+
+    const [showQuoteSplash, setShowQuoteSplash] = useState(true);
 
     if (userLoading){
         return <ThemedText>Loading...</ThemedText>;
@@ -38,8 +45,15 @@ export default function HomePage() {
         return <Redirect href = "/" />;
     }
 
-    const insets = useSafeAreaInsets();
-    const totalTopPadding = insets.top + 20;
+    if (showQuoteSplash) {
+        return (
+            <QuoteScreenContent
+            onDone={() => {
+                setShowQuoteSplash(false);
+            }}
+            />
+        );
+    }
    
     return (
         <ThemedView style = {[
@@ -55,7 +69,18 @@ export default function HomePage() {
                     </ThemedText>
                     <Button
                         title=" Connect & import 7 days"
-                        onPress={connectAndImport}
+                        onPress={ () => {
+                            console.log('Connect & import 7 days pressed');
+                            connectAndImport();
+                        }}
+                    />
+                <View style = {{ height: 8 }} />
+                    <Button
+                    title= "Export CSV"
+                    onPress={() => {
+                        console.log('Export CSV pressed');
+                        exportToCsv();
+                      }}
                     />
                 </View>
                 {healthLoading && <ActivityIndicator style={styles.spacing} />}
@@ -81,7 +106,11 @@ export default function HomePage() {
                         <ThemedText style ={styles.sectionTitle}>
                             Sleep samples (last 7 days)
                         </ThemedText>
-                        <ThemedText>{sleep7d.length} samples</ThemedText>
+                        {sleep7d.map ((d:any)=> (
+                            <ThemedText key = {d.startDate}>
+                                {d.startDate.slice(0,10)}: {Number(d.value).toFixed(1)} hours
+                            </ThemedText>
+                        ))}
                     </View>
                 )}
                 </ScrollView>

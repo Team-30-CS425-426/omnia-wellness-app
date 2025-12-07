@@ -1,0 +1,62 @@
+
+> front-end@1.0.0 loc-authors
+> tsx scripts/locByAuthor.ts
+
+Alexis Mae Asuncion
+  app/(tabs)/_layout.tsx      47
+  app/(tabs)/add.tsx          3
+  app/components/Modal.tsx    102
+  app/screens/moodStress.tsx  13
+  app/screens/workout.tsx     13
+  Total: 178
+
+Daisy Madera Camacho
+  app/_layout.tsx                  10
+  app/(auth)/_layout.tsx           3
+  app/(tabs)/_layout.tsx           15
+  app/(tabs)/home.tsx              116
+  app/(tabs)/settings.tsx          278
+  app/index.tsx                    3
+  app/quote.tsx                    112
+  contexts/UserContext.tsx         5
+  scripts/locByAuthor.ts           90
+  src/hooks/useHealthData.ts       216
+  src/services/healthCSVExport.ts  74
+  src/services/QuoteService.ts     79
+  src/services/ReminderManager.ts  99
+  Total: 1100
+
+Kevin Ye
+  app/_layout.tsx         3
+  app/(tabs)/_layout.tsx  7
+  app/(tabs)/home.tsx     93
+  app/(tabs)/profile.tsx  1
+  app/index.tsx           2
+  Total: 106
+
+Kroxsed
+  app/_layout.tsx                             17
+  app/(auth)/_layout.tsx                      56
+  app/(auth)/login.tsx                        102
+  app/(auth)/register.tsx                     130
+  app/(auth)/reset-password.tsx               97
+  app/(auth)/resetPassword.tsx                82
+  app/(tabs)/_layout.tsx                      7
+  app/(tabs)/home.tsx                         39
+  app/(tabs)/profile.tsx                      72
+  app/components/DeleteConfirmationModal.tsx  153
+  app/components/Modal.tsx                    3
+  app/components/Spacer.tsx                   16
+  app/components/ThemedButton.tsx             32
+  app/components/ThemedText.tsx               34
+  app/components/ThemedTextInput.tsx          33
+  app/components/ThemedView.tsx               14
+  app/dashboard.tsx                           30
+  app/index.tsx                               35
+  app/onboarding/name.tsx                     107
+  config/supabaseConfig.ts                    21
+  constants/Colors.tsx                        12
+  contexts/UserContext.tsx                    212
+  utils/authErrors.ts                         24
+  Total: 1328
+
