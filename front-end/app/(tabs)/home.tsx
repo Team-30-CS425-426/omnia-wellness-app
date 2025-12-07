@@ -31,6 +31,7 @@ export default function HomePage() {
         steps7d,
         sleep7d,
         connectAndImport,
+        exportToCsv,
     } = useHealthData();
 
     const [showQuoteSplash, setShowQuoteSplash] = useState(true);
@@ -69,6 +70,11 @@ export default function HomePage() {
                         title=" Connect & import 7 days"
                         onPress={connectAndImport}
                     />
+                <View style = {{ height: 8 }} />
+                    <Button
+                    title= "Export CSV"
+                    onPress = { exportToCsv }
+                    />
                 </View>
                 {healthLoading && <ActivityIndicator style={styles.spacing} />}
                 {error && (
@@ -93,7 +99,11 @@ export default function HomePage() {
                         <ThemedText style ={styles.sectionTitle}>
                             Sleep samples (last 7 days)
                         </ThemedText>
-                        <ThemedText>{sleep7d.length} samples</ThemedText>
+                        {sleep7d.map ((d:any)=> (
+                            <ThemedText key = {d.startDate}>
+                                {d.startDate.slice(0,10)}: {Number(d.value).toFixed(1)} hours
+                            </ThemedText>
+                        ))}
                     </View>
                 )}
                 </ScrollView>
