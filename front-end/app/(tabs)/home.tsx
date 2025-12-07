@@ -1,17 +1,18 @@
+import { Redirect } from 'expo-router';
 import React, { useState } from 'react';
-import {StyleSheet, 
-        ScrollView,
-        View,
-        Button,
-        ActivityIndicator,
+import {
+    ActivityIndicator,
+    Button,
+    ScrollView,
+    StyleSheet,
+    View,
 } from 'react-native';
-import {Redirect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useUser } from '../../contexts/UserContext';
 
-import ThemedView from '../components/ThemedView';
 import ThemedText from '../components/ThemedText';
+import ThemedView from '../components/ThemedView';
 
 import useHealthData from '@/src/hooks/useHealthData';
 import { QuoteScreenContent } from '../quote';
@@ -68,12 +69,18 @@ export default function HomePage() {
                     </ThemedText>
                     <Button
                         title=" Connect & import 7 days"
-                        onPress={connectAndImport}
+                        onPress={ () => {
+                            console.log('Connect & import 7 days pressed');
+                            connectAndImport();
+                        }}
                     />
                 <View style = {{ height: 8 }} />
                     <Button
                     title= "Export CSV"
-                    onPress = { exportToCsv }
+                    onPress={() => {
+                        console.log('Export CSV pressed');
+                        exportToCsv();
+                      }}
                     />
                 </View>
                 {healthLoading && <ActivityIndicator style={styles.spacing} />}
