@@ -4,13 +4,19 @@ import { Colors } from '../../constants/Colors'
 // Define the props for ThemedButton component
 interface ThemedButtonProps extends PressableProps {
     style?: object;
+    color?: string;
 }
 // ThemedButton component for consistent button styling
-function ThemedButton({ style, ...props } : ThemedButtonProps) {
+function ThemedButton({ style, color, ...props } : ThemedButtonProps) {
 
   return (
     <Pressable 
-      style={({ pressed }) => [styles.btn, pressed && styles.pressed, style]} 
+      style={({ pressed }) => [
+        styles.btn, 
+        color && { backgroundColor: color }, // <--- 2. APPLY DYNAMIC BACKGROUND COLOR
+        pressed && styles.pressed, 
+        style
+      ]} 
       {...props}
     />
   )
