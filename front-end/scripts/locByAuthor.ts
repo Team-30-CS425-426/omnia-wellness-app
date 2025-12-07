@@ -34,8 +34,26 @@ function blameFile(filePath: string, counts: Counts) {
       if (line.startsWith("author ")) {
         currentAuthor = line.slice("author ".length).trim();
       } else if (line.startsWith("\t")) {
-        // This is a source line belonging to currentAuthor
+        // This is the actual source line text
         if (!currentAuthor) continue;
+
+        const content = line.slice(1); // remove the leading tab
+        const trimmed = content.trim();
+
+        // 1) Skip completely empty lines
+        if (trimmed === "") {
+          continue;
+        }
+
+        // 2) Skip obvious comment-only lines
+        if (
+          trimmed.startsWith("//") || // single-line comment
+          trimmed.startsWith("/*") || // start of block comment
+          trimmed.startsWith("*") ||  // inside block comment
+          trimmed.startsWith("*/")    // end of block comment
+        ) {
+          continue;
+        }
 
         if (!counts[currentAuthor]) {
           counts[currentAuthor] = {};
@@ -52,7 +70,7 @@ function blameFile(filePath: string, counts: Counts) {
 }
 
 function main() {
-  let files = getFiles();
+  const files = getFiles();
   if (files.length === 0) {
     console.log("No files to process.");
     return;
@@ -74,10 +92,11 @@ function main() {
     console.log(author);
     const fileMap = counts[author];
 
-    // For pretty alignment
     const entries = Object.entries(fileMap).sort(
       ([a], [b]) => a.localeCompare(b)
     );
+
+    // For pretty alignment of filenames
     const maxFileLen = entries.reduce(
       (max, [file]) => Math.max(max, file.length),
       0
