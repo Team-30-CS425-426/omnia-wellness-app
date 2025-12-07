@@ -27,7 +27,7 @@ const OPTIONS: Option[] = [
   { label: 'Habits', icon: 'checkmark-circle-outline'}
 ];
 
-const AddMenuButton = () => {
+const AddMenuButton = () => { 
   const [modalVisible, setModalVisible] = useState(false);
 
   return (
@@ -39,9 +39,12 @@ const AddMenuButton = () => {
       >
         <MaterialIcons 
           name="add-circle-outline" 
-          size={40} 
-          color={COLORS.tabIconSelected} 
+          size={30} 
+          color="#007AFF" 
         />
+
+        <Text style={styles.addLabel}>Add</Text> 
+
       </TouchableOpacity>
 
       {/* Bottom Sheet Modal */}
@@ -90,14 +93,21 @@ const AddMenuButton = () => {
 };
 
 const styles = StyleSheet.create({
+
   fab: {
-    height: 70,
-    width: 70,
-    borderRadius: 35,
-    backgroundColor: COLORS.primary,
+    //height: 70,
+    //width: 70,
+    //borderRadius: 35,
+    //backgroundColor: COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    alignSelf: 'center',
+    //alignSelf: 'center',
+    padding: 5,
+  },
+  addLabel: {
+    fontSize: 11, 
+    color: '#003cfff',
+    marginTop: -1,
   },
   modalStyle: {
     justifyContent: 'flex-end',

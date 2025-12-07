@@ -42,7 +42,7 @@ const TabsLayout = () => {
         name="Add"
         component={AddMenuScreen} // empty screen
         options={{
-          tabBarButton: () => <AddMenuButton />,
+        tabBarButton: () => <AddMenuButton />,  
         }}
       />
       <Tab.Screen
