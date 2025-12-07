@@ -19,12 +19,12 @@ Daisy Madera Camacho
   app/index.tsx                    3
   app/quote.tsx                    112
   contexts/UserContext.tsx         5
-  scripts/locByAuthor.ts           76
+  scripts/locByAuthor.ts           90
   src/hooks/useHealthData.ts       216
   src/services/healthCSVExport.ts  74
   src/services/QuoteService.ts     79
   src/services/ReminderManager.ts  99
-  Total: 1086
+  Total: 1100
 
 Kevin Ye
   app/_layout.tsx         3
@@ -59,8 +59,4 @@ Kroxsed
   contexts/UserContext.tsx                    212
   utils/authErrors.ts                         24
   Total: 1328
-
-Not Committed Yet
-  scripts/locByAuthor.ts  14
-  Total: 14
 
