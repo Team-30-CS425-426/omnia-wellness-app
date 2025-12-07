@@ -1,11 +1,11 @@
 import React, { createContext, useState, useEffect, ReactNode, useContext } from 'react';
-import { User } from '@supabase/supabase-js'; // Supabase's User type
-import { supabase } from '../config/supabaseConfig'; // ⬅️ Import your initialized Supabase client
+import { User } from '@supabase/supabase-js';
+import { supabase } from '../config/supabaseConfig';
 import * as Linking from 'expo-linking';
+import { SUPABASE_URL } from '../config/supabaseConfig'
 
 // 1. Define what data the Context will hold
 interface UserContextType {
-  // Supabase's User type is slightly different but serves the same purpose
   user: User | null; 
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
@@ -16,7 +16,7 @@ interface UserContextType {
   hasOnboarded: boolean | null;
   initialLoadFinished: boolean | null;
   setOnboardedStatus: (status: boolean) => void;
-  deleteAccount: (confirmation: string) => void;
+  deleteAccount: () => void;
 }
 
 // 2. Create the context with an initial undefined value
@@ -27,7 +27,6 @@ interface UserProviderProps {
   children: ReactNode;
 }
 
-// Helper to parse the #access_token=... from the URL
 const extractParamsFromUrl = (url: string) => {
   const params: { [key: string]: string } = {};
   // Supabase sends tokens after the '#' symbol
@@ -121,7 +120,6 @@ export function UserProvider({ children }: UserProviderProps) {
           setHasOnboarded(null);
           setLoading(false)
         }
-
       }
     );
 
@@ -135,20 +133,16 @@ export function UserProvider({ children }: UserProviderProps) {
     const handleDeepLink = async (url: string | null) => {
       if (!url) return;
 
-      // Check if the URL contains a Supabase token (reset password flow)
-      // Supabase puts tokens in the hash fragment (#)
       if (url.includes('access_token') && url.includes('refresh_token')) {
           const params = extractParamsFromUrl(url);
           
           if (params.access_token && params.refresh_token) {
-              // Manually set the session using the tokens from the URL
+
               const { error } = await supabase.auth.setSession({
                   access_token: params.access_token,
                   refresh_token: params.refresh_token,
               });
               if (error) console.error("Deep Link Session Error:", error);
-              
-              // Note: If successful, onAuthStateChange above will update the user state automatically
           }
       }
     };
@@ -177,10 +171,14 @@ export function UserProvider({ children }: UserProviderProps) {
     } 
   };
 
+
+
   const logout = async (): Promise<void> => {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
   };
+
+
 
   const register = async (email: string, password: string): Promise<void> => {
     if (!email || !password) {
@@ -226,6 +224,8 @@ export function UserProvider({ children }: UserProviderProps) {
     if (error) throw error;
   };
 
+
+
   const resetPassword = async (email: string): Promise<void> => {
       // 1. Generate the correct link for your specific device/environment
       const redirectUrl = Linking.createURL('/reset-password');
@@ -236,21 +236,34 @@ export function UserProvider({ children }: UserProviderProps) {
       if (error) throw error;
   };
 
-  const deleteAccount = async (confirmation: string) => {
+
+
+  const deleteAccount = async () => {
     if (!user) throw new Error('No user logged in');
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) throw new Error('No active session');
+        const response = await fetch(
+            `${SUPABASE_URL}/functions/v1/delete-account`,
+            {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${session.access_token}`,
+                    'Content-Type': 'application/json',
+                },
+            }
+        );
 
-    const {error} = await supabase
-    .from('User')
-    .delete()
-    .eq('id', user.id);
+        if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.error || 'Failed to delete account');
+        }
 
-    if (error) throw error;
-
-
-    const { error: authError} = await supabase.auth.admin.deleteUser(user.id);
-    if (authError) throw authError;
-
-    await logout();
+        await logout();
+    } catch (error) {
+        console.error('Error deleting account:', error);
+        throw error;
+    }
   }
 
   return (
@@ -260,7 +273,6 @@ export function UserProvider({ children }: UserProviderProps) {
   );
 }
 
-// 4. Create a custom hook to use this context easily
 export const useUser = () => {
   const context = useContext(UserContext);
   if (context === undefined) {
