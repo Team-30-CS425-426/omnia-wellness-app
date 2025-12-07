@@ -1,3 +1,4 @@
+// code below written by Alexis Mae Asuncion
 import React, { useState } from 'react';
 import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import { Text } from 'react-native-elements';
