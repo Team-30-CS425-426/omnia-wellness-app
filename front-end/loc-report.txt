@@ -1,0 +1,64 @@
+
+> front-end@1.0.0 loc-authors
+> tsx scripts/locByAuthor.ts
+
+Alexis Mae Asuncion
+  app/(tabs)/_layout.tsx      50
+  app/(tabs)/add.tsx          4
+  app/components/Modal.tsx    117
+  app/screens/moodStress.tsx  15
+  app/screens/workout.tsx     15
+  Total: 201
+
+Daisy Madera Camacho
+  app/_layout.tsx                  10
+  app/(auth)/_layout.tsx           3
+  app/(tabs)/_layout.tsx           15
+  app/(tabs)/home.tsx              109
+  app/(tabs)/settings.tsx          291
+  app/index.tsx                    7
+  app/quote.tsx                    116
+  contexts/UserContext.tsx         5
+  src/hooks/useHealthData.ts       127
+  src/services/QuoteService.ts     84
+  src/services/ReminderManager.ts  114
+  Total: 881
+
+Kevin Ye
+  app/_layout.tsx         4
+  app/(tabs)/_layout.tsx  7
+  app/(tabs)/home.tsx     115
+  app/(tabs)/profile.tsx  1
+  app/index.tsx           3
+  Total: 130
+
+Kroxsed
+  app/_layout.tsx                     21
+  app/(auth)/_layout.tsx              69
+  app/(auth)/login.tsx                131
+  app/(auth)/register.tsx             164
+  app/(auth)/reset-password.tsx       120
+  app/(auth)/resetPassword.tsx        104
+  app/(tabs)/_layout.tsx              7
+  app/(tabs)/home.tsx                 46
+  app/(tabs)/profile.tsx              59
+  app/components/Modal.tsx            3
+  app/components/Spacer.tsx           18
+  app/components/ThemedButton.tsx     31
+  app/components/ThemedText.tsx       46
+  app/components/ThemedTextInput.tsx  41
+  app/components/ThemedView.tsx       18
+  app/dashboard.tsx                   37
+  app/index.tsx                       47
+  app/onboarding/name.tsx             129
+  config/supabaseConfig.ts            28
+  constants/Colors.tsx                31
+  contexts/UserContext.tsx            265
+  utils/authErrors.ts                 26
+  Total: 1441
+
+Not Committed Yet
+  app/(tabs)/home.tsx         11
+  src/hooks/useHealthData.ts  93
+  Total: 104
+
