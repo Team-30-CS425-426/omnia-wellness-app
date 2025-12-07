@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { Platform } from 'react-native';
-import AppleHealthKit, { 
+import AppleHealthKit, {
     HealthKitPermissions,
     HealthValue,
 } from 'react-native-health';
+import { exportHealthCsv } from "../services/healthCSVExport";
+const UI_DAYS_WINDOW = 7;
+const EXPORT_DAYS_WINDOW = 30;
 const { Permissions } = AppleHealthKit.Constants;
 const healthPermissions: HealthKitPermissions = {
     permissions: {
@@ -106,15 +109,101 @@ const useHealthData = () => {
 
                 (AppleHealthKit as any).getSleepSamples(
                     options,
-                    (sleepErr: any, sleepResults: HealthValue[])=>{
+                    (sleepErr: any, sleepResults: any[])=>{
                         setLoading(false);
                         if (sleepErr){
                             setError('Error loading sleep');
                             return;
                         }
-                        setSleep7d(sleepResults || []);
+                        const sleepByDate: Record<string, number> = {};
+                        (sleepResults || []).forEach((sample) => {
+                            const start = new Date(sample.startDate);
+                            const end = new Date(sample.endDate);
+                            const durationHours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+                            const dateKey = sample.startDate.slice(0,10);
+                            sleepByDate[dateKey] = (sleepByDate[dateKey] || 0) + durationHours;
+                        })
+                        const aggregatedSleep: HealthValue[] = Object.keys(sleepByDate)
+                        .sort ((a,b) => (a < b ? 1 : -1))
+                        .map((dateKey) => ({
+                            startDate: dateKey,
+                            endDate: dateKey,
+                            value: sleepByDate[dateKey],
+                        } as any)
+                        );
+                        setSleep7d(aggregatedSleep);
                     }
                 );
+            }
+        );
+    };
+    const exportToCsv = () =>{
+        if (!isAuthorized){
+            setError("Please connect Apple Health first.");
+            return;
+        }
+        setError(null);
+        const end = new Date();
+        const start = new Date();
+        start.setDate(end.getDate() - EXPORT_DAYS_WINDOW);
+        const options = {
+            startDate: start.toISOString(),
+            endDate: end.toISOString(),
+        };
+        (AppleHealthKit as any).getDailyStepCountSamples(
+            options,
+            (err: any, stepResults: HealthValue[]) => {
+                if (err){
+                    setError("Error loading steps for export");
+                    return;
+                }
+                const stepSamples = stepResults || [];
+                const stepsByDate: Record < string, number> = {};
+                stepSamples.forEach((sample: any) => {
+                    const dateKey = sample.startDate.slice(0,10);
+                    const rawValue = sample.value;
+                    const value = typeof rawValue === "number" ? rawValue : Number(rawValue) || 0;
+                    stepsByDate[dateKey] = (stepsByDate[dateKey] || 0) + value;
+                });
+                const steps30d: HealthValue [] = Object.keys(stepsByDate)
+                .sort((a,b) => (a<b ? 1 : -1))
+                .map((dateKey) => ({
+                    startDate: dateKey,
+                    endDate: dateKey,
+                    value: stepsByDate[dateKey],
+                }as any)
+            );
+            (AppleHealthKit as any).getSleepSamples(
+                options,
+                async(sleepErr: any, sleepResults: any[]) => {
+                    if(sleepErr){
+                        setError("Error loading sleep for export");
+                        return;
+                    }
+                    const sleepByDate: Record<string, number> = {};
+                    (sleepResults || []).forEach((sample) => {
+                        const start = new Date(sample.startDate);
+                        const end = new Date(sample.endDate);
+                        const durationHours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+                        const dateKey = sample.startDate.slice(0,10);
+                        sleepByDate[dateKey] = (sleepByDate[dateKey] || 0) + durationHours;
+                    });
+                    const sleep30d: HealthValue[] = Object.keys(sleepByDate)
+                    .sort((a,b) => (a < b ? 1 : -1))
+                    .map((dateKey) => ({
+                        startDate: dateKey,
+                        endDate: dateKey,
+                        value: sleepByDate[dateKey],
+                    }as any));
+                    try{
+                        await exportHealthCsv(steps30d, sleep30d);
+                    }catch(e: any){
+                        console.error("Error exporting CSV", e);
+                        setError(e?.message || "Error exporting CSV");
+                    }
+                }
+            );
+
             }
         );
     };
@@ -125,6 +214,7 @@ const useHealthData = () => {
         steps7d,
         sleep7d,
         connectAndImport,
+        exportToCsv,
     };
 };
 export default useHealthData;
