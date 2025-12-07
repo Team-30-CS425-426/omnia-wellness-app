@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Platform } from "react-native";
 import AppleHealthKit, {
-  HealthKitPermissions,
-  HealthValue,
+    HealthKitPermissions,
+    HealthValue,
 } from "react-native-health";
 import { exportHealthCsv } from "../services/healthCSVExport";
 
