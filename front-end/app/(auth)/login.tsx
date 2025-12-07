@@ -29,10 +29,9 @@ const Login = () => {
 
         try {
         // Attempt to Sign In
-        await login(email, password);
-        // On success, navigate to Home
-        router.push('/home'); 
-
+            await login(email, password);
+            await new Promise(resolve => setTimeout(resolve, 200))
+            router.replace('/(tabs)/home')
     } catch (error: any) {
       
         const message = error.message || 'An unknown error occurred';
