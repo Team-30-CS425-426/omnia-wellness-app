@@ -1,146 +1,323 @@
-import { Redirect } from 'expo-router';
-import React, { useState } from 'react';
-import {
-    ActivityIndicator,
-    Button,
-    ScrollView,
-    StyleSheet,
-    View,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StyleProp, Text, View, ViewStyle, StyleSheet, ScrollView } from "react-native";
 
-import { useUser } from '../../contexts/UserContext';
-
-import ThemedText from '../components/ThemedText';
-import ThemedView from '../components/ThemedView';
-
-import useHealthData from '@/src/hooks/useHealthData';
-import { QuoteScreenContent } from '../quote';
-
-/*
-Currently a minimalistic HomePage with placeholders
-*/
-
-export default function HomePage() {
-    const insets = useSafeAreaInsets();
-    const totalTopPadding = insets.top + 20;
-
-    const {user, loading: userLoading} = useUser();
-    const {
-        loading: healthLoading,
-        error,
-        steps7d,
-        sleep7d,
-        connectAndImport,
-        exportToCsv,
-    } = useHealthData();
-
-    const [showQuoteSplash, setShowQuoteSplash] = useState(true);
-
-    if (userLoading){
-        return <ThemedText>Loading...</ThemedText>;
-    }
-
-    if (!user){
-        return <Redirect href = "/" />;
-    }
-
-    if (showQuoteSplash) {
-        return (
-            <QuoteScreenContent
-            onDone={() => {
-                setShowQuoteSplash(false);
-            }}
-            />
-        );
-    }
-   
+export default function HomeScreen() {
     return (
-        <ThemedView style = {[
-            styles.container, 
-            {paddingTop : totalTopPadding, paddingBottom: insets.bottom + 20}
-            ]} >
-                <ScrollView contentContainerStyle = {styles.scrollContent}>
-                <View style ={styles.section}>
-                    <ThemedText style = {styles.sectionTitle}>
-                        Apple Health (FR2 demo)
-                    </ThemedText>
-                    <Button
-                        title=" Connect & import 7 days"
-                        onPress={ () => {
-                            console.log('Connect & import 7 days pressed');
-                            connectAndImport();
-                        }}
-                    />
-                <View style = {{ height: 8 }} />
-                    <Button
-                    title= "Export CSV"
-                    onPress={() => {
-                        console.log('Export CSV pressed');
-                        exportToCsv();
-                      }}
-                    />
-                </View>
-                {healthLoading && <ActivityIndicator style={styles.spacing} />}
-                {error && (
-                    <ThemedText style={[styles.spacing, styles.error]}>
-                        {error}
-                    </ThemedText>
-                )}
-                {steps7d.length > 0 && (
-                    <View style={styles.section}>
-                        <ThemedText style={styles.sectionTitle}>
-                            Steps (last 7 days)
-                        </ThemedText>
-                        {steps7d.map((d:any) => (
-                            <ThemedText key={d.startDate}>
-                                {d.startDate.slice(0,10)}: {Math.round(d.value)} steps
-                            </ThemedText>
-                        ))}
-                    </View>
-                )}
-                {sleep7d.length > 0 && (
-                    <View style={styles.section}>
-                        <ThemedText style ={styles.sectionTitle}>
-                            Sleep samples (last 7 days)
-                        </ThemedText>
-                        {sleep7d.map ((d:any)=> (
-                            <ThemedText key = {d.startDate}>
-                                {d.startDate.slice(0,10)}: {Number(d.value).toFixed(1)} hours
-                            </ThemedText>
-                        ))}
-                    </View>
-                )}
-                </ScrollView>
-        </ThemedView>
+        <ScrollView style={{
+            flex: 1,
+            paddingHorizontal: '5%',
+            paddingTop: '15%',
+            backgroundColor: 'white'
+        }}>
+            <Title style={{
+                flex: 1,
+                justifyContent: 'center',
+                alignItems: 'center',
+                paddingVertical: 20
+            }}/>
+            <WellnessDashboards style={{
+                flex: 9,
+                gap: 20,
+                marginBottom: '30%'
+            }}/>
+        </ScrollView>
     );
 }
 
 
+interface TitleProps {
+    style?: StyleProp<ViewStyle>
+}
+
+
+function Title({ style }: TitleProps) {
+    return (
+        <View style={style}>
+            <Text style={{
+                fontSize: 30,
+                fontFamily: 'serif'
+            }}>O M N I A</Text>
+        </View>
+    )
+}
+
+
+interface WellnessDashboardsProps {
+    style?: StyleProp<ViewStyle>
+}
+
+
+function WellnessDashboards({ style }: WellnessDashboardsProps) {
+    return (
+        <View style={style}>
+            <View>
+                <Text style={{
+                    fontFamily: 'timesnewroman',
+                    fontWeight: 'bold',
+                    fontSize: 20,
+                }}>
+                    Wellness Dashboards
+                </Text>
+            </View>
+            <Metrics style={{
+                gap: 20
+            }}/>
+            <KeyStats style={{
+                gap: 20
+            }}/>
+            <Insights style={{
+                gap: 20
+            }}/>
+        </View>
+    )
+}
+
+
+interface MetricsProps {
+    style?: StyleProp<ViewStyle>
+}
+
+
+function Metrics({ style }: MetricsProps) {
+    return (
+        <View style={style}>
+            <DateDropDown/>
+            <View style={{
+                flexDirection: 'row',
+                borderWidth: 1,
+                backgroundColor: 'lightgrey',
+                padding: '1%',
+                justifyContent: 'space-evenly'
+            }}>
+                <Sleep/>
+                <Activity/>
+                <Nutrition/>
+                <MoodStress/>
+            </View>
+        </View>
+    )
+}
+
+
+interface DateDropDownProps {
+    style?: StyleProp<ViewStyle>
+}
+
+
+function DateDropDown({ style }: DateDropDownProps) {
+    return (
+        <View style={style}>
+            <Text style={{
+                fontFamily: 'times',
+                fontSize: 20,
+            }}>Oct 30, 2025</Text>
+        </View>
+    )
+}
+
+
+interface MetricItemProps {
+    circleLabel: string,
+    label: string,
+    color?: string
+}
+
+
+function MetricItem({ circleLabel, label, color }: MetricItemProps) {
+    return (
+        <View style={{
+            alignItems: 'center'
+        }}>
+            <View style={[styles.circle, {
+                borderColor: color
+            }]}>
+                <Text style={{
+                    fontSize: 17
+                }}>
+                    {circleLabel}
+                </Text>
+            </View>
+            <Text style={{
+                fontSize: 17
+            }}>
+                {label}
+            </Text>
+        </View>
+    )
+}
+
+
+function Sleep() {
+    return (
+        <MetricItem circleLabel="6h" label="Sleep" color="blue"/>
+    )
+}
+
+
+function Activity() {
+    return (
+        <MetricItem circleLabel="45" label="Activity" color="green"/>
+    )
+}
+
+
+function Nutrition() {
+    return (
+        <MetricItem circleLabel="1450" label="Nutrition" color="orange"/>
+    )
+}
+
+
+function MoodStress(){
+    return (
+        <MetricItem circleLabel="8.2" label="Mood/Stress" color="red"/>
+    )
+}
+
+
+interface KeyStatsProps {
+    style?: StyleProp<ViewStyle>
+}
+
+
+function KeyStats({ style }: KeyStatsProps) {
+    return (
+        <View style={style}>
+            <Text style={{
+                fontFamily: 'times',
+                fontSize: 20
+            }}>
+                Key Stats
+            </Text>
+            <View style={{
+                flexDirection: 'row',
+                flexWrap: 'wrap',
+                gap: 20
+            }}>
+                <SleepQuality/>
+                <Steps/>
+                <Mood/>
+                <Habits/>
+                <Calories/>
+            </View>
+        </View>
+        
+    );
+}
+
+
+interface KeyStatsItemProps {
+    label?: string,
+    content?: string
+}
+
+
+function KeyStatsItem({ label, content }: KeyStatsItemProps) {
+    return (
+        <View style={{
+            borderWidth: 1,
+            backgroundColor: 'lightgrey',
+            height: 60,
+            width: 120,
+            justifyContent: 'center',
+            alignItems: 'center'
+        }}>
+            <Text style={{fontSize: 16}}>{label}</Text>
+            <Text style={{fontSize: 16}}>{content}</Text>
+        </View>
+    )
+}
+
+function SleepQuality() {
+    return (
+        <KeyStatsItem label="Sleep Quality" content="6 hours"/>
+    )
+}
+
+function Steps() {
+    return (
+        <KeyStatsItem label="Steps" content="5340"/>
+    )
+}
+
+function Mood() {
+    return (
+        <KeyStatsItem label="Mood" content="Low"/>
+    )
+}
+
+function Habits() {
+    return (
+        <KeyStatsItem label="Habits" content="3 of 4"/>
+    )
+}
+
+function Calories() {
+    return (
+        <KeyStatsItem label="Calories" content="1450"/>
+    )
+}
+
+
+interface InsightsProps {
+    style?: StyleProp<ViewStyle>
+}
+
+
+function Insights({ style }: InsightsProps) {
+    return (
+        <View style={style}>
+            {/* Insights Title */}
+            <Text style={{
+                fontSize: 20,
+                fontFamily: 'times'
+            }}>
+                Insights
+            </Text>
+
+            {/* Body */}
+            <View style={{
+                flexDirection: 'row',
+                flexWrap: 'wrap',
+                gap: 20
+            }}>
+                <InsightsItem content="Protein Intake is very low - Try adding a high protein snack"/>
+                <InsightsItem content="Reduced deep sleep last night may affect your endurance today. Consider lighter training."/>        
+            </View>
+        </View>
+    )
+}
+
+
+interface InsightsItemProps {
+    content?: string
+}
+
+
+function InsightsItem({ content }: InsightsItemProps) {
+    return (
+        <View style={{
+            borderWidth: 1,
+            backgroundColor: 'lightgrey',
+            width: 200,
+            padding: 10
+        }}>
+            <Text style={{ fontSize: 16 }}>{content}</Text>
+        </View>
+    )
+}
+
+
 const styles = StyleSheet.create({
-    container: {
-        flex:1,
+    circle: {
+        width: 60, 
+        height: 60,
+        borderRadius: 30, // 80 / 2 = 40
+        borderWidth: 4, 
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'lightgrey', 
     },
-    scrollContent:{
-        alignItems:'center',
-        paddingHorizontal: 20,
-    },
-    spacing: {
-        marginTop:16,
-    },
-    error:{
-        color: 'red',
-    },
-    section: {
-        marginTop: 24,
-        marginBottom: 16,
-        alignSelf: 'stretch',
-    },
-    sectionTitle: {
-        fontWeight: 'bold',
-        marginBottom: 8,
-    },
-    
-});
-
-
+    circleLabel: {
+        fontSize: 16
+    }
+})
