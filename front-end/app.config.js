@@ -45,7 +45,7 @@ export default{
           }
         }
       ],
-      "react-native-health"
+    "react-native-health"
     ],
     "experiments": {
       "typedRoutes": true,
