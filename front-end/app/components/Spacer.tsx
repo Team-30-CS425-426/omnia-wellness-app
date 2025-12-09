@@ -1,3 +1,4 @@
+//Developed by Johan Ramirez
 import { View, ViewProps, ViewStyle } from 'react-native'
 import React from 'react'
 
