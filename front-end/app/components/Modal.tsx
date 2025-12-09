@@ -1,3 +1,4 @@
+// code below written by Alexis Mae Asuncion
 import React, { useState } from 'react';
 import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import { Text } from 'react-native-elements';
@@ -20,9 +21,12 @@ interface Option {
 const OPTIONS: Option[] = [
   { label: 'Workout', icon: 'barbell' },
   { label: 'Mood & Stress', icon: 'happy-outline' },
+  { label: 'Sleep', icon: 'bed-outline' },
+  { label: 'Nutrition', icon: 'restaurant-outline' },
+  { label: 'Habits', icon: 'checkmark-circle-outline'}
 ];
 
-const AddMenuButton = () => {
+const AddMenuButton = () => { 
   const [modalVisible, setModalVisible] = useState(false);
 
   return (
@@ -34,9 +38,12 @@ const AddMenuButton = () => {
       >
         <MaterialIcons 
           name="add-circle-outline" 
-          size={40} 
-          color={COLORS.tabIconSelected} 
+          size={30} 
+          color="#007AFF" 
         />
+
+        <Text style={styles.addLabel}>Add</Text> 
+
       </TouchableOpacity>
 
       {/* Bottom Sheet Modal */}
@@ -58,11 +65,19 @@ const AddMenuButton = () => {
                 onPress={() => {
                   setModalVisible(false);
 
-                  if (item.label === 'Workout') {
-                    router.push('/screens/workout');
-                  } else {
-                    router.push('/screens/moodStress');
-                  }
+                  setTimeout(() => {
+                    if (item.label === 'Workout') {
+                      router.push('/screens/workout');
+                    } else if (item.label === 'Mood & Stress') {
+                      router.push('/screens/moodStress');
+                    } else if (item.label === 'Sleep') {
+                      router.push('/screens/sleep');
+                    } else if (item.label == 'Nutrition') {
+                      router.push('/screens/nutrition');
+                    } else if (item.label == 'Habits') {
+                      router.push('/screens/habit' as any);
+                    }
+                  }, 200); 
                 }}
               >
                 <Ionicons name={item.icon} size={32} color="#007AFF" />
@@ -77,14 +92,21 @@ const AddMenuButton = () => {
 };
 
 const styles = StyleSheet.create({
+
   fab: {
-    height: 70,
-    width: 70,
-    borderRadius: 35,
-    backgroundColor: COLORS.primary,
+    //height: 70,
+    //width: 70,
+    //borderRadius: 35,
+    //backgroundColor: COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    alignSelf: 'center',
+    //alignSelf: 'center',
+    padding: 5,
+  },
+  addLabel: {
+    fontSize: 11, 
+    color: '#003cfff',
+    marginTop: -1,
   },
   modalStyle: {
     justifyContent: 'flex-end',
