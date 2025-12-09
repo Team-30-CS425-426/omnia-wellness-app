@@ -4,21 +4,21 @@
 
 Alexis Mae Asuncion
   app/_layout.tsx             61
-  app/(tabs)/_layout.tsx      52
+  app/(tabs)/_layout.tsx      47
   app/(tabs)/add.tsx          3
   app/components/Modal.tsx    125
-  app/entry/workout.tsx       1
   app/screens/habit.tsx       221
   app/screens/moodStress.tsx  215
   app/screens/nutrition.tsx   312
   app/screens/sleep.tsx       228
   app/screens/workout.tsx     285
-  Total: 1503
+  Total: 1497
 
 Daisy Madera Camacho
   app/_layout.tsx                  19
   app/(auth)/_layout.tsx           3
   app/(tabs)/_layout.tsx           15
+  app/(tabs)/home.tsx              124
   app/(tabs)/settings.tsx          278
   app/index.tsx                    3
   app/quote.tsx                    112
@@ -28,25 +28,15 @@ Daisy Madera Camacho
   src/services/healthCSVExport.ts  74
   src/services/QuoteService.ts     79
   src/services/ReminderManager.ts  99
-  Total: 1023
+  Total: 1147
 
 Kevin Ye
-  app/_layout.tsx                3
-  app/(tabs)/_layout.tsx         19
-  app/(tabs)/demo.tsx            127
-  app/(tabs)/home.tsx            28
-  app/(tabs)/profile.tsx         1
-  app/entry/moodstress.tsx       11
-  app/entry/workout.tsx          10
-  app/index.tsx                  2
-  components/home/dashboard.tsx  63
-  components/home/dropdown.tsx   37
-  components/home/insights.tsx   41
-  components/home/keystats.tsx   119
-  components/home/metrics.tsx    125
-  components/home/title.tsx      14
-  config/homeSupabaseConfig.ts   6
-  Total: 606
+  app/_layout.tsx         3
+  app/(tabs)/_layout.tsx  7
+  app/(tabs)/home.tsx     93
+  app/(tabs)/profile.tsx  1
+  app/index.tsx           2
+  Total: 106
 
 Kroxsed
   app/_layout.tsx                             11
@@ -56,6 +46,7 @@ Kroxsed
   app/(auth)/reset-password.tsx               97
   app/(auth)/resetPassword.tsx                82
   app/(tabs)/_layout.tsx                      7
+  app/(tabs)/home.tsx                         38
   app/(tabs)/profile.tsx                      72
   app/components/DeleteConfirmationModal.tsx  153
   app/components/Spacer.tsx                   16
@@ -70,5 +61,5 @@ Kroxsed
   constants/Colors.tsx                        12
   contexts/UserContext.tsx                    212
   utils/authErrors.ts                         24
-  Total: 1280
+  Total: 1318
 
