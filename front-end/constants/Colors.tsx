@@ -1,3 +1,4 @@
+//Developed by Johan Ramirez
 export const Colors = {
 
   default:{

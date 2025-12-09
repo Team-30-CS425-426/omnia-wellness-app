@@ -1,3 +1,4 @@
+//Developed by Johan Ramirez
 import React, { useState } from 'react';
 import { Alert, StyleSheet, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
@@ -17,7 +18,7 @@ export default function SetupNameScreen() {
   const { user, setOnboardedStatus } = useUser();
 
   const handleSaveName = async () => {
-    // 1. Validation Change: Only check for essential data (user existence)
+    // Validation Change: Only check for essential data (user existence)
     if (!user) {
         Alert.alert('Error', 'User data missing. Please log in again.');
         return;
@@ -33,9 +34,9 @@ export default function SetupNameScreen() {
 
     try {
       const response = await supabase
-        .from('User') // ⚠️ Ensure this is your correct table name
+        .from('User') 
         .update({ 
-            name: name, // ⬅️ Submitting the raw name string (can be "")
+            name: name,
             onboarded: true 
         }) 
         .eq('id', user.id); // Update the correct user profile
