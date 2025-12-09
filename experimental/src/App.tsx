@@ -7,10 +7,11 @@ export default function App() {
     const [update, setUpdate] = useState(false)
     async function handleDatabase() {
         const response = await supabase
-            .from('DailyEntries')
+            .from('Metrics')
             .select('*')
+            .eq("entry_id", 1)
         console.log(response)
-        setData(JSON.stringify(response))
+        setData(JSON.stringify(response['data'][0]['sleep']))
     }
     useEffect(() => {
         handleDatabase()
