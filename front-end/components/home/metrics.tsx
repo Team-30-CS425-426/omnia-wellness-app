@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from "react"
 import { StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native"
 import { EntryContext } from "./dashboard"
-import { supabase } from "@/config/supabaseConfig"
+import { supabase } from "@/config/homeSupabaseConfig"
 
 interface MetricsProps {
     style?: StyleProp<ViewStyle>
@@ -10,39 +10,37 @@ interface MetricsProps {
 
 export function Metrics({ style }: MetricsProps) {
     const { entryId } = useContext(EntryContext)
-    const [sleep, setSleep] = useState(null)
-    const [activity, setActivity] = useState(null)
-    const [nutrition, setNutrition] = useState(null)
-    const [moodstress, setMoodStress] = useState(null)
-    // const [sleepQuality, setSleepQuality] = useState(null)
-    // const [steps, setSteps] = useState(null)
-    // const [mood, setMood] = useState(null)
-    // const [habits, setHabits] = useState(null)
-    // const [calories, setCalories] = useState(null)
+    const [sleep, setSleep] = useState("NaN")
+    const [activity, setActivity] = useState("NaN")
+    const [nutrition, setNutrition] = useState("NaN")
+    const [moodstress, setMoodStress] = useState("NaN")
 
     async function fetchMetrics() {
-        const response: any = await supabase
+        const response = await supabase
             .from('Metrics')
             .select('*')
             .eq('entry_id', entryId)
-        if (response['error']) {
-            return
+        if (response?.data?.[0]) {
+            const d = response['data'][0]
+            setSleep(d['sleep'])
+            setActivity(d['activity'])
+            setNutrition(d['nutrition'])
+            setMoodStress(d['moodstress'])
         }
         else {
-            setSleep(response['data']['sleep'])
-            setActivity(response['data']['activity'])
-            setNutrition(response['data']['nutrition'])
-            setMoodStress(response['data']['moodstress'])
+            setSleep('NaN')
+            setActivity('NaN')
+            setNutrition('NaN')
+            setMoodStress('NaN')
         }
     }
 
     useEffect(() => {
         fetchMetrics()
-    })
+    }, [entryId])
 
     return (
         <View style={style}>
-            <Text>{sleep}</Text>
             <View style={{
                 flexDirection: 'row',
                 borderWidth: 1,
@@ -51,10 +49,10 @@ export function Metrics({ style }: MetricsProps) {
                 justifyContent: 'space-evenly'
             }}>
                 
-                <Sleep/>
-                <Activity/>
-                <Nutrition/>
-                <MoodStress/>
+                <Sleep value={sleep}/>
+                <Activity value={activity}/>
+                <Nutrition value={nutrition}/>
+                <MoodStress value={moodstress}/>
             </View>
         </View>
     )
@@ -92,30 +90,49 @@ function MetricItem({ circleLabel, label, color }: MetricItemProps) {
 }
 
 
-function Sleep() {
+interface SleepProps {
+    value?: string
+}
+
+
+function Sleep({ value = "" }: SleepProps) {
     return (
-        <MetricItem circleLabel="6h" label="Sleep" color="blue"/>
+        <MetricItem circleLabel={value} label="Sleep" color="blue"/>
+    )
+}
+
+interface ActivityProps {
+    value?: string
+}
+
+
+function Activity({ value = "" }: ActivityProps) {
+    return (
+        <MetricItem circleLabel={value} label="Activity" color="green"/>
     )
 }
 
 
-function Activity() {
+interface NutritionProps {
+    value?: string
+}
+
+
+function Nutrition({ value = "" }: NutritionProps) {
     return (
-        <MetricItem circleLabel="45" label="Activity" color="green"/>
+        <MetricItem circleLabel={value} label="Nutrition" color="orange"/>
     )
 }
 
 
-function Nutrition() {
-    return (
-        <MetricItem circleLabel="1450" label="Nutrition" color="orange"/>
-    )
+interface MoodStressProps {
+    value?: string
 }
 
 
-function MoodStress(){
+function MoodStress({ value = "" }: MoodStressProps){
     return (
-        <MetricItem circleLabel="8.2" label="Mood/Stress" color="red"/>
+        <MetricItem circleLabel={value} label="Mood/Stress" color="red"/>
     )
 }
 

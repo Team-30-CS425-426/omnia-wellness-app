@@ -43,7 +43,6 @@ export function WellnessDashboards({ style }: WellnessDashboardsProps) {
     return (
         <EntryContext.Provider value={{ entryId }}>
             <View style={style}>
-                <Text>{entryId}</Text>
                 <View>
                     <Text style={{
                         fontFamily: 'timesnewroman',
