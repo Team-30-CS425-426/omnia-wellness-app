@@ -1,4 +1,4 @@
-import React from 'react'
+import React, {useState} from 'react'
 import { router } from 'expo-router';
 import {StyleSheet} from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,7 +10,7 @@ import ThemedText from '../components/ThemedText'
 import Spacer from '../components/Spacer'
 import ThemedButton from '../components/ThemedButton'
 import { Colors } from '../../constants/Colors';
-
+import ConfirmDeleteModal from '../components/DeleteConfirmationModal';
 
 
 const ProfilePage = () =>{
@@ -18,10 +18,28 @@ const ProfilePage = () =>{
     const totalTopPadding = insets.top;
 
     const { logout, user, deleteAccount } = useUser();
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
     const handleLogout = async () => {
         await logout();
         router.replace('/');
+    }
+
+    const handleDeleteAccount = async () =>{
+        try{
+            await deleteAccount();
+            setShowDeleteModal(false);
+            router.replace('/');
+        } catch (error) {
+            console.error("Error:", error);
+            alert('Failed to delete account. Please try again')
+        }
+    }
+
+    const handleCloseModal = () => {
+        setShowDeleteModal(false);
+        setDeleteConfirmText('');
     }
 
     return (
@@ -40,6 +58,19 @@ const ProfilePage = () =>{
                 <ThemedText style={{color: Colors.default.white}} > Logout </ThemedText>
             </ThemedButton>    
             <Spacer height={30} />
+
+            <ThemedButton color={Colors.default.errorRed} onPress = {() => setShowDeleteModal(true)}>  
+                <ThemedText style={{color: Colors.default.white}} > Delete Account </ThemedText>
+            </ThemedButton>    
+            <Spacer height={30} />
+        
+            <ConfirmDeleteModal
+                isVisible={showDeleteModal}
+                onClose={handleCloseModal}
+                onConfirm={handleDeleteAccount}
+                confirmText={deleteConfirmText}
+                onChangeText={setDeleteConfirmText}
+            />
         
         </ThemedView>
     )

@@ -1,24 +1,34 @@
-import React, { useState } from 'react';
-import { 
-  View, 
-  StyleSheet, 
-  TextInput, 
-  TouchableOpacity, 
-  Alert, 
-  Keyboard, 
-  TouchableWithoutFeedback 
-} from 'react-native';
-import { Text } from 'react-native-elements';
-import { Dropdown } from 'react-native-element-dropdown';
-import { Stack, useRouter } from 'expo-router';
+// code written by Alexis Mae Asuncion
+import React, { useState, useLayoutEffect } from "react"; 
+import {
+  View,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+  Keyboard,
+  TouchableWithoutFeedback,
+  Text,
+  KeyboardAvoidingView,
+  Platform,
+} from "react-native";
+import { Dropdown } from "react-native-element-dropdown";
+import { useNavigation } from "@react-navigation/native";
 
 const WorkoutScreen = () => {
-  const router = useRouter()
+  const navigation = useNavigation();
+
+  // Hide default header
+  useLayoutEffect(() => {
+    navigation.setOptions({ headerShown: false });
+  }, [navigation]);
+
+  // State
   const [workoutType, setWorkoutType] = useState<string | null>(null);
-  const [customWorkout, setCustomWorkout] = useState(''); // Custom field if "Other"
-  const [duration, setDuration] = useState('');
+  const [customWorkout, setCustomWorkout] = useState("");
+  const [duration, setDuration] = useState("");
   const [intensity, setIntensity] = useState<string | null>(null);
-  const [notes, setNotes] = useState('');
+  const [notes, setNotes] = useState("");
 
   const INTENSITIES = ["Low", "Medium", "High"];
 
@@ -41,9 +51,16 @@ const WorkoutScreen = () => {
       return;
     }
 
-    const finalWorkoutType = workoutType === "Other" && customWorkout.trim() !== ""
-      ? customWorkout.trim()
-      : workoutType;
+    const parsedDuration = parseInt(duration, 10);
+    if (isNaN(parsedDuration) || parsedDuration <= 0) {
+      Alert.alert("Please enter a valid duration in minutes.");
+      return;
+    }
+
+    const finalWorkoutType =
+      workoutType === "Other" && customWorkout.trim() !== ""
+        ? customWorkout.trim()
+        : workoutType;
 
     if (!finalWorkoutType) {
       Alert.alert("Please provide a name for your custom workout.");
@@ -52,56 +69,66 @@ const WorkoutScreen = () => {
 
     const entry = {
       workoutType: finalWorkoutType,
-      duration: parseInt(duration),
+      duration: parsedDuration,
       intensity,
       notes,
       date: new Date(),
     };
 
+    // LOG to terminal
     console.log("Workout Entry:", entry);
 
     Alert.alert(
       "Workout Saved!",
-      `Type: ${finalWorkoutType}\nDuration: ${duration} minutes\nIntensity: ${intensity}`
+      `Type: ${finalWorkoutType}\nDuration: ${parsedDuration} minutes\nIntensity: ${intensity}`
     );
 
+    // Reset form
     setWorkoutType(null);
-    setCustomWorkout('');
-    setDuration('');
+    setCustomWorkout("");
+    setDuration("");
     setIntensity(null);
-    setNotes('');
+    setNotes("");
   };
 
   return (
-    <>
-      <Stack.Screen 
-        options={{
-          title: "Workout",
-          headerBackTitle: "Back",
-        }}
-      />
-
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.container}>
 
-          <Text h3 style={styles.title}>Workout Tracker</Text>
+          {/* Custom Header */}
+          <View style={styles.header}>
+            <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+              <Text style={styles.backArrow}>{"←"}</Text>
+              <Text style={styles.backText}>Back</Text>
+            </TouchableOpacity>
 
-          {/* Workout Type Dropdown */}
+            <Text style={styles.headerTitle}>Workout Tracker</Text>
+            <View style={{ width: 60 }} />
+          </View>
+
+          {/* Page Title */}
+          <Text style={styles.pageTitle}>Log Your Workout</Text>
+
+          {/* Workout Type */}
           <Text style={styles.sectionLabel}>Workout Type</Text>
           <Dropdown
             style={styles.dropdown}
+            placeholder="Select Workout Type..."
             placeholderStyle={styles.placeholderStyle}
             selectedTextStyle={styles.selectedTextStyle}
             data={workoutOptions}
             maxHeight={300}
             labelField="label"
             valueField="value"
-            placeholder="Select Workout Type..."
             value={workoutType}
             onChange={(item) => setWorkoutType(item.value)}
           />
 
-          {/* Custom Workout Input if "Other" is selected */}
+          {/* Custom workout entry */}
           {workoutType === "Other" && (
             <TextInput
               style={styles.notesInput}
@@ -112,7 +139,7 @@ const WorkoutScreen = () => {
             />
           )}
 
-          {/* Duration Input */}
+          {/* Duration */}
           <Text style={styles.sectionLabel}>Duration</Text>
           <View style={styles.durationContainer}>
             <TextInput
@@ -125,7 +152,7 @@ const WorkoutScreen = () => {
             <Text style={styles.durationLabel}>minutes</Text>
           </View>
 
-          {/* Intensity Buttons */}
+          {/* Intensity */}
           <Text style={styles.sectionLabel}>Intensity</Text>
           <View style={styles.intensityContainer}>
             {INTENSITIES.map((level) => (
@@ -145,7 +172,7 @@ const WorkoutScreen = () => {
             ))}
           </View>
 
-          {/* Notes Input */}
+          {/* Notes */}
           <Text style={styles.sectionLabel}>Notes (Optional)</Text>
           <TextInput
             style={styles.notesInput}
@@ -157,96 +184,153 @@ const WorkoutScreen = () => {
           />
 
           {/* Save Button */}
-          <TouchableOpacity style={styles.saveButton} onPress={() => router.replace('/home')}>
+          <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
             <Text style={styles.saveButtonText}>Save Workout</Text>
           </TouchableOpacity>
 
         </View>
       </TouchableWithoutFeedback>
-    </>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: '#fff' },
-  title: { textAlign: 'center', marginBottom: 20 },
+  container: { 
+    flex: 1, 
+    padding: 20, 
+    backgroundColor: "#fff" 
+  },
 
-  sectionLabel: { fontSize: 16, fontWeight: '500', marginVertical: 10 },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingTop: 40,
+    paddingBottom: 10,
+  },
+
+  backButton: { 
+    flexDirection: "row", 
+    alignItems: "center" 
+  },
+
+  backArrow: { 
+    fontSize: 22, 
+    fontWeight: "600", 
+    marginRight: 6 
+  },
+
+  backText: { 
+    fontSize: 18 
+  },
+
+  headerTitle: { 
+    fontSize: 20, 
+    fontWeight: "bold", 
+    textAlign: "center", 
+    flex: 1 
+  },
+
+  pageTitle: { 
+    textAlign: "center", 
+    fontSize: 22, 
+    fontWeight: "bold", 
+    marginBottom: 20 
+  },
+
+  sectionLabel: { 
+    fontSize: 16, 
+    fontWeight: "500", 
+    marginVertical: 10 
+  },
 
   dropdown: {
     height: 50,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     borderWidth: 1,
     borderRadius: 8,
     paddingHorizontal: 10,
     marginBottom: 20,
   },
-  placeholderStyle: {
-    fontSize: 16,
-    color: '#999',
+
+  placeholderStyle: { 
+    fontSize: 16, 
+    color: "#999" 
   },
-  selectedTextStyle: {
-    fontSize: 16,
-    color: '#000',
+  
+  selectedTextStyle: { 
+    fontSize: 16, 
+    color: "#000" 
   },
 
-  durationContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
+  durationContainer: { 
+    flexDirection: "row", 
+    alignItems: "center", 
+    marginBottom: 20 
   },
+
   durationInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     borderRadius: 8,
     padding: 10,
     fontSize: 16,
   },
-  durationLabel: {
-    marginLeft: 10,
-    fontSize: 16,
-    color: "#555",
+
+  durationLabel: { 
+    marginLeft: 10, 
+    fontSize: 16, 
+    color: "#555" 
   },
 
-  intensityContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 25,
+  intensityContainer: { 
+    flexDirection: "row", 
+    justifyContent: "space-between", 
+    marginBottom: 25 
   },
+
   intensityButton: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     padding: 12,
     marginHorizontal: 5,
     borderRadius: 10,
-    alignItems: 'center',
+    alignItems: "center",
   },
-  intensitySelected: {
-    backgroundColor: '#E0F0FF',
-    borderColor: '#007AFF',
+
+  intensitySelected: { 
+    backgroundColor: "#E0F0FF", 
+    borderColor: "#007AFF" 
   },
-  intensityText: { fontSize: 16 },
+
+  intensityText: { 
+    fontSize: 16 
+  },
 
   notesInput: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     borderRadius: 8,
     padding: 10,
     height: 80,
     marginBottom: 20,
-    textAlignVertical: 'top',
+    textAlignVertical: "top",
   },
 
   saveButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: "#007AFF",
     padding: 15,
     borderRadius: 12,
-    alignItems: 'center',
+    alignItems: "center",
   },
-  saveButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+
+  saveButtonText: { 
+    color: "#fff", 
+    fontSize: 16, 
+    fontWeight: "bold" 
+  },
 });
 
 export default WorkoutScreen;
-
