@@ -1,3 +1,5 @@
+// Demo.tsx lines of code was written by Daisy Madera, loc-report.txt currently does not show this
+// due to kevin refactoring or app layout.
 import { Redirect } from 'expo-router';
 import React, { useState } from 'react';
 import {
