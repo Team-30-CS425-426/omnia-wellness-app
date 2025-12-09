@@ -1,4 +1,8 @@
+import { supabase } from "@/config/homeSupabaseConfig";
+import { useEffect, useState } from "react";
 import { StyleProp, Text, View, ViewStyle, StyleSheet, ScrollView } from "react-native";
+import { Dropdown } from "react-native-element-dropdown";
+
 
 export default function HomeScreen() {
     return (
@@ -46,9 +50,35 @@ interface WellnessDashboardsProps {
 }
 
 
+type DailyEntry ={
+    id: string,
+    created_at: string,
+    datetime: string
+}
+
+
 function WellnessDashboards({ style }: WellnessDashboardsProps) {
+    const [entryId, setEntryId] = useState(null)
+    const [dropdownItems, setDropdownItems] = useState<DailyEntry[]>([])
+
+    async function fetchDailyEntries() {
+        const response = await supabase
+            .from('DailyEntries')
+            .select()
+        if (response['error']) {
+            console.log(JSON.stringify(response['error']))
+            return
+        }
+        else {
+            setDropdownItems(response['data'])
+        }
+    }
+    useEffect(() => {
+        fetchDailyEntries()
+    }, [])
     return (
         <View style={style}>
+            <Text>{entryId}</Text>
             <View>
                 <Text style={{
                     fontFamily: 'timesnewroman',
@@ -58,6 +88,11 @@ function WellnessDashboards({ style }: WellnessDashboardsProps) {
                     Wellness Dashboards
                 </Text>
             </View>
+            <DateDropDown
+                data={dropdownItems} 
+                entryId={entryId}
+                setEntryId={setEntryId}
+            />
             <Metrics style={{
                 gap: 20
             }}/>
@@ -80,7 +115,6 @@ interface MetricsProps {
 function Metrics({ style }: MetricsProps) {
     return (
         <View style={style}>
-            <DateDropDown/>
             <View style={{
                 flexDirection: 'row',
                 borderWidth: 1,
@@ -99,18 +133,35 @@ function Metrics({ style }: MetricsProps) {
 
 
 interface DateDropDownProps {
-    style?: StyleProp<ViewStyle>
+    entryId: any,
+    setEntryId: React.Dispatch<React.SetStateAction<any>>
+    style?: StyleProp<ViewStyle>,
+    data?: DailyEntry[]
 }
 
 
-function DateDropDown({ style }: DateDropDownProps) {
+function DateDropDown({ entryId, setEntryId, style, data = [{
+        datetime: 'Oct 30, 2025', 
+        created_at: '',
+        id: '-1'
+    }]
+}: DateDropDownProps) {
+    const [value, setValue] = useState(
+        data.length > 0 ? data[0].id : null
+    )
+    function handleOnChange(item: any) {
+        setValue(item.id)
+        setEntryId(item.id)
+    }
     return (
-        <View style={style}>
-            <Text style={{
-                fontFamily: 'times',
-                fontSize: 20,
-            }}>Oct 30, 2025</Text>
-        </View>
+        <Dropdown
+            placeholder="Select..."
+            data={data}
+            labelField="datetime"
+            valueField="id"
+            value={value}
+            onChange={handleOnChange}
+        />
     )
 }
 
