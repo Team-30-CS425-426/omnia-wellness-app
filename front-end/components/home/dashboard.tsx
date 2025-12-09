@@ -37,9 +37,11 @@ export function WellnessDashboards({ style }: WellnessDashboardsProps) {
             setDropdownItems(response['data'])
         }
     }
+    
     useEffect(() => {
         fetchDailyEntries()
     }, [])
+
     return (
         <EntryContext.Provider value={{ entryId }}>
             <View style={style}>

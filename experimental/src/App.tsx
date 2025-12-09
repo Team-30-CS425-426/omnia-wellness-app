@@ -11,7 +11,9 @@ export default function App() {
             .select('*')
             .eq("entry_id", 1)
         console.log(response)
-        setData(JSON.stringify(response['data'][0]['sleep']))
+        if (response?.data?.[0]){
+            setData(JSON.stringify(response['data'][0]['sleep']))
+        }
     }
     useEffect(() => {
         handleDatabase()
