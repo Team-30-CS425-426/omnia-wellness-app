@@ -1,3 +1,4 @@
+//Developed by Johan Ramirez
 import { Pressable, StyleSheet , PressableProps} from 'react-native'
 import { Colors } from '../../constants/Colors'
 
@@ -13,7 +14,7 @@ function ThemedButton({ style, color, ...props } : ThemedButtonProps) {
     <Pressable 
       style={({ pressed }) => [
         styles.btn, 
-        color && { backgroundColor: color }, // <--- 2. APPLY DYNAMIC BACKGROUND COLOR
+        color && { backgroundColor: color }, 
         pressed && styles.pressed, 
         style
       ]} 
