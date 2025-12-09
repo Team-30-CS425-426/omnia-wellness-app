@@ -1,3 +1,4 @@
+//Developed by Johan Ramirez
 import React from 'react'; 
 import { Link, router } from 'expo-router';
 import { StyleSheet, Alert, ActivityIndicator } from 'react-native';
