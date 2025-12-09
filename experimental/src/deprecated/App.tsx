@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { supabase } from "./config/supabaseConfig"
+import { supabase } from "../config/supabaseConfig"
 
 /*
 For testing supabase connection to frontend
