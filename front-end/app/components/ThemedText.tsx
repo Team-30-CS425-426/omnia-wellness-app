@@ -1,4 +1,4 @@
-// ThemedText.tsx (Modified)
+//Developed by Johan Ramirez
 
 import { Text, TextProps, TextStyle, StyleSheet } from 'react-native'
 import { Colors } from '../../constants/Colors'
