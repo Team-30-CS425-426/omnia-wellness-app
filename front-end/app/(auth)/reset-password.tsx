@@ -1,4 +1,4 @@
-
+//Developed by Johan Ramirez
 import React, { useState } from 'react';
 import { StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
