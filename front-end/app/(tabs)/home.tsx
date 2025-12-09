@@ -1,5 +1,5 @@
 import { supabase } from "@/config/homeSupabaseConfig";
-import { useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { StyleProp, Text, View, ViewStyle, StyleSheet, ScrollView } from "react-native";
 import { Dropdown } from "react-native-element-dropdown";
 
@@ -57,8 +57,11 @@ type DailyEntry ={
 }
 
 
+const EntryContext = createContext<any>(-1)
+
+
 function WellnessDashboards({ style }: WellnessDashboardsProps) {
-    const [entryId, setEntryId] = useState(null)
+    const [entryId, setEntryId] = useState(-1)
     const [dropdownItems, setDropdownItems] = useState<DailyEntry[]>([])
 
     async function fetchDailyEntries() {
@@ -77,32 +80,33 @@ function WellnessDashboards({ style }: WellnessDashboardsProps) {
         fetchDailyEntries()
     }, [])
     return (
-        <View style={style}>
-            <Text>{entryId}</Text>
-            <View>
-                <Text style={{
-                    fontFamily: 'timesnewroman',
-                    fontWeight: 'bold',
-                    fontSize: 20,
-                }}>
-                    Wellness Dashboards
-                </Text>
+        <EntryContext.Provider value={{ entryId }}>
+            <View style={style}>
+                <Text>{entryId}</Text>
+                <View>
+                    <Text style={{
+                        fontFamily: 'timesnewroman',
+                        fontWeight: 'bold',
+                        fontSize: 20,
+                    }}>
+                        Wellness Dashboards
+                    </Text>
+                </View>
+                <DateDropDown
+                    data={dropdownItems} 
+                    setEntryId={setEntryId}
+                />
+                <Metrics style={{
+                    gap: 20
+                }}/>
+                <KeyStats style={{
+                    gap: 20
+                }}/>
+                <Insights style={{
+                    gap: 20
+                }}/>
             </View>
-            <DateDropDown
-                data={dropdownItems} 
-                entryId={entryId}
-                setEntryId={setEntryId}
-            />
-            <Metrics style={{
-                gap: 20
-            }}/>
-            <KeyStats style={{
-                gap: 20
-            }}/>
-            <Insights style={{
-                gap: 20
-            }}/>
-        </View>
+        </EntryContext.Provider>
     )
 }
 
@@ -133,14 +137,13 @@ function Metrics({ style }: MetricsProps) {
 
 
 interface DateDropDownProps {
-    entryId: any,
     setEntryId: React.Dispatch<React.SetStateAction<any>>
     style?: StyleProp<ViewStyle>,
     data?: DailyEntry[]
 }
 
 
-function DateDropDown({ entryId, setEntryId, style, data = [{
+function DateDropDown({ setEntryId, style, data = [{
         datetime: 'Oct 30, 2025', 
         created_at: '',
         id: '-1'
