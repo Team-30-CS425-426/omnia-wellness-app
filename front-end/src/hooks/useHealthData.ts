@@ -1,3 +1,4 @@
+// code written by Daisy Madera
 import { useState } from "react";
 import { Platform } from "react-native";
 import AppleHealthKit, {
