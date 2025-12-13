@@ -1,3 +1,4 @@
+// code written by Daisy Madera
 import { execSync } from "child_process";
 
 type Counts = Record<string, Record<string, number>>;
