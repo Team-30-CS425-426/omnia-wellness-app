@@ -1,4 +1,5 @@
 // app/_layout.tsx
+// Developed by Johan Ramirez
 import { Stack, router, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect } from 'react';

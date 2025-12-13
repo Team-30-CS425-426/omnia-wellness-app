@@ -1,10 +1,10 @@
+// Developed by Johan Ramirez
 import React from 'react'
 import { Link, router } from 'expo-router';
 import {StyleSheet, Alert, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useUser } from '../../contexts/UserContext';
-import { getAuthErrorMessage } from '../../utils/authErrors';
 
 import ThemedView from '../components/ThemedView'
 import ThemedText from '../components/ThemedText'

@@ -1,3 +1,4 @@
+// Developed by Johan Ramirez
 import React, { createContext, useState, useEffect, ReactNode, useContext } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '../config/supabaseConfig';
@@ -227,11 +228,10 @@ export function UserProvider({ children }: UserProviderProps) {
 
 
   const resetPassword = async (email: string): Promise<void> => {
-      // 1. Generate the correct link for your specific device/environment
       const redirectUrl = Linking.createURL('/reset-password');
 
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: redirectUrl, // ⬅️ Use the generated URL
+        redirectTo: redirectUrl,
       });
       if (error) throw error;
   };

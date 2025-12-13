@@ -1,3 +1,4 @@
+// Developed by Johan Ramirez
 import { View, ViewProps, StyleSheet} from 'react-native'
 import { Colors } from "../../constants/Colors"
 

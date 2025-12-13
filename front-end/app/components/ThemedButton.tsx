@@ -1,3 +1,4 @@
+// Developed by Johan Ramirez
 import { Pressable, StyleSheet , PressableProps} from 'react-native'
 import { Colors } from '../../constants/Colors'
 
