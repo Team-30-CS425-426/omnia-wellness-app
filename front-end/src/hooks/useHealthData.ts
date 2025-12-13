@@ -1,10 +1,14 @@
 // code written by Daisy Madera
 import { useState } from "react";
 import { Platform } from "react-native";
+//Apple Health data (steps, sleep) is read by the react-native-health library, which 
+//bridges to Apple HealthKit on iOS
+//----------------------
 import AppleHealthKit, {
     HealthKitPermissions,
     HealthValue,
 } from "react-native-health";
+//--------------------
 import { exportHealthCsv } from "../services/healthCSVExport";
 
 const UI_DAYS_WINDOW = 7;
