@@ -1,4 +1,4 @@
-// code written by Alexis Mae Asuncion
+// code written by Alexis Mae Asuncion, Daisy Madera, Kevin Ye 
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'; //import bottom tab navigator
 import HomeScreen from './home'; //import the Home screen component for the main tab navigation
