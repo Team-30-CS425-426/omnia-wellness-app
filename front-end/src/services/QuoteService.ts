@@ -1,3 +1,4 @@
+// code written by Daisy Madera
 export type Quote = {
     quote: string;
     author: string;
