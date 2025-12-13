@@ -1,3 +1,4 @@
+// code written by Daisy Madera
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View  } from 'react-native';
 import { router } from 'expo-router';
