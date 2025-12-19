@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import { StyleProp, Text, View, ViewStyle } from "react-native";
-import { EntryContext } from "./dashboard";
+import { EntryContext } from "@/contexts/EntryContext";
 import { supabase } from "@/config/homeSupabaseConfig";
 
 

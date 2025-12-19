@@ -5,6 +5,7 @@ import { DateDropDown } from "./dropdown"
 import { Metrics } from "./metrics"
 import { KeyStats } from "./keystats"
 import { Insights } from "./insights"
+import { EntryContext } from "@/contexts/EntryContext"
 
 interface WellnessDashboardsProps {
     style?: StyleProp<ViewStyle>
@@ -16,9 +17,6 @@ type DailyEntry ={
     created_at: string,
     datetime: string
 }
-
-
-export const EntryContext = createContext<any>(-1)
 
 
 export function WellnessDashboards({ style }: WellnessDashboardsProps) {
