@@ -1,4 +1,4 @@
-// code written by Alexis Mae Asuncion
+// code written by Alexis Mae Asuncion, Daisy Madera, Kevin Ye 
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'; //import bottom tab navigator
 import HomeScreen from './home'; //import the Home screen component for the main tab navigation
@@ -8,6 +8,7 @@ import AddMenuButton from '../components/Modal'; //import the custom Add Menu Bu
 import SettingsScreen from './settings';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Colors } from '../../constants/Colors';
+import HealthKitDemo from './demo';
 //create a navigator object, use to define screens
 const Tab = createBottomTabNavigator();
 
@@ -29,10 +30,26 @@ const TabsLayout = () => {
         name="Home"
         component={HomeScreen}
         options={{
+          headerShown: false,
           tabBarLabel: 'Home',
           tabBarIcon: ({ focused }) => (
             <MaterialIcons
               name="home"
+              size={28}
+              color={focused ? COLORS.tabIconSelected : COLORS.tabIconDefault}
+            />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Demo"
+        component={HealthKitDemo}
+        options={{
+          headerShown: false,
+          tabBarLabel: 'Demo',
+          tabBarIcon: ({ focused }) => (
+            <MaterialIcons
+              name="tab"
               size={28}
               color={focused ? COLORS.tabIconSelected : COLORS.tabIconDefault}
             />

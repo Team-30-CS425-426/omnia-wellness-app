@@ -1,4 +1,4 @@
-// Developed by Johan Ramirez
+//Developed by Johan Ramirez
 import React from 'react';
 import { StyleSheet, View, TouchableOpacity, TextInput } from 'react-native';
 import Modal from 'react-native-modal';

@@ -1,4 +1,4 @@
-// Developed by Johan Ramirez
+//Developed by Johan Ramirez
 import React, {useState} from 'react'
 import { router } from 'expo-router';
 import {StyleSheet} from 'react-native'

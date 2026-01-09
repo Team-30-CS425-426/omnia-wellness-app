@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 // Developed by Johan Ramirez
+=======
+//Developed by Johan Ramirez
+>>>>>>> main
 import { View, ViewProps, StyleSheet} from 'react-native'
 import { Colors } from "../../constants/Colors"
 

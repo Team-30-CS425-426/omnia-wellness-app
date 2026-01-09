@@ -1,11 +1,11 @@
-// Developed by Johan Ramirez
+//Developed by Johan Ramirez
 import React, { createContext, useState, useEffect, ReactNode, useContext } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '../config/supabaseConfig';
 import * as Linking from 'expo-linking';
 import { SUPABASE_URL } from '../config/supabaseConfig'
 
-// 1. Define what data the Context will hold
+//  Define what data the Context will hold
 interface UserContextType {
   user: User | null; 
   loading: boolean;
@@ -90,7 +90,7 @@ export function UserProvider({ children }: UserProviderProps) {
 
   // --- 1. Session & Auth State Listener ---
   useEffect(() => {
-    // A. Get the current session on load
+    // Get the current session on load
     const fetchSession = async () => {
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error && error.message !== 'Auth session missing!') {
@@ -109,7 +109,7 @@ export function UserProvider({ children }: UserProviderProps) {
     
     fetchSession();
 
-    // B. Subscribe to auth changes (login, logout, auto-refresh)
+    // Subscribe to auth changes (login, logout, auto-refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         const currentUser = session?.user ?? null
@@ -129,7 +129,7 @@ export function UserProvider({ children }: UserProviderProps) {
     };
   }, []);
 
-  // --- 2. Deep Link Listener (For Password Reset Flow) ---
+  // ---  Deep Link Listener (For Password Reset Flow) ---
   useEffect(() => {
     const handleDeepLink = async (url: string | null) => {
       if (!url) return;
@@ -228,10 +228,11 @@ export function UserProvider({ children }: UserProviderProps) {
 
 
   const resetPassword = async (email: string): Promise<void> => {
+      // Generate the correct link for your specific device/environment
       const redirectUrl = Linking.createURL('/reset-password');
 
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: redirectUrl,
+        redirectTo: redirectUrl, // Use the generated URL
       });
       if (error) throw error;
   };

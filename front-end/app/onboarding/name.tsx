@@ -1,4 +1,4 @@
-// Developed by Johan Ramirez
+//Developed by Johan Ramirez
 import React, { useState } from 'react';
 import { Alert, StyleSheet, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
@@ -36,7 +36,7 @@ export default function SetupNameScreen() {
       const response = await supabase
         .from('User') 
         .update({ 
-            name: name, 
+            name: name,
             onboarded: true 
         }) 
         .eq('id', user.id); // Update the correct user profile

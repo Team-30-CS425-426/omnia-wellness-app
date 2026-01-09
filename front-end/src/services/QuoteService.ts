@@ -1,3 +1,4 @@
+// code written by Daisy Madera
 export type Quote = {
     quote: string;
     author: string;
@@ -29,8 +30,11 @@ function getFallbackQuote(): Quote{
     const index = Math.floor(Math.random() * FALLBACK_QUOTES.length);
     return FALLBACK_QUOTES[index];
 }
-
+//External Quote API used for random quotes in Omnia 
+//https://api.realinspire.live/v1/quotes/random
+//------------------------------------------------------------------
 const Quote_API_URL = 'https://api.realinspire.live/v1/quotes/random';
+//-------------------------------------------------------------------
 const DEFAULT_TIME_MS = 5000;
 
 type ApiQuote = {

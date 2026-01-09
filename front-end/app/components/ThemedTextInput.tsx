@@ -1,4 +1,4 @@
-// Developed by Johan Ramirez
+//Developed by Johan Ramirez
 import { TextInput, TextInputProps, StyleSheet } from 'react-native'
 import { Colors } from '../../constants/Colors'
 

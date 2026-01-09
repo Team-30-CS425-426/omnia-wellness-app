@@ -18,7 +18,6 @@ interface Option {
   icon: IoniconName;
 }
 
-
 const OPTIONS: Option[] = [
   { label: 'Workout', icon: 'barbell' },
   { label: 'Mood & Stress', icon: 'happy-outline' },

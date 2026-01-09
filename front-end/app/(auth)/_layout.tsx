@@ -10,7 +10,7 @@ export default function AuthLayout() {
     const segments = useSegments() as string[]; 
 
     useEffect(() => {
-    console.log("🔥 AUTH LAYOUT TRIGGERED");
+    console.log(" AUTH LAYOUT TRIGGERED");
     console.log("user:", user?.id);
     console.log("loading:", loading);
     console.log("hasOnboarded:", hasOnboarded);
@@ -28,7 +28,7 @@ export default function AuthLayout() {
     console.log("isInIndex:", isInIndex);
 
     if (loading) {
-        console.log("⏳ loading… skipping redirect");
+        console.log("loading… skipping redirect");
         return;
     }
 
@@ -46,20 +46,20 @@ export default function AuthLayout() {
          }
 
         if (hasOnboarded === false && !isOnNameScreen) {
-            console.log("➡️ Redirect: go to /onboarding/name");
+            console.log("Redirect: go to /onboarding/name");
             router.replace('/onboarding/name' as any);
             return;
         }
 
         if (hasOnboarded === true && !currentPath.includes('(tabs)')) {
-            console.log("➡️ Redirect: go to /(tabs)/home");
+            console.log("Redirect: go to /(tabs)/home");
             router.replace('/(tabs)/home');
             return;
         }
     }
 
     if (!user && !inAuthGroup && !isInIndex) {
-        console.log("➡️ Redirect: not logged in → /login");
+        console.log("Redirect: not logged in → /login");
         router.replace('/login');
     }
     }, [user, loading, segments]);
