@@ -1,5 +1,8 @@
 // code written by Alexis Mae Asuncion
 import React, { useState, useLayoutEffect } from "react"; 
+import { insertWorkout } from '../../src/services/workoutService';
+import { useUser } from '../../contexts/UserContext';
+
 import {
   View,
   StyleSheet,
@@ -17,7 +20,11 @@ import { useNavigation } from "@react-navigation/native";
 
 const WorkoutScreen = () => {
   const navigation = useNavigation();
+  const { user } = useUser();
 
+
+
+  
   // Hide default header
   useLayoutEffect(() => {
     navigation.setOptions({ headerShown: false });
@@ -30,25 +37,30 @@ const WorkoutScreen = () => {
   const [intensity, setIntensity] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
 
-  const INTENSITIES = ["Low", "Medium", "High"];
-
-  const workoutOptions = [
-    { label: "Running", value: "Running" },
-    { label: "Strength Training", value: "Strength Training" },
-    { label: "Core / Ab Training", value: "Core / Ab Training" },
-    { label: "Functional Strength Training", value: "Functional Strength Training" },
-    { label: "Pilates", value: "Pilates" },
-    { label: "HIIT", value: "HIIT" },
-    { label: "Cycling", value: "Cycling" },
-    { label: "CrossFit", value: "CrossFit" },
-    { label: "Yoga", value: "Yoga" },
-    { label: "Other", value: "Other" },
+  const INTENSITIES = [
+    {label: "Low", value: "1"},
+    {label: "Medium", value: "2"},
+    {label: "High", value: "3"},
   ];
 
-  const handleSave = () => {
+  const workoutOptions = [
+    { label: "Running", value: "1" },
+    { label: "Strength Training", value: "2" },
+    { label: "Core / Ab Training", value: "3" },
+    { label: "Functional Strength Training", value: "4" },
+    { label: "Pilates", value: "5" },
+    { label: "HIIT", value: "6" },
+    { label: "Cycling", value: "7" },
+    { label: "CrossFit", value: "8" },
+    { label: "Yoga", value: "9" },
+    { label: "Other", value: "10" },
+  ];
+
+  const handleSave = async () => {
     if (!workoutType || !duration || !intensity) {
       Alert.alert("Please fill out all required fields.");
       return;
+      
     }
 
     const parsedDuration = parseInt(duration, 10);
@@ -67,28 +79,42 @@ const WorkoutScreen = () => {
       return;
     }
 
-    const entry = {
-      workoutType: finalWorkoutType,
-      duration: parsedDuration,
-      intensity,
-      notes,
-      date: new Date(),
+    if (!user?.id) {
+      Alert.alert("Error", "User not authenticated.");
+      return;
+    }
+
+    // Convert numeric intensity value to label
+    const intensityMap: { [key: string]: 'Low' | 'Medium' | 'High' } = {
+      '1': 'Low',
+      '2': 'Medium',
+      '3': 'High',
     };
+    const intensityLabel = intensityMap[intensity || ''];
 
-    // LOG to terminal
-    console.log("Workout Entry:", entry);
+    // Save to Supabase
+    const result = await insertWorkout(user.id, {
+      workout_type: finalWorkoutType,
+      duration: parsedDuration,
+      intensity: intensityLabel,
+      notes: notes || undefined,
+    });
 
-    Alert.alert(
-      "Workout Saved!",
-      `Type: ${finalWorkoutType}\nDuration: ${parsedDuration} minutes\nIntensity: ${intensity}`
-    );
+    if (result.success) {
+      Alert.alert(
+        "Workout Saved!",
+        `Type: ${finalWorkoutType}\nDuration: ${parsedDuration} minutes\nIntensity: ${intensity}`
+      );
 
-    // Reset form
-    setWorkoutType(null);
-    setCustomWorkout("");
-    setDuration("");
-    setIntensity(null);
-    setNotes("");
+      // Reset form
+      setWorkoutType(null);
+      setCustomWorkout("");
+      setDuration("");
+      setIntensity(null);
+      setNotes("");
+    } else {
+      Alert.alert("Error", result.error || "Failed to save workout");
+    }
   };
 
   return (
@@ -157,17 +183,17 @@ const WorkoutScreen = () => {
           <View style={styles.intensityContainer}>
             {INTENSITIES.map((level) => (
               <TouchableOpacity
-                key={level}
+                key={level.value}
                 style={[
                   styles.intensityButton,
-                  intensity === level && styles.intensitySelected,
+                  intensity === level.value && styles.intensitySelected,
                 ]}
                 onPress={() => {
                   Keyboard.dismiss();
-                  setIntensity(level);
+                  setIntensity(level.value);
                 }}
               >
-                <Text style={styles.intensityText}>{level}</Text>
+                <Text style={styles.intensityText}>{level.label}</Text>
               </TouchableOpacity>
             ))}
           </View>
