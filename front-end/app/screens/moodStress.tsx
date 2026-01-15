@@ -1,4 +1,5 @@
 // code written by Alexis Mae Asuncion
+
 import React, { useState, useLayoutEffect } from "react";
 import {
   View,
@@ -13,56 +14,84 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 
+// user + service import
+import { useUser } from "../../contexts/UserContext";
+import { insertStressLog } from "../../src/services/moodStressService";
+
 const MOODS = [
   { label: "Very Low", emoji: "😞" },
   { label: "Low", emoji: "🙁" },
   { label: "Neutral", emoji: "😐" },
   { label: "Good", emoji: "😊" },
   { label: "Excellent", emoji: "😁" },
-];
+] as const;
+
+// Mood label type derived from the MOODS list
+type MoodLabel = (typeof MOODS)[number]["label"];
 
 const MoodStressScreen = () => {
   const navigation = useNavigation();
 
+  // Get logged-in user 
+  const { user } = useUser();
+
   // Hide default header
   useLayoutEffect(() => {
     navigation.setOptions({ headerShown: false });
-  }, []);
+  }, [navigation]);
 
-  const [selectedMood, setSelectedMood] = useState<string | null>(null);
+  const [selectedMood, setSelectedMood] = useState<MoodLabel | null>(null);
   const [stressLevel, setStressLevel] = useState(5);
   const [notes, setNotes] = useState("");
 
-  const handleSave = () => {
+  // Save handler (backend connection)
+  const handleSave = async () => {
+    // Client side validation
     if (!selectedMood) {
       Alert.alert("Please select your mood before saving.");
       return;
     }
 
-    const entry = {
-      mood: selectedMood,
-      stress: stressLevel,
-      notes,
-      date: new Date(),
-    };
+    // Make sure the user is logged in before saving
+    if (!user?.id) {
+      Alert.alert("Error", "User not authenticated.");
+      return;
+    }
 
-    console.log("Mood & Stress Entry:", entry);
+    if (stressLevel < 1 || stressLevel > 10) {
+      Alert.alert("Error", "Stress level must be between 1 and 10.");
+      return;
+    }
 
-    Alert.alert(
-      "Mood & Stress Saved!",
-      `Mood: ${selectedMood}\nStress Level: ${stressLevel}`
-    );
+    // Call Supabase (via service)
+    // This sends the data to Supabase using a service function, the service handles the actual database insert
+    const result = await insertStressLog(user.id, {
+      moodLabel: selectedMood,
+      stressLevel,
+      notes: notes || undefined,
+      meditated: false, 
+    });
 
-    // Reset
-    setSelectedMood(null);
-    setStressLevel(5);
-    setNotes("");
+    // Handle backend response
+    if (result.success) {
+      Alert.alert(
+        "Mood & Stress Saved!",
+        `Mood: ${selectedMood}\nStress Level: ${stressLevel}`
+      );
+
+      // Reset form after successful save
+      setSelectedMood(null);
+      setStressLevel(5);
+      setNotes("");
+    } else {
+      // If Supabase returns an error, show it to the user
+      Alert.alert("Error", result.error || "Failed to save mood & stress entry");
+    }
   };
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.container}>
-
         {/* Custom Header */}
         <View style={styles.header}>
           <TouchableOpacity
@@ -75,9 +104,7 @@ const MoodStressScreen = () => {
 
           <Text style={styles.headerTitle}>Mood & Stress</Text>
 
-          <View style={{ width: 60 }}>
-            {/* Layout balancer */}
-          </View>
+          <View style={{ width: 60 }}>{/* Layout balancer */}</View>
         </View>
 
         {/* Page Title */}
@@ -140,10 +167,10 @@ const MoodStressScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    padding: 20, 
-    backgroundColor: "#fff" 
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: "#fff",
   },
 
   /* HEADER */
@@ -155,19 +182,19 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
 
-  backButton: { 
-    flexDirection: "row", 
-    alignItems: "center" 
+  backButton: {
+    flexDirection: "row",
+    alignItems: "center",
   },
 
-  backArrow: { 
-    fontSize: 22, 
-    fontWeight: "600", 
-    marginRight: 6 
+  backArrow: {
+    fontSize: 22,
+    fontWeight: "600",
+    marginRight: 6,
   },
 
-  backText: { 
-    fontSize: 18 
+  backText: {
+    fontSize: 18,
   },
 
   headerTitle: {
@@ -184,10 +211,10 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
 
-  sectionLabel: { 
-    fontSize: 16, 
-    fontWeight: "500", 
-    marginVertical: 10 
+  sectionLabel: {
+    fontSize: 16,
+    fontWeight: "500",
+    marginVertical: 10,
   },
 
   /* MOOD SECTION */
@@ -209,15 +236,15 @@ const styles = StyleSheet.create({
     borderColor: "#007AFF",
     borderWidth: 1,
   },
-  
-  emoji: { 
-    fontSize: 32 
+
+  emoji: {
+    fontSize: 32,
   },
 
-  moodLabel: { 
-    marginTop: 5, 
-    fontSize: 14, 
-    textAlign: "center" 
+  moodLabel: {
+    marginTop: 5,
+    fontSize: 14,
+    textAlign: "center",
   },
 
   /* STRESS SECTION */
@@ -228,9 +255,9 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
 
-  stressValue: { 
-    fontSize: 22, 
-    fontWeight: "bold" 
+  stressValue: {
+    fontSize: 22,
+    fontWeight: "bold",
   },
 
   /* NOTES */
