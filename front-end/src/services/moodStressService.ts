@@ -1,4 +1,4 @@
-//
+// code written by Alexis Mae Asuncion
 
 import { supabase } from "../../config/supabaseConfig";
 
