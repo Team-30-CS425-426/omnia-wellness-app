@@ -51,9 +51,9 @@ export default function AuthLayout() {
             return;
         }
 
-        if (hasOnboarded === true && !currentPath.includes('(tabs)')) {
-            console.log("Redirect: go to /(tabs)/home");
-            router.replace('/(tabs)/home');
+        if (hasOnboarded === true && !currentPath.includes('(tabs)') && !currentPath.includes('quote')){
+            console.log("Redirect: go to /quote");
+            router.replace('/quote' as any);
             return;
         }
     }

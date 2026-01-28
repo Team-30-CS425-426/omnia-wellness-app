@@ -1,21 +1,26 @@
 import { useContext, useEffect, useState } from "react";
-import { StyleProp, Text, View, ViewStyle } from "react-native";
+import { StyleProp, Text, View, ViewStyle, Pressable  } from "react-native";
+import { router } from "expo-router";
 import { EntryContext } from "./dashboard";
 import { supabase } from "@/config/homeSupabaseConfig";
 
 
 interface KeyStatsProps {
-    style?: StyleProp<ViewStyle>
+    style?: StyleProp<ViewStyle>;
+    health: any;
 }
 
 
-export function KeyStats({ style }: KeyStatsProps) {
+export function KeyStats({ style, health  }: KeyStatsProps) {
     const { entryId } = useContext(EntryContext)
     const [sleepQuality, setSleepQuality] = useState("NaN")
     const [steps, setSteps] = useState("NaN")
     const [mood, setMood] = useState("NaN")
     const [habits, setHabits] = useState("NaN")
     const [calories, setCalories] = useState("NaN")
+
+    const stepsToday =
+    Number.isFinite(health?.stepsToday) ? Math.round(health.stepsToday) : 0;
 
     async function fetchKeyStats() {
         const response = await supabase
@@ -56,7 +61,16 @@ export function KeyStats({ style }: KeyStatsProps) {
                 gap: 20
             }}>
                 <SleepQuality value={sleepQuality}/>
-                <Steps value={steps}/>
+                <Pressable
+                    onPress={() =>
+                        router.push({
+                            pathname: "/health-details",
+                            params: { type: "steps" },
+                        } as any)
+                    }
+                >
+                    <Steps value={`${stepsToday}`} />
+                </Pressable>
                 <Mood value={mood}/>
                 <Habits value={habits}/>
                 <Calories value={calories}/>

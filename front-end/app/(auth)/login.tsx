@@ -1,17 +1,16 @@
 //Developed by Johan Ramirez
-import React from 'react'
 import { Link, router } from 'expo-router';
-import {StyleSheet, Alert, View } from 'react-native'
+import React from 'react';
+import { Alert, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useUser } from '../../contexts/UserContext';
-import { getAuthErrorMessage } from '../../utils/authErrors';
 
-import ThemedView from '../components/ThemedView'
-import ThemedText from '../components/ThemedText'
-import ThemedTextInput from '../components/ThemedTextInput'
-import Spacer from '../components/Spacer'
-import ThemedButton from '../components/ThemedButton'
+import Spacer from '../components/Spacer';
+import ThemedButton from '../components/ThemedButton';
+import ThemedText from '../components/ThemedText';
+import ThemedTextInput from '../components/ThemedTextInput';
+import ThemedView from '../components/ThemedView';
 
 const Login = () => {
 
@@ -32,7 +31,7 @@ const Login = () => {
         // Attempt to Sign In
             await login(email, password);
             await new Promise(resolve => setTimeout(resolve, 200))
-            router.replace('/(tabs)/home')
+            router.replace('/quote')
     } catch (error: any) {
       
         const message = error.message || 'An unknown error occurred';

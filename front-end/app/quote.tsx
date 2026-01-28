@@ -1,10 +1,10 @@
 // code written by Daisy Madera
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, View  } from 'react-native';
+import { fetchRandomQuote, Quote } from '@/src/services/QuoteService';
 import { router } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import ThemedText from './components/ThemedText';
 import ThemedView from './components/ThemedView';
-import { fetchRandomQuote, Quote } from '@/src/services/QuoteService';
 
 export type QuoteScreenProps = {
     onDone?: () => void;
@@ -37,7 +37,7 @@ export function QuoteScreenContent({ onDone }: QuoteScreenProps){
             if (onDone){
                 onDone();
             }else{
-                router.replace('/home')
+                router.replace('/(tabs)/home')
             }
         }, 7000);
         return () => clearTimeout(timer);

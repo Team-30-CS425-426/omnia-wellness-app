@@ -8,6 +8,7 @@ import { Insights } from "./insights"
 
 interface WellnessDashboardsProps {
     style?: StyleProp<ViewStyle>
+    health: any;
 }
 
 
@@ -21,7 +22,7 @@ type DailyEntry ={
 export const EntryContext = createContext<any>(-1)
 
 
-export function WellnessDashboards({ style }: WellnessDashboardsProps) {
+export function WellnessDashboards({ style, health  }: WellnessDashboardsProps) {
     const [entryId, setEntryId] = useState(-1)
     const [dropdownItems, setDropdownItems] = useState<DailyEntry[]>([])
 
@@ -31,10 +32,10 @@ export function WellnessDashboards({ style }: WellnessDashboardsProps) {
             .select()
         if (response['error']) {
             console.log(JSON.stringify(response['error']))
-            return
+            return;
         }
         else {
-            setDropdownItems(response['data'])
+            setDropdownItems(response['data']);
         }
     }
     
@@ -60,14 +61,16 @@ export function WellnessDashboards({ style }: WellnessDashboardsProps) {
                 />
                 <Metrics style={{
                     gap: 20
-                }}/>
+                }}health={health}
+                />
                 <KeyStats style={{
                     gap: 20
-                }}/>
+                }}health={health}
+                />
                 <Insights style={{
                     gap: 20
                 }}/>
             </View>
         </EntryContext.Provider>
-    )
+    );
 }

@@ -1,31 +1,71 @@
 import { WellnessDashboards } from "@/components/home/dashboard";
 import Title from "@/components/home/title";
 import { supabase } from "@/config/homeSupabaseConfig";
-import { createContext, useContext, useEffect, useState } from "react";
-import { StyleProp, Text, View, ViewStyle, StyleSheet, ScrollView } from "react-native";
-import { Dropdown } from "react-native-element-dropdown";
-
+import { useEffect } from "react";
+import { View, ScrollView, Pressable, Alert } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import useHealthData from "@/src/hooks/useHealthData";
 
 export default function HomeScreen() {
-    return (
-        <ScrollView style={{
-            flex: 1,
-            paddingHorizontal: '5%',
-            paddingTop: '15%',
-            backgroundColor: 'white'
-        }}>
-            <Title style={{
-                flex: 1,
-                justifyContent: 'center',
-                alignItems: 'center',
-                paddingVertical: 20
-            }}/>
-            <WellnessDashboards style={{
-                flex: 9,
-                gap: 20,
-                marginBottom: '30%'
-            }}/>
-        </ScrollView>
-    );
-}
+  const health = useHealthData();
 
+  useEffect(() => {
+    if (!health.isAuthorized && !health.loading) {
+      health.connectAndImport();
+    }
+  }, [health.isAuthorized, health.loading]);
+
+  const handleExport = () => {
+    // Optionally block export until connected
+    if (!health.isAuthorized) {
+      Alert.alert("Connect Apple Health first", "Then try exporting again.");
+      return;
+    }
+
+    health.exportToCsv();
+    Alert.alert("Export started", "Generating CSV for last 30 days...");
+  };
+
+  return (
+    <ScrollView
+      style={{
+        flex: 1,
+        paddingHorizontal: "5%",
+        paddingTop: "15%",
+        backgroundColor: "white",
+      }}
+    >
+
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          paddingVertical: 20,
+        }}
+      >
+        <View style={{ flex: 1 }}>
+          <Title
+            style={{
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          />
+        </View>
+
+        <Pressable onPress={handleExport} hitSlop={10} style={{ padding: 8 }}>
+          <Ionicons name="download-outline" size={24} color="black" />
+        </Pressable>
+      </View>
+
+      <WellnessDashboards
+        style={{
+          flex: 9,
+          gap: 20,
+          marginBottom: "30%",
+        }}
+        health={health}
+      />
+    </ScrollView>
+  );
+}

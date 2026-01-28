@@ -1,19 +1,29 @@
 import { useContext, useEffect, useState } from "react"
-import { StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native"
+import { StyleProp, StyleSheet, Text, View, ViewStyle, Pressable } from "react-native";
+import { router } from "expo-router";
 import { EntryContext } from "./dashboard"
 import { supabase } from "@/config/homeSupabaseConfig"
 
 interface MetricsProps {
-    style?: StyleProp<ViewStyle>
+    style?: StyleProp<ViewStyle>;
+    health: any;
 }
 
 
-export function Metrics({ style }: MetricsProps) {
+export function Metrics({ style, health  }: MetricsProps) {
     const { entryId } = useContext(EntryContext)
     const [sleep, setSleep] = useState("NaN")
     const [activity, setActivity] = useState("NaN")
     const [nutrition, setNutrition] = useState("NaN")
     const [moodstress, setMoodStress] = useState("NaN")
+
+    const stepsToday =
+    Number.isFinite(health?.stepsToday) ? Math.round(health.stepsToday) : 0;
+
+    const sleepToday =
+    Number.isFinite(health?.sleepToday)
+      ? Number(health.sleepToday).toFixed(1)
+      : "0.0";
 
     async function fetchMetrics() {
         const response = await supabase
@@ -49,13 +59,22 @@ export function Metrics({ style }: MetricsProps) {
                 justifyContent: 'space-evenly'
             }}>
                 
-                <Sleep value={sleep}/>
+                <Pressable
+                    onPress={() =>
+                        router.push({
+                            pathname: "/health-details",
+                            params: { type: "sleep" },
+                        } as any)
+                    }
+                >
+                    <Sleep value={sleepToday} />
+                </Pressable>
                 <Activity value={activity}/>
                 <Nutrition value={nutrition}/>
                 <MoodStress value={moodstress}/>
             </View>
         </View>
-    )
+    );
 }
 
 
@@ -86,7 +105,7 @@ function MetricItem({ circleLabel, label, color }: MetricItemProps) {
                 {label}
             </Text>
         </View>
-    )
+    );
 }
 
 
@@ -150,4 +169,4 @@ const styles = StyleSheet.create({
     circleLabel: {
         fontSize: 16
     }
-})
+});
