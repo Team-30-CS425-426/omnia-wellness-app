@@ -5,7 +5,7 @@
     "ios-simulator": {
       "extends": "development",
       "ios": {
-        "simulator": true
+        "simulator": false
       }
     }
   }
