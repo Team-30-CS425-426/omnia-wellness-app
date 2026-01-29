@@ -1,7 +1,7 @@
 //Developed by Johan Ramirez
 import React, {useState} from 'react'
-import { Link, router } from 'expo-router';
-import {StyleSheet, Text, View, Button, TextInput } from 'react-native'
+import { Link } from 'expo-router';
+import {StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 //import { onAuthStateChanged, signOut, User } from 'firebase/auth';

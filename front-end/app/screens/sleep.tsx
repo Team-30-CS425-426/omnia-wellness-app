@@ -1,4 +1,5 @@
 // code written by Alexis Mae Asuncion
+
 import React, { useState, useLayoutEffect } from "react";
 import {
   View,
@@ -15,48 +16,77 @@ import {
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation } from "@react-navigation/native";
 
-const SLEEP_QUALITIES = ["Excellent", "Good", "Fair", "Poor", "Very Poor"];
+import { useUser } from "../../contexts/UserContext";
+import {
+  insertSleepLog,
+  formatHoursToHMin,
+  SleepQualityLabel,
+} from "../../src/services/sleepLogService";
+
+const SLEEP_QUALITIES = ["Excellent", "Good", "Fair", "Poor", "Very Poor"] as const;
+type SleepQuality = (typeof SLEEP_QUALITIES)[number];
 
 const SleepTrackerScreen = () => {
   const navigation = useNavigation();
+  const { user } = useUser();
 
   useLayoutEffect(() => {
     navigation.setOptions({ headerShown: false });
   }, [navigation]);
 
-  const [sleepStart, setSleepStart] = useState(new Date());
+  const [sleepStart, setSleepStart] = useState(new Date()); // bedtime
   const [wakeTime, setWakeTime] = useState(new Date());
-  const [sleepQuality, setSleepQuality] = useState<string | null>(null);
+  const [sleepQuality, setSleepQuality] = useState<SleepQuality | null>(null);
   const [notes, setNotes] = useState("");
 
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showWakePicker, setShowWakePicker] = useState(false);
 
-  const handleSave = () => {
+  // Handles saving sleep data to Supabase
+  const handleSave = async () => {
     if (!sleepQuality) {
       Alert.alert("Please select sleep quality.");
       return;
     }
 
-    const entry = {
-      sleepStart: sleepStart.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      wakeTime: wakeTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      sleepQuality,
-      notes,
-      date: new Date(),
-    };
+    if (!user?.id) {
+      Alert.alert("Error", "User not authenticated.");
+      return;
+    }
 
-    console.log("Sleep Tracker Entry:", entry);
+    // Save to Supabase
+    const result = await insertSleepLog(user.id, {
+      bedTime: sleepStart,
+      wakeTime: wakeTime,
+      sleepQualityLabel: sleepQuality as SleepQualityLabel,
+      notes: notes || undefined,
+      // date is optional - backend defaults to today
+    });
 
-    Alert.alert(
-      "Sleep Entry Saved!",
-      `Sleep: ${entry.sleepStart}\nWake: ${entry.wakeTime}\nQuality: ${sleepQuality}`
-    );
+    // Handle backend response 
+    if (result.success) {
+      // Convert decimal hours into readable text, ex: 7h 30min
+      const hoursText =
+        result.data?.hoursSlept != null
+          ? formatHoursToHMin(Number(result.data.hoursSlept))
+          : "N/A";
 
-    setSleepStart(new Date());
-    setWakeTime(new Date());
-    setSleepQuality(null);
-    setNotes("");
+      Alert.alert(
+        "Sleep Entry Saved!",
+        `Bed: ${sleepStart.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}\n` +
+          `Wake: ${wakeTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}\n` +
+          `Duration: ${hoursText}\n` +
+          `Quality: ${sleepQuality}`
+      );
+
+      setSleepStart(new Date());
+      setWakeTime(new Date());
+      setSleepQuality(null);
+      setNotes("");
+    } else {
+      // Backend returned an error
+      Alert.alert("Error", result.error || "Failed to save sleep entry");
+    }
   };
 
   return (
@@ -66,7 +96,6 @@ const SleepTrackerScreen = () => {
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.container}>
-          
           {/* Custom Header */}
           <View style={styles.header}>
             <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
@@ -82,11 +111,10 @@ const SleepTrackerScreen = () => {
 
           {/* Sleep Start */}
           <Text style={styles.sectionLabel}>Sleep Start</Text>
-          <TouchableOpacity
-            style={styles.timeInput}
-            onPress={() => setShowStartPicker(true)}
-          >
-            <Text>{sleepStart.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</Text>
+          <TouchableOpacity style={styles.timeInput} onPress={() => setShowStartPicker(true)}>
+            <Text>
+              {sleepStart.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+            </Text>
           </TouchableOpacity>
           {showStartPicker && (
             <DateTimePicker
@@ -101,11 +129,10 @@ const SleepTrackerScreen = () => {
 
           {/* Wake Time */}
           <Text style={styles.sectionLabel}>Wake Time</Text>
-          <TouchableOpacity
-            style={styles.timeInput}
-            onPress={() => setShowWakePicker(true)}
-          >
-            <Text>{wakeTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</Text>
+          <TouchableOpacity style={styles.timeInput} onPress={() => setShowWakePicker(true)}>
+            <Text>
+              {wakeTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+            </Text>
           </TouchableOpacity>
           {showWakePicker && (
             <DateTimePicker
@@ -157,10 +184,10 @@ const SleepTrackerScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    padding: 20, 
-    backgroundColor: "#fff" 
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: "#fff",
   },
 
   header: {
@@ -171,26 +198,26 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
 
-  backButton: { 
-    flexDirection: "row", 
-    alignItems: "center" 
+  backButton: {
+    flexDirection: "row",
+    alignItems: "center",
   },
 
-  backArrow: { 
-    fontSize: 22, 
-    fontWeight: "600", 
-    marginRight: 6 
+  backArrow: {
+    fontSize: 22,
+    fontWeight: "600",
+    marginRight: 6,
   },
 
-  backText: { 
-    fontSize: 18 
+  backText: {
+    fontSize: 18,
   },
 
-  headerTitle: { 
-    fontSize: 20, 
-    fontWeight: "bold", 
-    textAlign: "center", 
-    flex: 1 
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    textAlign: "center",
+    flex: 1,
   },
 
   pageTitle: {
@@ -200,10 +227,10 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
 
-  sectionLabel: { 
-    fontSize: 16, 
-    fontWeight: "500", 
-    marginVertical: 10 
+  sectionLabel: {
+    fontSize: 16,
+    fontWeight: "500",
+    marginVertical: 10,
   },
 
   timeInput: {
@@ -253,10 +280,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  saveButtonText: { 
-    color: "#fff", 
-    fontSize: 16, 
-    fontWeight: "bold" 
+  saveButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });
 

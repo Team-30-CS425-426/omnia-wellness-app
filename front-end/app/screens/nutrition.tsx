@@ -1,4 +1,5 @@
 // code written by Alexis Mae Asuncion
+
 import React, { useState, useLayoutEffect } from "react";
 import {
   View,
@@ -15,17 +16,24 @@ import {
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation } from "@react-navigation/native";
 
-const MEAL_TYPES = ["Breakfast", "Lunch", "Dinner", "Snack"];
+import { useUser } from "../../contexts/UserContext";
+
+import { insertNutritionLog } from "../../src/services/nutritionService";
+
+const MEAL_TYPES = ["Breakfast", "Lunch", "Dinner", "Snack"] as const;
+type MealType = (typeof MEAL_TYPES)[number];
 
 const NutritionScreen = () => {
   const navigation = useNavigation();
+
+  const { user } = useUser();
 
   useLayoutEffect(() => {
     navigation.setOptions({ headerShown: false });
   }, [navigation]);
 
   const [mealName, setMealName] = useState("");
-  const [mealType, setMealType] = useState<string | null>(null);
+  const [mealType, setMealType] = useState<MealType | null>(null);
   const [calories, setCalories] = useState("");
   const [protein, setProtein] = useState("");
   const [carbs, setCarbs] = useState("");
@@ -34,9 +42,10 @@ const NutritionScreen = () => {
   const [mealTime, setMealTime] = useState(new Date());
   const [showTimePicker, setShowTimePicker] = useState(false);
 
-  const handleSave = () => {
+  // Async because we call Supabase
+  const handleSave = async () => {
     // Check required fields
-    if (!mealName || !mealType || !calories || !protein || !carbs || !fat) {
+    if (!mealName.trim() || !mealType || !calories || !protein || !carbs || !fat) {
       Alert.alert(
         "Please enter all required fields: Meal Name, Meal Type, Calories, Protein, Carbs, and Fat."
       );
@@ -55,40 +64,47 @@ const NutritionScreen = () => {
       isNaN(parsedCarbs) || parsedCarbs < 0 ||
       isNaN(parsedFat) || parsedFat < 0
     ) {
-      Alert.alert(
-        "Please enter valid numbers for Calories, Protein, Carbs, Fat, and Meal Time."
-      );
+      Alert.alert("Please enter valid numbers for Calories, Protein, Carbs, and Fat.");
       return;
     }
 
-    const entry = {
+    // Ensure user is logged in 
+    if (!user?.id) {
+      Alert.alert("Error", "User not authenticated.");
+      return;
+    }
+
+    // Insert into Supabase NutritionLog
+    const result = await insertNutritionLog(user.id, {
       mealName,
       mealType,
       calories: parsedCalories,
       protein: parsedProtein,
       carbs: parsedCarbs,
       fat: parsedFat,
-      mealTime: mealTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      mealTime,
       notes,
-      date: new Date(),
-    };
+    });
 
-    console.log("Nutrition Entry:", entry);
+    if (result.success) {
+      Alert.alert(
+        "Nutrition Entry Saved!",
+        `Meal: ${mealName}\nType: ${mealType}\nCalories: ${parsedCalories}\nProtein: ${parsedProtein}g\nCarbs: ${parsedCarbs}g\nFat: ${parsedFat}g` +
+          (notes.trim() ? `\nNotes: ${notes.trim()}` : "")
+      );
 
-    Alert.alert(
-      "Nutrition Entry Saved!",
-      `Meal: ${mealName}\nType: ${mealType}\nCalories: ${parsedCalories}\nProtein: ${parsedProtein}g\nCarbs: ${parsedCarbs}g\nFat: ${parsedFat}g`
-    );
-
-    // Reset form
-    setMealName("");
-    setMealType(null);
-    setCalories("");
-    setProtein("");
-    setCarbs("");
-    setFat("");
-    setNotes("");
-    setMealTime(new Date());
+      // Reset form
+      setMealName("");
+      setMealType(null);
+      setCalories("");
+      setProtein("");
+      setCarbs("");
+      setFat("");
+      setNotes("");
+      setMealTime(new Date());
+    } else {
+      Alert.alert("Error", result.error || "Failed to save nutrition entry");
+    }
   };
 
   return (
@@ -98,7 +114,6 @@ const NutritionScreen = () => {
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.container}>
-
           {/* Header */}
           <View style={styles.header}>
             <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
@@ -186,10 +201,7 @@ const NutritionScreen = () => {
 
           {/* Meal Time */}
           <Text style={styles.sectionLabel}>Meal Time</Text>
-          <TouchableOpacity
-            style={styles.timeInput}
-            onPress={() => setShowTimePicker(true)}
-          >
+          <TouchableOpacity style={styles.timeInput} onPress={() => setShowTimePicker(true)}>
             <Text>{mealTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</Text>
           </TouchableOpacity>
           {showTimePicker && (
@@ -225,8 +237,7 @@ const NutritionScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
+  container: { flex: 1, 
     padding: 20, 
     backgroundColor: "#fff" 
   },
@@ -270,7 +281,7 @@ const styles = StyleSheet.create({
 
   sectionLabel: { 
     fontSize: 16, 
-    fontWeight: "500",
+    fontWeight: "500", 
     marginVertical: 10 
   },
 
@@ -307,10 +318,10 @@ const styles = StyleSheet.create({
 
   macroContainer: { 
     flexDirection: "row", 
-    justifyContent: "space-between",
+    justifyContent: "space-between", 
     marginBottom: 20 
   },
-
+  
   macroInputContainer: { 
     flex: 1, 
     marginHorizontal: 5 
@@ -352,6 +363,7 @@ const styles = StyleSheet.create({
     fontSize: 16, 
     fontWeight: "bold" 
   },
+
 });
 
 export default NutritionScreen;
