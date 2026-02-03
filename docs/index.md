@@ -1,3 +1,7 @@
+<style>
+  .site-title {display: none !important; }
+</style>
+
 # Omnia Wellness App
 **CS 426 Senior Project in Computer Science, Spring 2025**
 **University of Nevada, Reno (UNR) - CSE Department**
@@ -28,7 +32,9 @@ Omnia is a mobile wellness application designed to help users better understand 
 
 ---
 
-## Project-Related Resources (to be updated later)
+## Project-Related Resources
+
+To be updated later
 
 
 ---
