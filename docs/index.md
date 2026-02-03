@@ -1,6 +1,6 @@
 # Omnia Wellness App
 **CS 426 Senior Project in Computer Science, Spring 2025**
-**University of Nevada, Reno (UNR) - CSE Department***
+**University of Nevada, Reno (UNR) - CSE Department**
 
 ---
 
@@ -24,7 +24,7 @@
 ---
 
 ## Project Description 
-Omnia Wellness is a mobile wellness application designed to help users better understand and improve their day-to-day health habits through simple tracking and clear insights. 
+Omnia is a mobile wellness application designed to help users better understand and improve their day-to-day health habits through simple tracking and clear insights. Many people want a single place to view core indicators such as activity, sleep, mood/stress, nutrition, and workouts, but most tools make you switch between multiple apps. Our goal is to make tracking simple by pulling in data automatically when possible, while still letting users do quick check-ins.Over time Omnia will help users notice patterns and stay consistent using reminders and easy to read progess views. 
 
 ---
 
