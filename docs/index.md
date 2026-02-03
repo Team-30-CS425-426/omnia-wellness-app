@@ -1,5 +1,20 @@
 <style>
-  .site-title {display: none !important; }
+  .page-header,
+  .site-header,
+  header [role = "banner"],
+  header,
+  .project-name,
+  .project-tagline,
+  .site-title {
+    display: none !important;
+  }
+
+  .main-content,
+  .page-content,
+  main {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+  }
 </style>
 
 # Omnia Wellness App
