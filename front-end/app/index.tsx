@@ -7,7 +7,7 @@ export default function Index(){
         <View>
             <Button
                 title='Log In'
-                onPress={() => router.replace('/(tabs)/home')}
+                onPress={() => router.replace('/(tabs)/dashboard')}
             />
         </View>
     )
