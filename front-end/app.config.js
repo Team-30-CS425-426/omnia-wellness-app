@@ -14,7 +14,7 @@ export default{
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.omnia.wellness"
+      "bundleIdentifier": "com.anonymous.front-end"
     },
     "android": {
       "adaptiveIcon": {
