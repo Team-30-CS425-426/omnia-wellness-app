@@ -11,7 +11,7 @@ export default{
     "icon": "./assets/images/icon.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.anonymous.front-end"
@@ -55,9 +55,9 @@ export default{
       supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
       supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
       supabaseAnonKey: process.env.NEXT_ANON_SUPABASE_KEY,
-    },
-    eas: {
-      projectId: "ec7eeaf2-3753-498d-ac68-0ff63bdab029"
+      eas: {
+        projectId: "ec7eeaf2-3753-498d-ac68-0ff63bdab029"
+      }
     }
   
   }
