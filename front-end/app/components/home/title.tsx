@@ -1,12 +1,12 @@
 import { StyleProp, View, ViewStyle, Text } from "react-native"
-import ThemedView from '../../app/components/ThemedView'
-import ThemedText from '../../app/components/ThemedText'
+import ThemedView from '../ThemedView'
+import ThemedText from '../ThemedText'
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {StyleSheet} from 'react-native'
-import { useUser } from '../../contexts/UserContext';
+import { useUser } from '../../../contexts/UserContext';
 import { useEffect, useState } from 'react';
-import { supabase } from '../../config/supabaseConfig';
-import {Colors} from '../../constants/Colors'
+import { supabase } from '../../../config/supabaseConfig';
+import {Colors} from '../../../constants/Colors'
 
 interface TitleProps {
     style?: StyleProp<ViewStyle>

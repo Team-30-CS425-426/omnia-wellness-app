@@ -1,5 +1,5 @@
-import { WellnessDashboards } from "@/components/home/dashboard";
-import Title from "@/components/home/title";
+import { WellnessDashboards } from "../components/home/dashboard";
+import Title from "../components/home/title";
 import { supabase } from "@/config/homeSupabaseConfig";
 import { useEffect } from "react";
 import { View, ScrollView, Pressable, Alert } from "react-native";
