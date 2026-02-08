@@ -55,9 +55,6 @@ export default{
       supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
       supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
       supabaseAnonKey: process.env.NEXT_ANON_SUPABASE_KEY,
-      eas: {
-        projectId: "8c8c7da2-c0ef-4d51-a244-cd539683b50c"
-      }
     }
   }
 }
