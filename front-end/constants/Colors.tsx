@@ -14,6 +14,8 @@ export const Colors = {
   primaryBlue: '#007AFF', 
   
   darkBlue: '#005BB5',
+
+  berryPurple: '#984fd3',
   
   successGreen: '#34C759',
   

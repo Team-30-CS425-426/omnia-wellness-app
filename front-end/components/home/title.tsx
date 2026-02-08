@@ -3,6 +3,10 @@ import ThemedView from '../../app/components/ThemedView'
 import ThemedText from '../../app/components/ThemedText'
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {StyleSheet} from 'react-native'
+import { useUser } from '../../contexts/UserContext';
+import { useEffect, useState } from 'react';
+import { supabase } from '../../config/supabaseConfig';
+import {Colors} from '../../constants/Colors'
 
 interface TitleProps {
     style?: StyleProp<ViewStyle>
@@ -10,16 +14,27 @@ interface TitleProps {
 
 export default function Title({ style }: TitleProps) {
     const insets = useSafeAreaInsets();
+    const { user } = useUser();
+    const [name, setName] = useState('');
     
+    useEffect(() => {
+        if(user?.id){
+            const fetchName = async () => {
+                const { data, error } = await supabase
+                    .from('User')
+                    .select('name')
+                    .eq('id', user.id)
+                    .single();
+                if (data?.name){
+                    setName(data.name);
+                }
+        }
+        fetchName();
+    }
+}, [user?.id]);
     return (
-        <ThemedView style={[
-            styles.container, 
-            { 
-                paddingBottom: insets.bottom // Use the actual inset, don't subtract 150
-            }, 
-            style
-        ]}>
-           <ThemedText title={true}>Omnia</ThemedText>
+        <ThemedView>
+           <ThemedText title={true} gradient={true} gradientColors={[Colors.default.primaryBlue, Colors.default.berryPurple]}>Hey, {name} </ThemedText>
         </ThemedView>
     )
 }
@@ -33,5 +48,4 @@ const styles = StyleSheet.create({
         fontWeight : '600',
         fontSize : 24,
     },
-    
 })

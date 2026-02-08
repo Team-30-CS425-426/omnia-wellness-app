@@ -53,25 +53,33 @@ export function Metrics({ style, health  }: MetricsProps) {
         <View style={style}>
             <View style={{
                 flexDirection: 'row',
-                borderWidth: 1,
-                backgroundColor: 'lightgrey',
-                padding: '1%',
-                justifyContent: 'space-evenly'
+                paddingHorizontal: '1%',
+                paddingVertical: '1%',
+                justifyContent: 'space-between',
+                alignItems: 'center'
             }}>
                 
-                <Pressable
-                    onPress={() =>
-                        router.push({
-                            pathname: "/health-details",
-                            params: { type: "sleep" },
-                        } as any)
-                    }
-                >
-                    <Sleep value={sleepToday} />
-                </Pressable>
-                <Activity value={activity}/>
-                <Nutrition value={nutrition}/>
-                <MoodStress value={moodstress}/>
+                <View style={{ flex: 1, alignItems: 'center', paddingHorizontal: 0 }}>
+                    <Pressable
+                        onPress={() =>
+                            router.push({
+                                pathname: "/health-details",
+                                params: { type: "sleep" },
+                            } as any)
+                        }
+                    >
+                        <Sleep value={sleepToday} />
+                    </Pressable>
+                </View>
+                <View style={{ flex: 1, alignItems: 'center', paddingHorizontal: 0 }}>
+                    <Activity value={activity}/>
+                </View>
+                <View style={{ flex: 1, alignItems: 'center', paddingHorizontal: 0 }}>
+                    <Nutrition value={nutrition}/>
+                </View>
+                <View style={{ flex: 1, alignItems: 'center', paddingHorizontal: 0 }}>
+                    <MoodStress value={moodstress}/>
+                </View>
             </View>
         </View>
     );
@@ -93,9 +101,7 @@ function MetricItem({ circleLabel, label, color }: MetricItemProps) {
             <View style={[styles.circle, {
                 borderColor: color
             }]}>
-                <Text style={{
-                    fontSize: 17
-                }}>
+                <Text style={styles.circleLabel}>
                     {circleLabel}
                 </Text>
             </View>
@@ -151,20 +157,20 @@ interface MoodStressProps {
 
 function MoodStress({ value = "" }: MoodStressProps){
     return (
-        <MetricItem circleLabel={value} label="Mood/Stress" color="red"/>
+        <MetricItem circleLabel={value} label="Mood" color="red"/>
     )
 }
 
 
 const styles = StyleSheet.create({
     circle: {
-        width: 60, 
-        height: 60,
-        borderRadius: 30, // 80 / 2 = 40
+        width: 80, 
+        height: 80,
+        borderRadius: 40, // 80 / 2 = 40
         borderWidth: 4, 
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'lightgrey', 
+        backgroundColor: 'white', 
     },
     circleLabel: {
         fontSize: 16

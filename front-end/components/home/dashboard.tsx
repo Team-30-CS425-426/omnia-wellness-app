@@ -52,13 +52,10 @@ export function WellnessDashboards({ style, health  }: WellnessDashboardsProps) 
                         fontWeight: 'bold',
                         fontSize: 20,
                     }}>
-                        Wellness Dashboards
+                        Daily Summary
                     </Text>
                 </View>
-                <DateDropDown
-                    data={dropdownItems} 
-                    setEntryId={setEntryId}
-                />
+                
                 <Metrics style={{
                     gap: 20
                 }}health={health}
