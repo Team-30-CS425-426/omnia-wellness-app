@@ -14,18 +14,24 @@ export default{
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.front-end"
+      "bundleIdentifier": "com.anonymous.front-end",
+      "infoPlist": {
+        "NSHealthShareUsageDescription": "Omnia reads your Health data (steps/sleep) to show your real-time wellness stats.",
+        "NSHealthUpdateUsageDescription": "Omnia can write workout data to Health when you log workouts."
+      }
+      
     },
     "android": {
+      "package": "com.anonymous.frontend",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
-      },
-      "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "backgroundColor": "#E6F4FE",
+      "foregroundImage": "./assets/images/android-icon-foreground.png",
+      "backgroundImage": "./assets/images/android-icon-background.png",
+      "monochromeImage": "./assets/images/android-icon-monochrome.png"
     },
+    "edgeToEdgeEnabled": true,
+    "predictiveBackGestureEnabled": false
+  },
     "web": {
       "output": "static",
       "favicon": "./assets/images/favicon.png"
@@ -45,8 +51,9 @@ export default{
           }
         }
       ],
-    "react-native-health"
+      "react-native-health"
     ],
+
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
