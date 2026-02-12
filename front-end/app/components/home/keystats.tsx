@@ -1,12 +1,13 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext} from "react";
 import { StyleProp, Text, View, ViewStyle, Pressable, StyleSheet } from "react-native";
 import { router } from "expo-router";
 import { EntryContext } from "./dashboard";
-import { supabase } from "@/config/supabaseConfig";
+
 import { Colors } from "../../../constants/Colors";
 import ThemedCard from "../ThemedCard";
 import Spacer from "../Spacer";
-import { useUser } from "../../../contexts/UserContext";
+
+import { useNutritionStats } from "@/src/hooks/NutritionTotals";
 
 interface KeyStatsProps {
     style?: StyleProp<ViewStyle>;
@@ -14,137 +15,7 @@ interface KeyStatsProps {
 }
 
 export function KeyStats({ style, health }: KeyStatsProps) {
-    const { entryId } = useContext(EntryContext);
-    const [sleepQuality, setSleepQuality] = useState("NaN");
-    const [steps, setSteps] = useState("NaN");
-    const [mood, setMood] = useState("NaN");
-    const [habits, setHabits] = useState("NaN");
-    const [calories, setCalories] = useState(0);
-    const [protein, setProtein] = useState(0);
-    const [carbs, setCarbs] = useState(0);
-    const [fat, setFat] = useState(0);
-    const { user } = useUser();
-
-    const stepsToday =
-        Number.isFinite(health?.stepsToday) ? Math.round(health.stepsToday) : 0;
-
-    async function fetchKeyStats() {
-        const response = await supabase
-            .from('KeyStats')
-            .select('*')
-            .eq('entry_id', entryId);
-            
-        if (response?.data?.[0]) {
-            const d = response['data'][0];
-            setSleepQuality(d['sleepquality']);
-            setSteps(d['steps']);
-            setMood(d['mood']);
-            setHabits(d['habits']);
-            setCalories(Number(d['calories']) || 0);
-            setProtein(Number(d['protein']) || 0);
-            setCarbs(Number(d['carbs']) || 0);
-            setFat(Number(d['fat']) || 0);
-        } else {
-            setSleepQuality('NaN');
-            setSteps('NaN');
-            setMood('NaN');
-            setHabits('NaN');
-            setCalories(0);
-            setProtein(0);
-            setCarbs(0);
-            setFat(0);
-        }
-    }
-
-    async function fetchNutritionData() {
-        console.log('fetchNutritionData Called');
-        
-        if (!user) {
-            console.log('No user in context');
-            return;
-        }
-        
-        console.log('User ID from context:', user.id);
-    
-        const today = new Date();
-        const targetDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-        console.log('Target date:', targetDate);
-    
-        const response = await supabase
-            .from('NutritionLog')
-            .select('calories, protein, carbs, fat')
-            .eq('userID', user.id)
-            .eq('date', targetDate);
-    
-        if (response.error) {
-            console.log('Supabase query error:', response.error);
-            return;
-        }
-    
-        console.log('Response data:', response.data);
-        console.log('Number of logs found:', response.data?.length || 0);
-    
-        if (response?.data && response.data.length > 0) {
-            const total = response.data.reduce((acc, log) => {
-                return {
-                    calories: acc.calories + (Number(log.calories) || 0),
-                    protein: acc.protein + (Number(log.protein) || 0),
-                    carbs: acc.carbs + (Number(log.carbs) || 0),
-                    fat: acc.fat + (Number(log.fat) || 0),
-                };
-            }, { calories: 0, protein: 0, carbs: 0, fat: 0 });
-            
-            console.log('Calculated totals:', total);
-            setCalories(total.calories);
-            setProtein(total.protein);
-            setCarbs(total.carbs);
-            setFat(total.fat);
-        } else {
-            console.log('No nutrition logs found for today');
-            setCalories(0);
-            setProtein(0);
-            setCarbs(0);
-            setFat(0);
-        }
-    }
-
-    useEffect(() => {
-        if (!user) {
-            console.log('No user found');
-            return;
-        }
-        
-        console.log("User Exists!");
-        fetchKeyStats();
-        fetchNutritionData();
-
-        // Set up subscription - use user from context
-        console.log('Setting up subscription for user:', user.id);
-        const channel = supabase
-            .channel('nutrition-updates')
-            .on(
-                'postgres_changes',
-                {
-                    event: '*',
-                    schema: 'public',
-                    table: 'NutritionLog',
-                    filter: `userID=eq.${user.id}`
-                },
-                (payload) => {
-                    console.log('🔥 Nutrition update received:', payload);
-                    fetchNutritionData();
-                }
-            )
-            .subscribe((status) => {
-                console.log('Subscription status:', status);
-            });
-
-        return () => {
-            console.log('Cleaning up subscription');
-            supabase.removeChannel(channel);
-        };
-    }, [entryId, user]);
-
+   const { nutrition, isLoading, error } = useNutritionStats();
     return (
         <View style={style}>
             <Text style={{
@@ -162,10 +33,10 @@ export function KeyStats({ style, health }: KeyStatsProps) {
                 gap: 20,
             }}>
                 <Nutrition 
-                    calories={calories} 
-                    protein={protein} 
-                    carbs={carbs} 
-                    fat={fat}
+                    calories={nutrition.calories} 
+                    protein={nutrition.protein} 
+                    carbs={nutrition.carbs} 
+                    fat={nutrition.fat}
                 />
                 <Pressable
                     onPress={() =>
@@ -235,7 +106,7 @@ function Nutrition({ calories = 0, protein = 0, carbs = 0, fat = 0 }: NutritionP
                 <Text style={{
                     fontSize: 18, 
                     fontWeight: 'bold', 
-                    color: Colors.default.berryBlue,
+                    color: Colors.default.pastelPink,
                     marginBottom: 10 
                 }}>
                     Nutrition
@@ -292,7 +163,7 @@ const styles = StyleSheet.create({
     value: {
         fontSize: 12,
         fontWeight: '600',
-        color: Colors.default.berryBlue,
+        color: Colors.default.pastelPink,
     },
     macroText: {
         fontSize: 11,
@@ -308,7 +179,7 @@ const styles = StyleSheet.create({
     },
     progressBarFill: {
         height: '100%',
-        backgroundColor: Colors.default.berryBlue,
+        backgroundColor: Colors.default.berryPurple,
         borderRadius: 4,
     },
 });

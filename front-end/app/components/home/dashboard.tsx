@@ -1,4 +1,4 @@
-import { supabase } from "@/config/homeSupabaseConfig"
+import { supabase } from "@/config/supabaseConfig"
 import { createContext, useEffect, useState } from "react"
 import { StyleProp, View, ViewStyle, Text } from "react-native"
 import { DateDropDown } from "./dropdown"

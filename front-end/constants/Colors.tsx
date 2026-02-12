@@ -22,5 +22,7 @@ export const Colors = {
   successGreen: '#34C759',
   
   errorRed: '#FF3B30',
+
+  pastelPink: '#FFC5D3'
   }
 };

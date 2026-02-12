@@ -2,7 +2,7 @@ import { useContext, useEffect, useState } from "react"
 import { StyleProp, StyleSheet, Text, View, ViewStyle, Pressable } from "react-native";
 import { router } from "expo-router";
 import { EntryContext } from "./dashboard"
-import { supabase } from "@/config/homeSupabaseConfig"
+import { supabase } from "@/config/supabaseConfig"
 
 interface MetricsProps {
     style?: StyleProp<ViewStyle>;
