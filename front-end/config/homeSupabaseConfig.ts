@@ -5,7 +5,7 @@ Temporary development config for home tab
 */
 
 export const supabase = createClient(
-    'https://pflqaoqpwucsewvkjajc.supabase.co',
-    'sb_publishable_NNnruGDoKGCeLjAG4pkecg_j0Q97utA'
+    'https://omltvisbblgiudgecgsv.supabase.co',
+    'sb_publishable_rdw57MN2xPlqt6rPKtALkA_zkxBdtmP'
 )
 

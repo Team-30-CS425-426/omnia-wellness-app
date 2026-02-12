@@ -2,10 +2,11 @@ import { useContext, useEffect, useState } from "react";
 import { StyleProp, Text, View, ViewStyle, Pressable, StyleSheet } from "react-native";
 import { router } from "expo-router";
 import { EntryContext } from "./dashboard";
-import { supabase } from "@/config/homeSupabaseConfig";
+import { supabase } from "@/config/supabaseConfig";
 import { Colors } from "../../../constants/Colors";
 import ThemedCard from "../ThemedCard";
 import Spacer from "../Spacer";
+import { useUser } from "../../../contexts/UserContext";
 
 interface KeyStatsProps {
     style?: StyleProp<ViewStyle>;
@@ -22,6 +23,7 @@ export function KeyStats({ style, health }: KeyStatsProps) {
     const [protein, setProtein] = useState(0);
     const [carbs, setCarbs] = useState(0);
     const [fat, setFat] = useState(0);
+    const { user } = useUser();
 
     const stepsToday =
         Number.isFinite(health?.stepsToday) ? Math.round(health.stepsToday) : 0;
@@ -54,70 +56,94 @@ export function KeyStats({ style, health }: KeyStatsProps) {
         }
     }
 
-    // Fetch nutrition data from NutritionLog table
     async function fetchNutritionData() {
-        // Get the current user
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-
+        console.log('fetchNutritionData Called');
+        
+        if (!user) {
+            console.log('No user in context');
+            return;
+        }
+        
+        console.log('User ID from context:', user.id);
+    
+        const today = new Date();
+        const targetDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        console.log('Target date:', targetDate);
+    
         const response = await supabase
             .from('NutritionLog')
             .select('calories, protein, carbs, fat')
             .eq('userID', user.id)
-            .eq('entry_id', entryId) // Assuming NutritionLog has entry_id
-            .order('created_at', { ascending: false })
-            .limit(1);
-
-        if (response?.data?.[0]) {
-            const d = response.data[0];
-            setCalories(Number(d.calories) || 0);
-            setProtein(Number(d.protein) || 0);
-            setCarbs(Number(d.carbs) || 0);
-            setFat(Number(d.fat) || 0);
+            .eq('date', targetDate);
+    
+        if (response.error) {
+            console.log('Supabase query error:', response.error);
+            return;
+        }
+    
+        console.log('Response data:', response.data);
+        console.log('Number of logs found:', response.data?.length || 0);
+    
+        if (response?.data && response.data.length > 0) {
+            const total = response.data.reduce((acc, log) => {
+                return {
+                    calories: acc.calories + (Number(log.calories) || 0),
+                    protein: acc.protein + (Number(log.protein) || 0),
+                    carbs: acc.carbs + (Number(log.carbs) || 0),
+                    fat: acc.fat + (Number(log.fat) || 0),
+                };
+            }, { calories: 0, protein: 0, carbs: 0, fat: 0 });
+            
+            console.log('Calculated totals:', total);
+            setCalories(total.calories);
+            setProtein(total.protein);
+            setCarbs(total.carbs);
+            setFat(total.fat);
+        } else {
+            console.log('No nutrition logs found for today');
+            setCalories(0);
+            setProtein(0);
+            setCarbs(0);
+            setFat(0);
         }
     }
 
     useEffect(() => {
+        if (!user) {
+            console.log('No user found');
+            return;
+        }
+        
+        console.log("User Exists!");
         fetchKeyStats();
         fetchNutritionData();
 
-        // Subscribe to nutrition updates
-        const setupSubscription = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
-
-            const channel = supabase
-                .channel('nutrition-updates')
-                .on(
-                    'postgres_changes',
-                    {
-                        event: '*', // Listen to INSERT, UPDATE, DELETE
-                        schema: 'public',
-                        table: 'NutritionLog',
-                        filter: `userID=eq.${user.id}`
-                    },
-                    (payload) => {
-                        console.log('Nutrition update received:', payload);
-                        // Refetch nutrition data when changes occur
-                        fetchNutritionData();
-                    }
-                )
-                .subscribe();
-
-            return channel;
-        };
-
-        let channel: any;
-        setupSubscription().then((ch) => {
-            channel = ch;
-        });
+        // Set up subscription - use user from context
+        console.log('Setting up subscription for user:', user.id);
+        const channel = supabase
+            .channel('nutrition-updates')
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'NutritionLog',
+                    filter: `userID=eq.${user.id}`
+                },
+                (payload) => {
+                    console.log('🔥 Nutrition update received:', payload);
+                    fetchNutritionData();
+                }
+            )
+            .subscribe((status) => {
+                console.log('Subscription status:', status);
+            });
 
         return () => {
-            if (channel) {
-                supabase.removeChannel(channel);
-            }
+            console.log('Cleaning up subscription');
+            supabase.removeChannel(channel);
         };
-    }, [entryId]);
+    }, [entryId, user]);
 
     return (
         <View style={style}>
@@ -187,7 +213,6 @@ interface NutritionProps {
 }
 
 function Nutrition({ calories = 0, protein = 0, carbs = 0, fat = 0 }: NutritionProps) {
-    // Calculate progress (max 100%)
     const calorieGoal = 2000;
     const proteinGoal = 150;
     const carbsGoal = 200;
@@ -216,14 +241,12 @@ function Nutrition({ calories = 0, protein = 0, carbs = 0, fat = 0 }: NutritionP
                     Nutrition
                 </Text>
 
-                {/* Calorie Progress Section */}
                 <View style={{ marginBottom: 15 }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
                         <Text style={styles.label}>Calories</Text>
                         <Text style={styles.value}>{calories} / {calorieGoal}</Text>
                     </View>
                     
-                    {/* The Progress Bar */}
                     <View style={styles.progressBarTrack}>
                         <View style={[styles.progressBarFill, { width: `${calorieProgressPercent}%` }]} />
                     </View>
@@ -279,13 +302,13 @@ const styles = StyleSheet.create({
     progressBarTrack: {
         height: 8,
         width: '100%',
-        backgroundColor: 'rgba(0,0,0,0.05)', // Light gray track
+        backgroundColor: 'rgba(0,0,0,0.05)',
         borderRadius: 4,
         overflow: 'hidden',
     },
     progressBarFill: {
         height: '100%',
-        backgroundColor: Colors.default.berryBlue, // Or a nice Green
+        backgroundColor: Colors.default.berryBlue,
         borderRadius: 4,
     },
 });
