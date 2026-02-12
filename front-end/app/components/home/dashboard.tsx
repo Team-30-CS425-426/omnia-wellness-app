@@ -28,23 +28,6 @@ export function WellnessDashboards({ style, health  }: WellnessDashboardsProps) 
     const [entryId, setEntryId] = useState(-1)
     const [dropdownItems, setDropdownItems] = useState<DailyEntry[]>([])
 
-    async function fetchDailyEntries() {
-        const response = await supabase
-            .from('DailyEntries')
-            .select()
-        if (response['error']) {
-            console.log(JSON.stringify(response['error']))
-            return;
-        }
-        else {
-            setDropdownItems(response['data']);
-        }
-    }
-    
-    useEffect(() => {
-        fetchDailyEntries()
-    }, [])
-
    return (
     <EntryContext.Provider value={{ entryId }}>
         <View style={style}>

@@ -106,7 +106,7 @@ function Nutrition({ calories = 0, protein = 0, carbs = 0, fat = 0 }: NutritionP
                 <Text style={{
                     fontSize: 18, 
                     fontWeight: 'bold', 
-                    color: Colors.default.pastelPink,
+                    color: Colors.default.berryPurple,
                     marginBottom: 10 
                 }}>
                     Nutrition
@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
     value: {
         fontSize: 12,
         fontWeight: '600',
-        color: Colors.default.pastelPink,
+        color: Colors.default.berryBlue,
     },
     macroText: {
         fontSize: 11,
@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
     },
     progressBarFill: {
         height: '100%',
-        backgroundColor: Colors.default.berryPurple,
+        backgroundColor: Colors.default.berryBlue,
         borderRadius: 4,
     },
 });

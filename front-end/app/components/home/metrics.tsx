@@ -122,7 +122,7 @@ interface SleepProps {
 
 function Sleep({ value = "" }: SleepProps) {
     return (
-        <MetricItem circleLabel={value} label="Sleep" color="blue"/>
+        <MetricItem circleLabel={value} label="Sleep" color="#187498"/>
     )
 }
 
@@ -133,7 +133,7 @@ interface ActivityProps {
 
 function Activity({ value = "" }: ActivityProps) {
     return (
-        <MetricItem circleLabel={value} label="Activity" color="green"/>
+        <MetricItem circleLabel={value} label="Activity" color="#36AE7C"/>
     )
 }
 
@@ -145,7 +145,7 @@ interface NutritionProps {
 
 function Nutrition({ value = "" }: NutritionProps) {
     return (
-        <MetricItem circleLabel={value} label="Steps" color="orange"/>
+        <MetricItem circleLabel={value} label="Steps" color="#F9D923"/>
     )
 }
 
@@ -157,7 +157,7 @@ interface MoodStressProps {
 
 function MoodStress({ value = "" }: MoodStressProps){
     return (
-        <MetricItem circleLabel={value} label="Mood" color="red"/>
+        <MetricItem circleLabel={value} label="Mood" color="#EB5353"/>
     )
 }
 
