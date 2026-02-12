@@ -164,7 +164,7 @@ function KeyStatsItem({ label, content }: KeyStatsItemProps) {
     return (
         <ThemedCard style={{
             height: 120,
-            width: 120,
+            width: 220,
             justifyContent: 'center',
             alignItems: 'center',
             paddingVertical: 0,
@@ -190,7 +190,7 @@ function Nutrition({ calories = 0, protein = 0, carbs = 0, fat = 0 }: NutritionP
     // Calculate progress (max 100%)
     const calorieGoal = 2000;
     const proteinGoal = 150;
-    const carbsGoal = 250;
+    const carbsGoal = 200;
     const fatGoal = 70;
     
     const calorieProgressPercent = Math.min((calories / calorieGoal) * 100, 100);
@@ -201,7 +201,7 @@ function Nutrition({ calories = 0, protein = 0, carbs = 0, fat = 0 }: NutritionP
     return (
         <ThemedCard style={{
             height: 200,
-            width: 225,
+            width: 375,
             justifyContent: 'flex-start', 
             alignItems: 'flex-start',     
             padding: 10,
