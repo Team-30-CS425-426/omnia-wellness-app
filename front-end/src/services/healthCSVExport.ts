@@ -1,7 +1,7 @@
  // code written by Daisy Madera
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
-import { HealthValue } from 'react-native-health';
+type HealthValue = { startDate: string; endDate: string; value: number };
 
 const fs = FileSystem as any;
 
