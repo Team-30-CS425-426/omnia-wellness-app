@@ -106,7 +106,7 @@ function Nutrition({ calories = 0, protein = 0, carbs = 0, fat = 0 }: NutritionP
                 <Text style={{
                     fontSize: 18, 
                     fontWeight: 'bold', 
-                    color: Colors.default.berryPurple,
+                    color: "#52357B",
                     marginBottom: 10 
                 }}>
                     Nutrition
@@ -119,7 +119,7 @@ function Nutrition({ calories = 0, protein = 0, carbs = 0, fat = 0 }: NutritionP
                     </View>
                     
                     <View style={styles.progressBarTrack}>
-                        <View style={[styles.progressBarFill, { width: `${calorieProgressPercent}%` }]} />
+                        <View style={[styles.progressBarFill, { width: `${calorieProgressPercent}%`, backgroundColor: "#52357B"}]} />
                     </View>
                     <Spacer height={10} />
 
@@ -128,7 +128,7 @@ function Nutrition({ calories = 0, protein = 0, carbs = 0, fat = 0 }: NutritionP
                         <Text style={styles.value}>{protein}g / {proteinGoal}g</Text>
                     </View>
                     <View style={styles.progressBarTrack}>
-                        <View style={[styles.progressBarFill, { width: `${proteinProgressPercent}%` }]} />
+                        <View style={[styles.progressBarFill, { width: `${proteinProgressPercent}%`, backgroundColor: "#5459AC" }]} />
                     </View>
                     <Spacer height={10} />
 
@@ -137,7 +137,7 @@ function Nutrition({ calories = 0, protein = 0, carbs = 0, fat = 0 }: NutritionP
                         <Text style={styles.value}>{carbs}g / {carbsGoal}g</Text>
                     </View>
                     <View style={styles.progressBarTrack}>
-                        <View style={[styles.progressBarFill, { width: `${carbsProgressPercent}%` }]} />
+                        <View style={[styles.progressBarFill, { width: `${carbsProgressPercent}%`, backgroundColor: "#648DB3" }]} />
                     </View>
                     <Spacer height={10} />
 
@@ -146,7 +146,7 @@ function Nutrition({ calories = 0, protein = 0, carbs = 0, fat = 0 }: NutritionP
                         <Text style={styles.value}>{fat}g / {fatGoal}g</Text>
                     </View>
                     <View style={styles.progressBarTrack}>
-                        <View style={[styles.progressBarFill, { width: `${fatProgressPercent}%` }]} />
+                        <View style={[styles.progressBarFill, { width: `${fatProgressPercent}%`, backgroundColor: "#B2D8CE" }]} />
                     </View>
                 </View>
             </View>

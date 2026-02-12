@@ -2,7 +2,7 @@
 export const Colors = {
 
   default:{
-  
+
   white: '#FFFFFF',
   
   lightGray: '#f7f7f7ff',
@@ -23,6 +23,14 @@ export const Colors = {
   
   errorRed: '#FF3B30',
 
-  pastelPink: '#FFC5D3'
+  pastelPink: '#FFC5D3',
+
+  oceanBlue: "#187498",
+
+  strongGreen: "#36AE7C",
+
+  mustardYellow: "#F9D923",
+
+  candyRed: "#EB5353"
   }
 };
