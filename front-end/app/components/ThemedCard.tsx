@@ -20,19 +20,23 @@ function ThemedCard({ style, color, children, ...props } : ThemedCardProps) {
         style
       ]} 
       {...props}
-    />
+    >
+      {children}
+    </Pressable>
   )
 }
 const styles = StyleSheet.create({
   cardBase: {
-    backgroundColor: Colors.default.primaryBlue,
+    backgroundColor: Colors.default.white,
     padding: 20,
     borderRadius: 20,
+    borderWidth: 1,
+    borderColor: Colors.default.mediumGray,
     marginVertical: 10,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
   },
   pressed: {
     opacity: 0.5
