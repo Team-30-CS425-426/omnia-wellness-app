@@ -3,7 +3,8 @@ import { StyleProp, Text, View, ViewStyle, Pressable  } from "react-native";
 import { router } from "expo-router";
 import { EntryContext } from "./dashboard";
 import { supabase } from "@/config/homeSupabaseConfig";
-
+import { Colors } from "../../../constants/Colors"
+import  ThemedCard  from "../ThemedCard"
 
 interface KeyStatsProps {
     style?: StyleProp<ViewStyle>;
@@ -50,9 +51,12 @@ export function KeyStats({ style, health  }: KeyStatsProps) {
     return (
         <View style={style}>
             <Text style={{
-                fontFamily: 'times',
-                fontSize: 20
-            }}>
+                    color: Colors.default.berryBlue,
+                    fontFamily: 'timesnewroman',
+                    fontWeight: 'bold',
+                    fontSize: 20,
+                    flex: 1
+                }}>
                 Key Stats
             </Text>
             <View style={{

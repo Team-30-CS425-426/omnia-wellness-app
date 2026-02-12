@@ -38,10 +38,10 @@ export function Metrics({ style, health  }: MetricsProps) {
             setMoodStress(d['moodstress'])
         }
         else {
-            setSleep('NaN')
-            setActivity('NaN')
-            setNutrition('NaN')
-            setMoodStress('NaN')
+            setSleep('')
+            setActivity('0')
+            setNutrition('0')
+            setMoodStress('0')
         }
     }
 
@@ -145,7 +145,7 @@ interface NutritionProps {
 
 function Nutrition({ value = "" }: NutritionProps) {
     return (
-        <MetricItem circleLabel={value} label="Nutrition" color="orange"/>
+        <MetricItem circleLabel={value} label="Steps" color="orange"/>
     )
 }
 
