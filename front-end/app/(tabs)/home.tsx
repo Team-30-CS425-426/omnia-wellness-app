@@ -1,6 +1,6 @@
-import { WellnessDashboards } from "@/components/home/dashboard";
-import Title from "@/components/home/title";
-import { supabase } from "@/config/homeSupabaseConfig";
+import { WellnessDashboards } from "../components/home/dashboard";
+import Title from "../components/home/title";
+//import { supabase } from "@/config/homeSupabaseConfig";
 import { useEffect } from "react";
 import { View, ScrollView, Pressable, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -38,25 +38,21 @@ export default function HomeScreen() {
 
       <View
         style={{
-          flexDirection: "row",
           alignItems: "center",
-          justifyContent: "space-between",
           paddingVertical: 20,
         }}
       >
-        <View style={{ flex: 1 }}>
-          <Title
-            style={{
-              justifyContent: "center",
-              alignItems: "center",
-            }}
-          />
-        </View>
-
-        <Pressable onPress={handleExport} hitSlop={10} style={{ padding: 8 }}>
-          <Ionicons name="download-outline" size={24} color="black" />
-        </Pressable>
+        <Title
+          style={{
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        />
       </View>
+
+      <Pressable onPress={handleExport} hitSlop={10} style={{ padding: 8, position: "absolute", top: 20, right: "0%", zIndex: 10 }}>
+        <Ionicons name="download-outline" size={24} color="black" />
+      </Pressable>
 
       <WellnessDashboards
         style={{
