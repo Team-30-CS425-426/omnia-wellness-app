@@ -1,8 +1,8 @@
-import { useContext, useEffect, useState } from "react"
-import { StyleProp, StyleSheet, Text, View, ViewStyle, Pressable } from "react-native";
+import { supabase } from "@/config/supabaseConfig";
 import { router } from "expo-router";
-import { EntryContext } from "./dashboard"
-import { supabase } from "@/config/supabaseConfig"
+import { useContext, useEffect, useState } from "react";
+import { Pressable, StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
+import { EntryContext } from "./dashboard";
 
 interface MetricsProps {
     style?: StyleProp<ViewStyle>;
@@ -58,7 +58,7 @@ export function Metrics({ style, health  }: MetricsProps) {
                 justifyContent: 'space-between',
                 alignItems: 'center'
             }}>
-                
+                {/* Sleep (clickable) */}
                 <View style={{ flex: 1, alignItems: 'center', paddingHorizontal: 0 }}>
                     <Pressable
                         onPress={() =>
@@ -74,9 +74,20 @@ export function Metrics({ style, health  }: MetricsProps) {
                 <View style={{ flex: 1, alignItems: 'center', paddingHorizontal: 0 }}>
                     <Activity value={activity}/>
                 </View>
+                {/* Steps (clickable) — replacing the old Nutrition slot */}
                 <View style={{ flex: 1, alignItems: 'center', paddingHorizontal: 0 }}>
-                    <Nutrition value={nutrition}/>
+                    <Pressable
+                        onPress={() =>
+                            router.push({
+                                pathname: "/health-details",
+                                params: { type: "steps" },
+                            } as any)
+                        }
+                        >
+                        <Steps value={String(stepsToday)} />
+                    </Pressable>
                 </View>
+
                 <View style={{ flex: 1, alignItems: 'center', paddingHorizontal: 0 }}>
                     <MoodStress value={moodstress}/>
                 </View>
@@ -138,12 +149,12 @@ function Activity({ value = "" }: ActivityProps) {
 }
 
 
-interface NutritionProps {
+interface StepsProps {
     value?: string
 }
 
 
-function Nutrition({ value = "" }: NutritionProps) {
+function Steps({ value = "" }: StepsProps) {
     return (
         <MetricItem circleLabel={value} label="Steps" color="#F9D923"/>
     )
