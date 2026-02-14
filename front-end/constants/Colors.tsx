@@ -16,9 +16,13 @@ export const Colors = {
   darkBlue: '#005BB5',
 
   berryPurple: '#984fd3',
+
+  berryBlue: '#6058aa',
   
   successGreen: '#34C759',
   
   errorRed: '#FF3B30',
+
+  pastelPink: '#FFC5D3'
   }
 };

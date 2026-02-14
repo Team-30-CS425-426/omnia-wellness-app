@@ -14,18 +14,24 @@ export default{
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.omnia.wellness"
+      "bundleIdentifier": "com.anonymous.front-end",
+      "infoPlist": {
+        "NSHealthShareUsageDescription": "Omnia reads your Health data (steps/sleep) to show your real-time wellness stats.",
+        "NSHealthUpdateUsageDescription": "Omnia can write workout data to Health when you log workouts."
+      }
+      
     },
     "android": {
+      "package": "com.anonymous.frontend",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
-      },
-      "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "backgroundColor": "#E6F4FE",
+      "foregroundImage": "./assets/images/android-icon-foreground.png",
+      "backgroundImage": "./assets/images/android-icon-background.png",
+      "monochromeImage": "./assets/images/android-icon-monochrome.png"
     },
+    "edgeToEdgeEnabled": true,
+    "predictiveBackGestureEnabled": false
+  },
     "web": {
       "output": "static",
       "favicon": "./assets/images/favicon.png"
@@ -45,8 +51,18 @@ export default{
           }
         }
       ],
-    "react-native-health"
+      [
+        "@kingstinct/react-native-healthkit",
+        {
+          NSHealthShareUsageDescription:
+            "Omnia reads your Health data (steps/sleep) to show your real-time wellness stats.",
+          NSHealthUpdateUsageDescription:
+            "Omnia can write wellness data to Health when you enable it.",
+          background: false
+        }
+      ]
     ],
+
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
@@ -56,8 +72,9 @@ export default{
       supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
       supabaseAnonKey: process.env.NEXT_ANON_SUPABASE_KEY,
       eas: {
-        projectId: "8c8c7da2-c0ef-4d51-a244-cd539683b50c"
+        projectId: "ec7eeaf2-3753-498d-ac68-0ff63bdab029"
       }
     }
+  
   }
 }

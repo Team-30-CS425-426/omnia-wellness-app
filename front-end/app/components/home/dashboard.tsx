@@ -1,4 +1,4 @@
-import { supabase } from "@/config/homeSupabaseConfig"
+import { supabase } from "@/config/supabaseConfig"
 import { createContext, useEffect, useState } from "react"
 import { StyleProp, View, ViewStyle, Text } from "react-native"
 import { DateDropDown } from "./dropdown"
@@ -27,23 +27,6 @@ export const EntryContext = createContext<any>(-1)
 export function WellnessDashboards({ style, health  }: WellnessDashboardsProps) {
     const [entryId, setEntryId] = useState(-1)
     const [dropdownItems, setDropdownItems] = useState<DailyEntry[]>([])
-
-    async function fetchDailyEntries() {
-        const response = await supabase
-            .from('DailyEntries')
-            .select()
-        if (response['error']) {
-            console.log(JSON.stringify(response['error']))
-            return;
-        }
-        else {
-            setDropdownItems(response['data']);
-        }
-    }
-    
-    useEffect(() => {
-        fetchDailyEntries()
-    }, [])
 
    return (
     <EntryContext.Provider value={{ entryId }}>

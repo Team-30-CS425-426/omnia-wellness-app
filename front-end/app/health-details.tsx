@@ -29,15 +29,16 @@ export default function HealthDetailsScreen() {
     }
   }, [range, health.isAuthorized]);
 
-  const rows = useMemo(() => {
+  const rows = useMemo((): { date: string; value: number }[] => {
     const data = isSteps ? health.stepsRange : health.sleepRange;
-
-    return (data || []).map((item: any) => {
+  
+    return (data || []).map((item) => {
       const date = String(item.startDate).slice(0, 10);
       const value = Number(item.value) || 0;
       return { date, value };
     });
   }, [isSteps, health.stepsRange, health.sleepRange]);
+  
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "white" }}>
