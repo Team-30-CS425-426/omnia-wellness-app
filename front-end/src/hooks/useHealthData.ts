@@ -4,9 +4,9 @@ import { useMemo, useState } from "react";
 import { Platform } from "react-native";
 
 import {
-  requestAuthorization,
-  queryQuantitySamples,
   queryCategorySamples,
+  queryQuantitySamples,
+  requestAuthorization,
 } from "@kingstinct/react-native-healthkit";
 
 import { exportHealthCsv } from "../services/healthCSVExport";
@@ -15,7 +15,7 @@ type DaysRange = 7 | 30;
 
 // SAME output shape as before (easy for UI + CSV):
 // startDate/endDate are "YYYY-MM-DD"
-type DayPoint = {
+export type DayPoint = {
   startDate: string;
   endDate: string;
   value: number;
@@ -28,16 +28,72 @@ type RawSample = {
   value: number;
 };
 
+type SleepSpan = { start: Date; end: Date } | null;
+
 const UI_DAYS_WINDOW: DaysRange = 7;
 const EXPORT_DAYS_WINDOW: DaysRange = 30;
 
 // --- helpers ---
-const isoDay = (d: Date) => d.toISOString().slice(0, 10);
+
+const localDay = (d: Date) => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+};
+const setTimeLocal = (d: Date, hour: number, minute = 0) =>
+  new Date(d.getFullYear(), d.getMonth(), d.getDate(), hour, minute, 0, 0);
+
+const startOfDayLocal = (d: Date) =>
+  new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
+
+const endOfDayLocal = (d: Date) =>
+  new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
+
+const addDaysLocal = (d: Date, n: number) => {
+  const x = new Date(d);
+  x.setDate(x.getDate() + n);
+  return x;
+};
+
+const toDate = (x: any): Date => {
+  if (x instanceof Date) return x;
+  const d = new Date(x);
+  return isNaN(d.getTime()) ? new Date() : d;
+};
+
+const getQuantityValue = (s: any): number => {
+  const v =
+    s?.quantity ??
+    s?.value ??
+    s?.quantityValue ??
+    s?.count ??
+    s?.sum ??
+    0;
+
+  return typeof v === "number" ? v : Number(v) || 0;
+};
+
+const keepMostRecentDays = (points: DayPoint[], n: DaysRange): DayPoint[] => {
+  return (points || []).slice(0, n);
+};
+
+const filterPointsToWindow = (
+  points: DayPoint[],
+  startDate: Date,
+  endDate: Date
+): DayPoint[] => {
+  const startKey = localDay(startDate);
+  const endkey = localDay(endDate);
+  return (points || []).filter(
+    (p) => p.startDate >= startKey && p.startDate <= endkey
+  );
+};
 
 const aggregateStepsByDate = (samples: RawSample[]): DayPoint[] => {
   const byDate: Record<string, number> = {};
   (samples || []).forEach((s) => {
-    const dateKey = isoDay(s.startDate);
+    const dateKey = localDay(s.startDate);
     byDate[dateKey] = (byDate[dateKey] || 0) + (Number(s.value) || 0);
   });
 
@@ -53,7 +109,7 @@ const aggregateStepsByDate = (samples: RawSample[]): DayPoint[] => {
 const aggregateSleepByDate = (samples: RawSample[]): DayPoint[] => {
   const byDate: Record<string, number> = {};
   (samples || []).forEach((s) => {
-    const dateKey = isoDay(s.startDate);
+    const dateKey = localDay(s.endDate);
     const durationHours =
       (s.endDate.getTime() - s.startDate.getTime()) / (1000 * 60 * 60);
     byDate[dateKey] = (byDate[dateKey] || 0) + durationHours;
@@ -67,26 +123,54 @@ const aggregateSleepByDate = (samples: RawSample[]): DayPoint[] => {
       value: byDate[dateKey],
     }));
 };
+const aggregateStepsByHourForDay = (samples: RawSample[], day: Date): number[] => {
+  const bins = new Array(24).fill(0);
+  const dayStart = startOfDayLocal(day);
+  const dayEnd = endOfDayLocal(day);
 
-// safest conversion (library may return Date or string depending on platform/version)
-const toDate = (x: any): Date => {
-  if (x instanceof Date) return x;
-  const d = new Date(x);
-  return isNaN(d.getTime()) ? new Date() : d;
+  (samples || []).forEach((s) => {
+    const st = s.startDate;
+    const en = s.endDate;
+
+    if (en < dayStart || st > dayEnd) return;
+
+    const hour = st.getHours();
+    bins[hour] += Number(s.value) || 0;
+  });
+  return bins.map((x) => (Number.isFinite(x) && x > 0 ? x : 0));
 };
 
-const getQuantityValue = (s: any): number => {
-  // different versions may name this differently
-  const v =
-    s?.quantity ??
-    s?.value ??
-    s?.quantityValue ??
-    s?.count ??
-    s?.sum ??
-    0;
+const aggregateSleepByHourForDay = (samples: RawSample[], day: Date): number[] => {
+  const bins = new Array(24).fill(0);
+  const dayStart = startOfDayLocal(day);
+  const dayEnd = endOfDayLocal(day);
 
-  return typeof v === "number" ? v : Number(v) || 0;
+  (samples || []).forEach((s) => {
+    // clamp sample to the day window
+    const st = s.startDate < dayStart ? dayStart : s.startDate;
+    const en = s.endDate > dayEnd ? dayEnd : s.endDate;
+
+    if (en <= dayStart || st >= dayEnd) return;
+    if (en <= st) return;
+
+    // add minutes into hour buckets
+    let cur = new Date(st);
+    while (cur < en) {
+      const hour = cur.getHours();
+      const nextHour = new Date(cur);
+      nextHour.setHours(hour + 1, 0, 0, 0);
+
+      const segEnd = nextHour < en ? nextHour : en;
+      const minutes = (segEnd.getTime() - cur.getTime()) / (1000 * 60);
+
+      bins[hour] += minutes;
+      cur = segEnd;
+    }
+  });
+
+  return bins.map((x) => (Number.isFinite(x) && x > 0 ? x : 0));
 };
+
 
 const useHealthData = () => {
   const [isAuthorized, setIsAuthorized] = useState(false);
@@ -97,6 +181,16 @@ const useHealthData = () => {
   const [rangeDays, setRangeDays] = useState<DaysRange>(7);
   const [stepsRange, setStepsRange] = useState<DayPoint[]>([]);
   const [sleepRange, setSleepRange] = useState<DayPoint[]>([]);
+
+  const [stepsDayBins, setStepsDayBins] = useState<number[]>(
+    new Array(24).fill(0)
+  );
+  const [sleepDayBins, setSleepDayBins] = useState<number[]>(
+    new Array(24).fill(0)
+  );
+  const [sleepDaySpan, setSleepDaySpan] = useState<{ start: Date; end: Date } | null>(null);
+
+  
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -115,7 +209,6 @@ const useHealthData = () => {
     }
 
     try {
-      //  New library expects an object { toRead, toWrite }
       const ok = await requestAuthorization({
         toRead: [
           "HKQuantityTypeIdentifierStepCount",
@@ -143,19 +236,22 @@ const useHealthData = () => {
   };
 
   const importLastDays = async (days: DaysRange) => {
-    const end = new Date();
-    const start = new Date();
-    start.setDate(end.getDate() - days);
+    const now = new Date();
 
-    console.log("[Health] importLastDays() range:", days, start, end);
+    const start = new Date(now);
+    start.setDate(now.getDate() - (days - 1));
+
+    const startDate = startOfDayLocal(start);
+    const endDate = now; 
+
+    console.log("[Health] importLastDays() range:", days, startDate, endDate);
 
     try {
-      // queryQuantitySamples(identifier, options)
       const stepSamples = await queryQuantitySamples(
         "HKQuantityTypeIdentifierStepCount" as any,
         {
-          startDate: start,
-          endDate: end,
+          startDate: startDate,
+          endDate: endDate,
           unit: "count",
           limit: 5000,
           sortOrder: "desc",
@@ -168,7 +264,14 @@ const useHealthData = () => {
         value: getQuantityValue(s),
       }));
 
-      const aggregatedSteps = aggregateStepsByDate(mappedSteps);
+      setStepsDayBins(aggregateStepsByHourForDay(mappedSteps, new Date()));
+
+      const aggregatedStepsAll = aggregateStepsByDate(mappedSteps);
+
+      const aggregatedSteps = keepMostRecentDays(
+        filterPointsToWindow(aggregatedStepsAll, startDate, endDate),
+        days
+      );
 
       if (days === 7) setSteps7d(aggregatedSteps);
       setStepsRange(aggregatedSteps);
@@ -177,8 +280,8 @@ const useHealthData = () => {
       const sleepSamples = await queryCategorySamples(
         "HKCategoryTypeIdentifierSleepAnalysis" as any,
         {
-          startDate: start,
-          endDate: end,
+          startDate: startDate,
+          endDate: endDate,
           limit: 5000,
           sortOrder: "desc",
         } as any
@@ -190,10 +293,46 @@ const useHealthData = () => {
         value: 1, // duration computed from start/end
       }));
 
-      const aggregatedSleep = aggregateSleepByDate(mappedSleep);
+      const sleepDay = addDaysLocal(startOfDayLocal(new Date()), -1); // yesterday (night before)
+      setSleepDayBins(aggregateSleepByHourForDay(mappedSleep, sleepDay));
+
+      // Apple-like "sleep day" window: (sleepDay-1) 10 PM -> (sleepDay) 10 AM
+      const windowStart = setTimeLocal(addDaysLocal(sleepDay, -1), 22, 0); // day before sleepDay at 10pm
+      const windowEnd = setTimeLocal(sleepDay, 10, 0); // sleepDay at 10am
+
+      let minStart: Date | null = null;
+      let maxEnd: Date | null = null;
+
+      (mappedSleep || []).forEach((s) => {
+        // must overlap the window
+        if (s.endDate <= windowStart || s.startDate >= windowEnd) return;
+
+        // clamp sample to window
+        const st = s.startDate < windowStart ? windowStart : s.startDate;
+        const en = s.endDate > windowEnd ? windowEnd : s.endDate;
+
+        if (en <= st) return;
+
+        if (!minStart || st < minStart) minStart = st;
+        if (!maxEnd || en > maxEnd) maxEnd = en;
+      });
+
+      setSleepDaySpan(minStart && maxEnd ? { start: minStart, end: maxEnd } : null);
+      console.log("[SleepSpan] sleepDay:", sleepDay);
+      console.log("[SleepSpan] window:", windowStart, windowEnd);
+      console.log("[SleepSpan] min/max:", minStart, maxEnd);
+      console.log("[SleepSpan] mappedSleep count:", mappedSleep.length);
+
+      const aggregatedSleepAll = aggregateSleepByDate(mappedSleep);
+
+      const aggregatedSleep = keepMostRecentDays(
+        filterPointsToWindow(aggregatedSleepAll, startDate, endDate),
+        days
+      );
 
       if (days === 7) setSleep7d(aggregatedSleep);
       setSleepRange(aggregatedSleep);
+
 
       setLoading(false);
     } catch (e: any) {
@@ -242,7 +381,11 @@ const useHealthData = () => {
     }
   };
 
-  const todayKey = new Date().toISOString().slice(0, 10);
+  const todayKey = localDay(new Date());
+  const yesterdayKey = localDay (new Date (Date.now() - 24 * 60 * 60 * 1000));
+
+  console.log("[Health] todayKey:", todayKey, "yesterdayKey:", yesterdayKey);
+  console.log("[Health] sleep7d dates:", sleep7d.map((x) => x.startDate));
 
   const stepsToday = useMemo(() => {
     const found = steps7d.find((x) => String(x.startDate).slice(0, 10) === todayKey);
@@ -251,10 +394,10 @@ const useHealthData = () => {
   }, [steps7d, todayKey]);
 
   const sleepToday = useMemo(() => {
-    const found = sleep7d.find((x) => String(x.startDate).slice(0, 10) === todayKey);
+    const found = sleep7d.find((x) => String(x.startDate).slice(0, 10) === yesterdayKey);
     const v = found?.value;
     return typeof v === "number" ? v : Number(v) || 0;
-  }, [sleep7d, todayKey]);
+  }, [sleep7d, yesterdayKey]);
 
   return {
     isAuthorized,
@@ -274,6 +417,10 @@ const useHealthData = () => {
     stepsRange,
     sleepRange,
     loadRange,
+
+    stepsDayBins,
+    sleepDayBins,
+    sleepDaySpan,
   };
 };
 
