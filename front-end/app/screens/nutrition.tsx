@@ -209,7 +209,6 @@ const NutritionScreen = () => {
               value={mealTime}
               mode="time"
               onChange={(event, selectedDate) => {
-                setShowTimePicker(false);
                 if (selectedDate) setMealTime(selectedDate);
               }}
             />
