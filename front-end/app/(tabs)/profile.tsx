@@ -49,10 +49,18 @@ const ProfilePage = () =>{
         setDeleteConfirmText('');
     }
 
-    const handleGoalSelect = (goalType: 'nutrition' | 'sleep' | 'physical-activity' | 'mood') => {
-        Alert.alert('Goal Type Selected', `You selected: ${goalType}`);
-        // TODO: Navigate to goal setting screen for the selected type
+    // profile.tsx - Update handleGoalSelect
+const handleGoalSelect = (goalType: 'nutrition' | 'sleep' | 'physical-activity' | 'mood') => {
+    // Navigate FIRST - new screen will cover the modal
+    if (goalType === 'nutrition'){
+      router.push('/screens/nutritionGoal');
     }
+    
+    // Close modal after navigation starts (it will be hidden by new screen)
+    setTimeout(() => {
+      setShowGoalModal(false);
+    }, 100);
+  };
 
     return (
         <ThemedView style = {[styles.container, { backgroundColor: Colors.default.lightGray }]}>

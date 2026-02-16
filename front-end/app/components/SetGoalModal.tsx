@@ -35,7 +35,6 @@ const SetGoalModal: React.FC<SetGoalModalProps> = ({
 }) => {
   const handleSelect = (goalType: 'nutrition' | 'sleep' | 'physical-activity' | 'mood') => {
     onSelect(goalType);
-    onClose();
   };
 
   const getIconColor = (goalType: 'nutrition' | 'sleep' | 'physical-activity' | 'mood') => {
@@ -58,6 +57,13 @@ const SetGoalModal: React.FC<SetGoalModalProps> = ({
       isVisible={isVisible}
       onBackdropPress={onClose}
       style={styles.modalStyle}
+      animationIn="fadeInUp"      // Smooth fade + slide up on open
+      animationOut="fadeOutDown"  // Smooth fade + slide down on close
+      animationInTiming={300}     // Duration for opening animation (ms)
+      animationOutTiming={300}    // Duration for closing animation (ms)
+      backdropTransitionInTiming={300}   // Backdrop fade in
+      backdropTransitionOutTiming={300}  // Backdrop fade out
+      useNativeDriver={true} 
     >
       <View style={styles.content}>
         <ThemedText style={styles.title}>What goal would you like to add?</ThemedText>
