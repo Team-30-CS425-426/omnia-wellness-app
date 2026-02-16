@@ -1,4 +1,4 @@
-import { useContext} from "react";
+import { useContext, useState, useEffect, useCallback} from "react";
 import { StyleProp, Text, View, ViewStyle, Pressable, StyleSheet } from "react-native";
 import { router } from "expo-router";
 import { EntryContext } from "./dashboard";
@@ -8,6 +8,9 @@ import ThemedCard from "../ThemedCard";
 import Spacer from "../Spacer";
 
 import { useNutritionStats } from "@/src/hooks/NutritionTotals";
+import { getUserNutritionGoals } from "@/src/services/nutritionGoalService";
+import { useUser } from "@/contexts/UserContext";
+import { useFocusEffect } from "@react-navigation/native";
 
 interface KeyStatsProps {
     style?: StyleProp<ViewStyle>;
@@ -84,11 +87,56 @@ interface NutritionProps {
 }
 
 function Nutrition({ calories = 0, protein = 0, carbs = 0, fat = 0 }: NutritionProps) {
-    const calorieGoal = 2000;
-    const proteinGoal = 150;
-    const carbsGoal = 200;
-    const fatGoal = 70;
+    const { user } = useUser();
+    const [goals, setGoals] = useState<{
+        calorie_goal: number;
+        protein_goal: number;
+        carb_goal: number;
+        fat_goal: number;
+    } | null>(null);
+    const [isLoadingGoals, setIsLoadingGoals] = useState(true);
+
     
+    useFocusEffect(
+        useCallback(() => {
+            async function fetchGoals() {
+                if (!user?.id) {
+                    return;
+                }
+    
+                try {
+                    const data = await getUserNutritionGoals(user.id);
+                    
+                    if (data) {
+                        setGoals({
+                            calorie_goal: data.calorie_goal || 2000,
+                            protein_goal: data.protein_goal || 150,
+                            carb_goal: data.carb_goal || 200,
+                            fat_goal: data.fat_goal || 65,
+                        });
+                    } else {
+                        setGoals({
+                            calorie_goal: 2000,
+                            protein_goal: 150,
+                            carb_goal: 200,
+                            fat_goal: 65,
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error fetching nutrition goals:', error);
+                }
+            }
+    
+            fetchGoals();
+        }, [user?.id])
+    );
+
+    // Use goals or defaults
+    const calorieGoal = goals?.calorie_goal || 2000;
+    const proteinGoal = goals?.protein_goal || 150;
+    const carbsGoal = goals?.carb_goal || 200;
+    const fatGoal = goals?.fat_goal || 65;
+
     const calorieProgressPercent = Math.min((calories / calorieGoal) * 100, 100);
     const proteinProgressPercent = Math.min((protein / proteinGoal) * 100, 100);
     const carbsProgressPercent = Math.min((carbs / carbsGoal) * 100, 100);
