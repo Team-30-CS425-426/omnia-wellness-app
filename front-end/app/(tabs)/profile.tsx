@@ -12,9 +12,11 @@ import Spacer from '../components/Spacer'
 import ThemedButton from '../components/ThemedButton'
 import { Colors } from '../../constants/Colors';
 import ConfirmDeleteModal from '../components/DeleteConfirmationModal';
+import SetGoalModal from '../components/SetGoalModal';
 import ThemedCard from '../components/ThemedCard';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Ionicons } from '@expo/vector-icons';
+import { Alert } from 'react-native';
 
 
 const ProfilePage = () =>{
@@ -24,14 +26,11 @@ const ProfilePage = () =>{
     const { logout, user, deleteAccount } = useUser();
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteConfirmText, setDeleteConfirmText] = useState('');
+    const [showGoalModal, setShowGoalModal] = useState(false);
 
     const handleLogout = async () => {
         await logout();
         router.replace('/');
-    }
-
-    const handleSetGoals = () => {
-        router.push('/screens/goals')
     }
 
     const handleDeleteAccount = async () =>{
@@ -48,6 +47,11 @@ const ProfilePage = () =>{
     const handleCloseModal = () => {
         setShowDeleteModal(false);
         setDeleteConfirmText('');
+    }
+
+    const handleGoalSelect = (goalType: 'nutrition' | 'sleep' | 'physical-activity' | 'mood') => {
+        Alert.alert('Goal Type Selected', `You selected: ${goalType}`);
+        // TODO: Navigate to goal setting screen for the selected type
     }
 
     return (
@@ -80,8 +84,7 @@ const ProfilePage = () =>{
             justifyContent: 'center', 
             alignItems: 'center',
             padding: 10}}
-
-            onPress={() => {console.log('Add clicked');}}>
+            onPress={() => setShowGoalModal(true)}>
                 
             <Ionicons 
                 name="add" 
@@ -107,6 +110,12 @@ const ProfilePage = () =>{
                 onConfirm={handleDeleteAccount}
                 confirmText={deleteConfirmText}
                 onChangeText={setDeleteConfirmText}
+            />
+
+            <SetGoalModal
+                isVisible={showGoalModal}
+                onClose={() => setShowGoalModal(false)}
+                onSelect={handleGoalSelect}
             />
         
         </ThemedView>
