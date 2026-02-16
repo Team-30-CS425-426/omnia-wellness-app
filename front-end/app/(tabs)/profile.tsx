@@ -27,6 +27,10 @@ const ProfilePage = () =>{
         router.replace('/');
     }
 
+    const handleSetGoals = () => {
+        router.push('/screens/goals')
+    }
+
     const handleDeleteAccount = async () =>{
         try{
             await deleteAccount();
@@ -44,9 +48,9 @@ const ProfilePage = () =>{
     }
 
     return (
-        <ThemedView style = {[styles.container, {paddingTop : totalTopPadding, paddingBottom: insets.bottom + 150}]}>
+        <ThemedView style = {[styles.container, {paddingTop : totalTopPadding + 25}]}>
             
-            <ThemedText title = {true}> Omnia </ThemedText>
+            <ThemedText title={true} gradient={true} gradientStart={{x:0, y: 0}} gradientEnd={{x:1, y:0}} gradientColors={[Colors.default.primaryBlue, Colors.default.berryPurple]}> Profile </ThemedText>
             <Spacer height={30} />
 
             <ThemedText style = {[styles.subHeader]}> Email: </ThemedText>
@@ -54,6 +58,11 @@ const ProfilePage = () =>{
 
             <ThemedText> {user?.email} </ThemedText>
             <Spacer height={40} />
+
+            <ThemedButton color = {Colors.default.strongGreen} onPress={handleSetGoals}>  
+                <ThemedText style={{color: Colors.default.white}} > Set Goals </ThemedText>
+            </ThemedButton>    
+            <Spacer height={30} />
 
             <ThemedButton onPress={handleLogout}>  
                 <ThemedText style={{color: Colors.default.white}} > Logout </ThemedText>
@@ -83,7 +92,7 @@ const styles = StyleSheet.create({
     container: {
         flex:1,
         alignItems:'center',
-        justifyContent:'center'
+        justifyContent:'flex-start'
     },
     subHeader:{ 
         fontWeight : '600',
