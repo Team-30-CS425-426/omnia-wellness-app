@@ -31,6 +31,8 @@ export const Colors = {
 
   strongGreen: "#36AE7C",
 
+  lightGreen: "#93c2b0",
+
   mustardYellow: "#F9D923",
 
   candyRed: "#EB5353",

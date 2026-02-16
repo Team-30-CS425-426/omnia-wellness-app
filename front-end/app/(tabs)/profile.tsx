@@ -12,6 +12,9 @@ import Spacer from '../components/Spacer'
 import ThemedButton from '../components/ThemedButton'
 import { Colors } from '../../constants/Colors';
 import ConfirmDeleteModal from '../components/DeleteConfirmationModal';
+import ThemedCard from '../components/ThemedCard';
+import { MaterialIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 
 
 const ProfilePage = () =>{
@@ -48,21 +51,45 @@ const ProfilePage = () =>{
     }
 
     return (
-        <ThemedView style = {[styles.container, {paddingTop : totalTopPadding + 25}]}>
-            
-            <ThemedText title={true} gradient={true} gradientStart={{x:0, y: 0}} gradientEnd={{x:1, y:0}} gradientColors={[Colors.default.primaryBlue, Colors.default.berryPurple]}> Profile </ThemedText>
-            <Spacer height={30} />
+        <ThemedView style = {[styles.container, { backgroundColor: Colors.default.lightGray }]}>
 
-            <ThemedText style = {[styles.subHeader]}> Email: </ThemedText>
+            <ThemedView style = {[styles.headerBar, {paddingTop : totalTopPadding + 20}]}>
+                <ThemedText title={true} 
+                    style = {{color: Colors.default.darkBlue}}> 
+                    Your Profile 
+                </ThemedText>
+            </ThemedView>
+
+            <Spacer height={15} />
+
+            <ThemedCard color = {Colors.default.white} style = {{height: 50, width: '90%', 
+                justifyContent: 'center',
+                 alignItems: 'center', 
+                 shadowColor: Colors.default.lightGray,
+                 borderColor: Colors.default.berryBlue,
+                 
+                 padding: 0}}>
+                <ThemedText style = {[styles.subHeader, {color: Colors.default.berryBlue}]}> Goals </ThemedText>
+            </ThemedCard>
+
+            <Spacer height={15} />
+
+            <ThemedCard style={{
+            height: 200,
+            width: '45%',
+            justifyContent: 'center', 
+            alignItems: 'center',
+            padding: 10}}
+
+            onPress={() => {console.log('Add clicked');}}>
+                
+            <Ionicons 
+                name="add" 
+                size={48} 
+                color={Colors.default.berryBlue}/>
+            </ThemedCard>
+
             <Spacer height={10} />
-
-            <ThemedText> {user?.email} </ThemedText>
-            <Spacer height={40} />
-
-            <ThemedButton color = {Colors.default.strongGreen} onPress={handleSetGoals}>  
-                <ThemedText style={{color: Colors.default.white}} > Set Goals </ThemedText>
-            </ThemedButton>    
-            <Spacer height={30} />
 
             <ThemedButton onPress={handleLogout}>  
                 <ThemedText style={{color: Colors.default.white}} > Logout </ThemedText>
@@ -96,6 +123,26 @@ const styles = StyleSheet.create({
     },
     subHeader:{ 
         fontWeight : '600',
-        fontSize : 24,
+        fontSize : 26
     },    
+    leftAlignedView: {
+        justifyContent: 'flex-start',
+        width: '100%',
+        paddingHorizontal: 20,
+    },
+    headerBar: {
+        width: '100%',
+        backgroundColor: Colors.default.white,  // Or any color you want,
+        paddingHorizontal: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
+        // Optional: Add border or shadow
+        borderBottomWidth: 1,
+        borderBottomColor: Colors.default.lightGray,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        // elevation: 3, // For Android shadow
+    },
 })
