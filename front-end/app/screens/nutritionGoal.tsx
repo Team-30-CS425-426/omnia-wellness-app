@@ -1,3 +1,26 @@
+/**
+ * nutritionGoal.tsx
+ * 
+ * GOAL-SETTING SCREEN for the Nutrition Goal system.
+ * This screen is presented when the user selects "Nutrition" from the SetGoalModal.
+ * 
+ * FLOW:
+ *   1. User arrives here via profile.tsx → SetGoalModal → handleGoalSelect('nutrition')
+ *      which routes to '/screens/nutritionGoal' (defined in GOAL_CONFIGS)
+ *   2. User fills in calorie, protein, carbs, and fat targets
+ *   3. User taps "Set Goal" → handleSave runs:
+ *      a. Parses and validates all numeric inputs
+ *      b. Checks if user is authenticated
+ *      c. Calls checkNutritionGoalExists() to prevent duplicates
+ *      d. Calls insertNutritionGoal() to save/upsert the goal in the database
+ *      e. Shows success alert, resets form, and navigates back to the profile page
+ *   4. After navigating back, profile.tsx's useFocusEffect re-fetches goals,
+ *      causing the new nutrition goal card to appear on the profile page
+ * 
+ * DEPENDENCIES:
+ *   - nutritionGoalService.ts: insertNutritionGoal(), checkNutritionGoalExists()
+ *   - UserContext: provides the authenticated user's ID
+ */
 
 import React, { useState, useLayoutEffect } from "react";
 import {
@@ -24,26 +47,39 @@ const NutritionScreen = () => {
 
   const { user } = useUser();
 
+  // Hide the default React Navigation header — this screen uses a custom header
   useLayoutEffect(() => {
     navigation.setOptions({ headerShown: false });
   }, [navigation]);
 
+  // Form state — each field is stored as a string for TextInput compatibility,
+  // then parsed to integers in handleSave before sending to the database
   const [calories, setCalories] = useState("");
   const [protein, setProtein] = useState("");
   const [carbs, setCarbs] = useState("");
   const [fat, setFat] = useState("");
 
 
-  // Async because we call Supabase
+  /**
+   * handleSave
+   * 
+   * Validates user input, checks for duplicate goals, and saves to Supabase.
+   * Async because it makes two database calls:
+   *   1. checkNutritionGoalExists() — prevents creating a second nutrition goal
+   *   2. insertNutritionGoal() — upserts the goal data into the 'nutritiongoals' table
+   * 
+   * On success: shows a confirmation alert, resets the form, and navigates back.
+   * On failure: shows an error alert and stays on the screen.
+   */
   const handleSave = async () => {
-    // Check required fields
 
+    // Parse string inputs to integers for database storage
     const parsedCalories = parseInt(calories, 10);
     const parsedProtein = parseInt(protein, 10);
     const parsedCarbs = parseInt(carbs, 10);
     const parsedFat = parseInt(fat, 10);
 
-    // Validate numeric input
+    // Validate: calories must be positive, macros must be non-negative
     if (
       isNaN(parsedCalories) || parsedCalories <= 0 ||
       isNaN(parsedProtein) || parsedProtein < 0 ||
@@ -54,12 +90,14 @@ const NutritionScreen = () => {
       return;
     }
 
-    // Ensure user is logged in 
+    // Ensure user is authenticated before making database calls
     if (!user?.id) {
       Alert.alert("Error", "User not authenticated.");
       return;
     }
 
+    // DUPLICATE CHECK: query the database to see if a nutrition goal already exists
+    // This prevents users from accidentally creating multiple nutrition goals
     try {
         const exists = await checkNutritionGoalExists(user.id);
         if (exists) {
@@ -71,6 +109,8 @@ const NutritionScreen = () => {
         return;
       }
       
+    // DATABASE INSERT: save the goal via nutritionGoalService
+    // insertNutritionGoal uses .upsert() so it will update if a row somehow already exists
     try {
         await insertNutritionGoal(user?.id, {
           calories: parsedCalories,
@@ -84,13 +124,13 @@ const NutritionScreen = () => {
           `Calories: ${parsedCalories}\nProtein: ${parsedProtein}g\nCarbs: ${parsedCarbs}g\nFat: ${parsedFat}g`
         );
     
-        // Reset form
+        // Reset form fields after successful save
         setCalories("");
         setProtein("");
         setCarbs("");
         setFat("");
         
-        // Navigate back
+        // Navigate back to the profile page — useFocusEffect there will re-fetch goals
         navigation.goBack();
       } catch (error: any) {
         Alert.alert("Error", error.message || "Failed to save nutrition goal");

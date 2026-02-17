@@ -1,3 +1,26 @@
+/**
+ * historicalNutritionData.tsx
+ * 
+ * HISTORICAL DATA SCREEN for the Nutrition Goal system.
+ * Displays a bar chart showing the user's calorie intake over the past 7 days.
+ * 
+ * FLOW:
+ *   1. User taps the Nutrition card on the home page (keystats.tsx)
+ *   2. keystats.tsx routes to '/screens/historicalNutritionData'
+ *   3. This screen fetches the last 7 days of nutrition logs via getNutritionHistory()
+ *   4. Data is transformed into bar chart format and rendered using react-native-gifted-charts
+ * 
+ * FEATURES:
+ *   - Dynamic bar sizing: bars automatically fill the screen width regardless of device size
+ *   - Gradient bars: each bar has a gradient from primaryBlue (bottom) to berryPurple (top)
+ *   - Interactive selection: tapping a bar highlights it with a different color
+ *   - Top labels: calorie value displayed above each bar
+ * 
+ * DEPENDENCIES:
+ *   - nutritionService.ts: getNutritionHistory() — fetches logged nutrition data
+ *   - react-native-gifted-charts: BarChart component for rendering the chart
+ */
+
 //Developed by Johan Ramirez
 import React, {useState, useCallback} from 'react'
 import { router } from 'expo-router';
@@ -19,9 +42,17 @@ const HistoricalNutritionData = () => {
     const insets = useSafeAreaInsets();
     const totalTopPadding = insets.top;
     const { user } = useUser();
+
+    // Stores the array of daily nutrition records fetched from the database
+    // Each entry has { date, calories, protein, carbs, fat }
     const [nutritionHistory, setNutritionHistory] = useState<any[]>([]);
+
+    // Tracks which bar the user has tapped (null = no selection)
+    // Used to change the selected bar's gradient color for visual feedback
     const [selectedBarIndex, setSelectedBarIndex] = useState<number | null>(null);
 
+    // Fetch nutrition history every time the screen comes into focus
+    // Uses 7-day lookback — change the number to show more/fewer days
     useFocusEffect(
         useCallback(() => {
             async function fetchHistory() {
@@ -37,23 +68,32 @@ const HistoricalNutritionData = () => {
         }, [user?.id])
     );
 
-    // Calculate dynamic bar sizing to fill screen width
+    // DYNAMIC BAR SIZING — calculates bar width and spacing so bars fill the screen
+    // Accounts for y-axis label space and chart padding
     const screenWidth = Dimensions.get('window').width;
-    const yAxisLabelWidth = 40;
-    const chartPadding = 20;
+    const yAxisLabelWidth = 40;   // approximate space for y-axis number labels
+    const chartPadding = 20;      // horizontal padding around the chart
     const numBars = nutritionHistory.length || 1;
-    const spacing = 12;
+    const spacing = 12;           // gap between bars
     const availableWidth = screenWidth - yAxisLabelWidth - chartPadding;
     const barWidth = Math.floor((availableWidth - (spacing * (numBars + 1))) / numBars);
 
-    // Transform data for react-native-gifted-charts
+    // Transform raw nutrition data into the format expected by react-native-gifted-charts
+    // Each bar gets a gradient (showGradient), a value label on top, and an onPress handler
+
     const barData = nutritionHistory.map((d, i) => ({
         value: d.calories,
-        label: d.date.slice(5),  // "MM-DD"
+        label: d.date.slice(5),  // "MM-DD" — strips the year for a compact x-axis label
         showGradient: true,
+        
+        // Gradient colors change when a bar is selected to provide visual feedback
         frontColor: selectedBarIndex === i ? Colors.default.berryPurple : Colors.default.primaryBlue,      // bottom of gradient
         gradientColor: selectedBarIndex === i ? Colors.default.berryPurple : Colors.default.berryPurple,   // top of gradient
+
+        // Toggle selection: tapping the same bar again deselects it
+        
         onPress: () => setSelectedBarIndex(selectedBarIndex === i ? null : i),
+        // Calorie value label displayed above each bar
         topLabelComponent: () => (
             <ThemedText style={{ fontSize: 10, color: Colors.default.berryBlue, marginBottom: 4 }}>
                 {d.calories}

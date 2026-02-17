@@ -1,3 +1,23 @@
+/**
+ * SetGoalModal.tsx
+ * 
+ * MODAL COMPONENT for the Goal system.
+ * Displays a popup with a 2x2 grid of goal categories (Nutrition, Sleep, Activity, Mood)
+ * that the user can tap to begin creating a new goal.
+ * 
+ * FLOW:
+ *   1. User taps the "+" card on the Profile page
+ *   2. This modal appears with animated fade-in
+ *   3. User taps a goal category (e.g. "Nutrition")
+ *   4. handleSelect fires, which calls onSelect(goalType) — passed down from profile.tsx
+ *   5. profile.tsx's handleGoalSelect receives the GoalType, looks up the route
+ *      in GOAL_CONFIGS, and navigates to the appropriate goal-setting screen
+ *   6. The modal closes after navigation begins
+ * 
+ * Currently, only "Nutrition" is fully implemented — the other categories
+ * show a "Coming Soon" alert (handled in profile.tsx's handleGoalSelect).
+ */
+
 //Developed by Johan Ramirez
 import React from 'react';
 import { StyleSheet, View, TouchableOpacity } from 'react-native';
@@ -13,7 +33,7 @@ type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 interface SetGoalModalProps {
   isVisible: boolean;
   onClose: () => void;
-  onSelect: (goalType: GoalType) => void;
+  onSelect: (goalType: GoalType) => void; // Callback to profile.tsx with the selected goal type
 }
 
 interface GoalOption {
@@ -22,6 +42,12 @@ interface GoalOption {
   icon: IoniconName;
 }
 
+/**
+ * GOAL_OPTIONS
+ * The list of goal categories displayed in the modal grid.
+ * Each option maps to a GoalType and provides a label + icon for the UI.
+ * When a new goal type is added, add a new entry here to make it appear in the modal.
+ */
 const GOAL_OPTIONS: GoalOption[] = [
   { type: 'nutrition', label: 'Nutrition', icon: 'restaurant-outline' },
   { type: 'sleep', label: 'Sleep', icon: 'bed-outline' },
@@ -34,6 +60,7 @@ const SetGoalModal: React.FC<SetGoalModalProps> = ({
   onClose,
   onSelect,
 }) => {
+  // Passes the selected goal type back up to profile.tsx for routing
   const handleSelect = (goalType: GoalType) => {
     onSelect(goalType);
   };
