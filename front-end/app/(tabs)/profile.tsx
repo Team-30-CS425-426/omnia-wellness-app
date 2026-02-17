@@ -1,8 +1,10 @@
 //Developed by Johan Ramirez
-import React, {useState} from 'react'
+import React, {useState, useEffect, useCallback} from 'react'
+import { useFocusEffect } from "@react-navigation/native";
 import { router } from 'expo-router';
-import {StyleSheet} from 'react-native'
+import {StyleSheet, View} from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { getUserNutritionGoals } from '../../src/services/nutritionGoalService';
 
 import { useUser } from '../../contexts/UserContext';
 
@@ -18,6 +20,92 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Ionicons } from '@expo/vector-icons';
 import { Alert } from 'react-native';
 
+// Define goal types
+type GoalType = 'nutrition' | 'sleep' | 'physical-activity' | 'mood';
+
+// Configuration for each goal type's display
+interface GoalDisplayConfig {
+    label: string;
+    icon: keyof typeof Ionicons.glyphMap;
+    color: string;
+    renderDetails: (goal: any) => React.ReactNode;
+}
+
+// Configuration map - add new goal types here
+const GOAL_CONFIGS: Record<GoalType, GoalDisplayConfig> = {
+    'nutrition': {
+        label: 'Nutrition Goal',
+        icon: 'restaurant',
+        color: Colors.default.white,
+        renderDetails: (goal) => (
+            <View style={styles.goalDetails}>
+                <ThemedText style={[styles.goalText, { color: Colors.default.strongGreen }]}>
+                    Calories: {goal.calorie_goal}
+                </ThemedText>
+                <ThemedText style={[styles.goalText, { color: Colors.default.strongGreen }]}>
+                    Protein: {goal.protein_goal}g
+                </ThemedText>
+                <ThemedText style={[styles.goalText, { color: Colors.default.strongGreen }]}>
+                    Carbs: {goal.carb_goal}g
+                </ThemedText>
+                <ThemedText style={[styles.goalText, { color: Colors.default.strongGreen }]}>
+                    Fat: {goal.fat_goal}g
+                </ThemedText>
+            </View>
+        )
+    },
+    'sleep': {
+        label: 'Sleep Goal',
+        icon: 'bed',
+        color: Colors.default.berryBlue,
+        renderDetails: (goal) => (
+            <View style={styles.goalDetails}>
+                <ThemedText style={styles.goalText}>
+                    Target Hours: {goal.target_hours}h
+                </ThemedText>
+                <ThemedText style={styles.goalText}>
+                    Bedtime: {goal.bedtime || 'Not set'}
+                </ThemedText>
+            </View>
+        )
+    },
+    'physical-activity': {
+        label: 'Activity Goal',
+        icon: 'barbell',
+        color: Colors.default.darkBlue,
+        renderDetails: (goal) => (
+            <View style={styles.goalDetails}>
+                <ThemedText style={styles.goalText}>
+                    Weekly: {goal.weekly_minutes || 0} min
+                </ThemedText>
+                <ThemedText style={styles.goalText}>
+                    Days/Week: {goal.days_per_week || 0}
+                </ThemedText>
+            </View>
+        )
+    },
+    'mood': {
+        label: 'Mood Goal',
+        icon: 'happy',
+        color: Colors.default.mustardYellow,
+        renderDetails: (goal) => (
+            <View style={styles.goalDetails}>
+                <ThemedText style={styles.goalText}>
+                    Target: {goal.target_mood || 'Not set'}
+                </ThemedText>
+                <ThemedText style={styles.goalText}>
+                    Check-ins: {goal.daily_checkins || 0}
+                </ThemedText>
+            </View>
+        )
+    }
+};
+
+// Generic goal structure
+interface UserGoal {
+    type: GoalType;
+    data: any; // The actual goal data (varies by type)
+}
 
 const ProfilePage = () =>{
     const insets = useSafeAreaInsets();
@@ -27,6 +115,54 @@ const ProfilePage = () =>{
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteConfirmText, setDeleteConfirmText] = useState('');
     const [showGoalModal, setShowGoalModal] = useState(false);
+
+    // Generic goals array - can hold any goal type
+    const [userGoals, setUserGoals] = useState<UserGoal[]>([]);
+
+    // Fetch all goals
+    const fetchAllGoals = useCallback(async () => {
+        if (!user?.id) return;
+        
+        const goals: UserGoal[] = [];
+
+        // Fetch nutrition goal
+        try {
+            const nutritionData = await getUserNutritionGoals(user.id);
+            if (nutritionData) {
+                goals.push({
+                    type: 'nutrition',
+                    data: nutritionData
+                });
+            }
+        } catch (error) {
+            // No nutrition goal exists - that's okay
+        }
+
+        // TODO: Add fetchers for other goal types as you implement them
+        // Example for sleep goals:
+        // try {
+        //     const sleepData = await getUserSleepGoals(user.id);
+        //     if (sleepData) {
+        //         goals.push({ type: 'sleep', data: sleepData });
+        //     }
+        // } catch (error) {
+        //     // No sleep goal exists
+        // }
+
+        setUserGoals(goals);
+    }, [user?.id]);
+
+    // Fetch on mount
+    useEffect(() => {
+        fetchAllGoals();
+    }, [fetchAllGoals]);
+
+    // Refetch when screen comes into focus (after creating a new goal)
+    useFocusEffect(
+        useCallback(() => {
+            fetchAllGoals();
+        }, [fetchAllGoals])
+    );
 
     const handleLogout = async () => {
         await logout();
@@ -49,18 +185,61 @@ const ProfilePage = () =>{
         setDeleteConfirmText('');
     }
 
-    // profile.tsx - Update handleGoalSelect
-const handleGoalSelect = (goalType: 'nutrition' | 'sleep' | 'physical-activity' | 'mood') => {
-    // Navigate FIRST - new screen will cover the modal
-    if (goalType === 'nutrition'){
-      router.push('/screens/nutritionGoal');
-    }
-    
-    // Close modal after navigation starts (it will be hidden by new screen)
-    setTimeout(() => {
-      setShowGoalModal(false);
-    }, 100);
-  };
+    const handleGoalSelect = (goalType: 'nutrition' | 'sleep' | 'physical-activity' | 'mood') => {
+        // Navigate to appropriate screen
+        if (goalType === 'nutrition'){
+            router.push('/screens/nutritionGoal');
+        } else if (goalType === 'sleep'){
+            router.push('/screens/sleepGoal');
+        } else if (goalType === 'physical-activity'){
+            router.push('/screens/workoutGoal');
+        } else if (goalType === 'mood'){
+            router.push('/screens/moodStressGoal');
+        }
+        
+        // Close modal after navigation starts
+        setTimeout(() => {
+            setShowGoalModal(false);
+        }, 100);
+    };
+
+    // Render a goal card dynamically
+    const renderGoalCard = (goal: UserGoal) => {
+        const config = GOAL_CONFIGS[goal.type];
+        const isNutrition = goal.type === 'nutrition';
+        const textColor = isNutrition ? Colors.default.strongGreen : Colors.default.white;
+        const iconColor = isNutrition ? Colors.default.strongGreen : Colors.default.white;
+        const borderColor = isNutrition ? Colors.default.strongGreen : undefined;
+        
+        return (
+            <ThemedCard 
+                key={goal.type}
+                color={config.color}
+                style={[
+                    styles.goalCard,
+                    borderColor && { borderWidth: 2, borderColor: borderColor }
+                ]}
+            >
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+                    <Ionicons 
+                        name={config.icon} 
+                        size={20} 
+                        color={iconColor}
+                        style={{ marginRight: 10 }}
+                    />
+                    <ThemedText style={{ 
+                        fontSize: 16, 
+                        fontWeight: 'bold',
+                        color: textColor 
+                    }}>
+                        {config.label}
+                    </ThemedText>
+                </View>
+                
+                {config.renderDetails(goal.data)}
+            </ThemedCard>
+        );
+    };
 
     return (
         <ThemedView style = {[styles.container, { backgroundColor: Colors.default.lightGray }]}>
@@ -86,19 +265,23 @@ const handleGoalSelect = (goalType: 'nutrition' | 'sleep' | 'physical-activity' 
 
             <Spacer height={15} />
 
-            <ThemedCard style={{
-            height: 200,
-            width: '45%',
-            justifyContent: 'center', 
-            alignItems: 'center',
-            padding: 10}}
-            onPress={() => setShowGoalModal(true)}>
-                
-            <Ionicons 
-                name="add" 
-                size={48} 
-                color={Colors.default.berryBlue}/>
-            </ThemedCard>
+            {/* Container for goal cards - allows 2 cards per row */}
+            <View style={styles.goalsContainer}>
+                {/* Display all existing goals dynamically */}
+                {userGoals.map(goal => renderGoalCard(goal))}
+
+                {/* Add Goal Card */}
+                <ThemedCard 
+                    style={styles.addGoalCard}
+                    onPress={() => setShowGoalModal(true)}
+                >
+                    <Ionicons 
+                        name="add" 
+                        size={48} 
+                        color={Colors.default.berryBlue}
+                    />
+                </ThemedCard>
+            </View>
 
             <Spacer height={10} />
 
@@ -149,17 +332,47 @@ const styles = StyleSheet.create({
     },
     headerBar: {
         width: '100%',
-        backgroundColor: Colors.default.white,  // Or any color you want,
+        backgroundColor: Colors.default.white,
         paddingHorizontal: 20,
         alignItems: 'center',
         justifyContent: 'center',
-        // Optional: Add border or shadow
         borderBottomWidth: 1,
         borderBottomColor: Colors.default.lightGray,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
-        // elevation: 3, // For Android shadow
+    },
+    goalsContainer: {
+        width: '90%',
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'center',
+        gap: 10,
+    },
+    goalCard: {
+        height: 200,
+        width: '45%',
+        padding: 10,
+        marginBottom: 10,
+    },
+    addGoalCard: {
+        height: 200,
+        width: '45%',
+        justifyContent: 'center', 
+        alignItems: 'center',
+        padding: 10,
+        marginBottom: 10,
+    },
+    goalDetails: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between',
+    },
+    goalText: {
+        fontSize: 16,
+        color: Colors.default.white,
+        marginVertical: 4,
+        width: '48%',
     },
 })
