@@ -12,6 +12,11 @@ import { getUserNutritionGoals } from "@/src/services/nutritionGoalService";
 import { useUser } from "@/contexts/UserContext";
 import { useFocusEffect } from "@react-navigation/native";
 
+const handleHistoricalNutritionData = () => {
+    console.log('button pressed');
+    router.push('/screens/historicalNutritionData');
+}
+
 interface KeyStatsProps {
     style?: StyleProp<ViewStyle>;
 }
@@ -107,7 +112,8 @@ function Nutrition({ calories = 0, protein = 0, carbs = 0, fat = 0 }: NutritionP
     const fatProgressPercent = Math.min((fat / fatGoal) * 100, 100);
 
     return (
-        <ThemedCard style={{
+        <ThemedCard  onPress={() => handleHistoricalNutritionData()} 
+        style={{
             height: 200,
             width: 375,
             justifyContent: 'flex-start', 

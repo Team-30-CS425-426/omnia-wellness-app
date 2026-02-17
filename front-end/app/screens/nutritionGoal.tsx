@@ -1,4 +1,3 @@
-// code written by Alexis Mae Asuncion
 
 import React, { useState, useLayoutEffect } from "react";
 import {
