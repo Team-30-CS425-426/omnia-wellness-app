@@ -250,19 +250,6 @@ const ProfilePage = () =>{
                     Your Profile 
                 </ThemedText>
             </ThemedView>
-
-            <Spacer height={15} />
-
-            <ThemedCard color = {Colors.default.white} style = {{height: 50, width: '90%', 
-                justifyContent: 'center',
-                 alignItems: 'center', 
-                 shadowColor: Colors.default.lightGray,
-                 borderColor: Colors.default.berryBlue,
-                 
-                 padding: 0}}>
-                <ThemedText style = {[styles.subHeader, {color: Colors.default.berryBlue}]}> Goals </ThemedText>
-            </ThemedCard>
-
             <Spacer height={15} />
 
             {/* Container for goal cards - allows 2 cards per row */}
