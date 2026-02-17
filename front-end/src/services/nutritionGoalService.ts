@@ -39,6 +39,17 @@ export type NutritionGoalInput = {
  * @param userId - The authenticated user's ID
  * @returns true if a goal already exists, false otherwise
  */
+
+export async function deleteNutritionGoal(userId: string){
+  const { error } = await supabase
+    .from('nutritiongoals')
+    .delete()
+    .eq('userid', userId)
+  
+  if (error) throw error;
+}
+
+
 export async function checkNutritionGoalExists(userId: string): Promise<boolean> {
     const { data, error } = await supabase
       .from('nutritiongoals')
@@ -72,6 +83,8 @@ export async function checkNutritionGoalExists(userId: string): Promise<boolean>
         protein_goal: nutritionData.protein,
         fat_goal: nutritionData.fat,
         carb_goal: nutritionData.carbs
+      },{
+        onConflict: 'userid',
       })
       .select()
       .single();

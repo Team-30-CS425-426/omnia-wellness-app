@@ -35,7 +35,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import { router } from 'expo-router';
 import {Alert, StyleSheet, View} from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { getUserNutritionGoals } from '../../src/services/nutritionGoalService';
+import { deleteNutritionGoal, getUserNutritionGoals } from '../../src/services/nutritionGoalService';
 import { useUser } from '../../contexts/UserContext';
 import ThemedView from '../components/ThemedView'
 import ThemedText from '../components/ThemedText'
@@ -47,6 +47,7 @@ import SetGoalModal from '../components/SetGoalModal';
 import ThemedCard from '../components/ThemedCard';
 import { Ionicons } from '@expo/vector-icons';
 import { GoalType, GOAL_CONFIGS, UserGoal } from '../../constants/goalConfigs';
+import EditModal from '../components/editModal';
 
 const ProfilePage = () =>{
     const insets = useSafeAreaInsets();
@@ -56,6 +57,8 @@ const ProfilePage = () =>{
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteConfirmText, setDeleteConfirmText] = useState('');
     const [showGoalModal, setShowGoalModal] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [selectedGoal, setSelectedGoal] = useState<UserGoal | null>(null);
 
     // Stores all of the user's active goals (nutrition, sleep, etc.)
     // Each entry is a UserGoal { type: GoalType, data: database row }
@@ -144,6 +147,7 @@ const ProfilePage = () =>{
     const handleGoalSelect = (goalType: GoalType) => {
 
         // Guard: only nutrition is implemented — other types show an alert
+        
         if (goalType !== 'nutrition') {
             Alert.alert('coming Soon!', 'Only nutrition goals are currently supported');
             return;
@@ -159,6 +163,29 @@ const ProfilePage = () =>{
         }, 100);
     };
 
+    const handleEditGoal = () => {
+        if (!selectedGoal) return;
+        const config = GOAL_CONFIGS[selectedGoal.type];
+        router.push(`${config.route}?mode=edit` as any);
+        
+        // Close modal after a brief delay to prevent visual flicker during navigation
+        setTimeout(() => {
+            setShowEditModal(false);
+        }, 100);
+    }
+
+
+    const handleDeleteGoal = async () => {
+        if (!user?.id) return;
+        try {
+            await deleteNutritionGoal(user.id);
+            setShowEditModal(false);
+            fetchAllGoals();
+        } catch (error) {
+            console.error("Error:", error);
+            alert('Failed to delete goal. Please try again')
+        }
+    }
     /**
      * renderGoalCard
      * 
@@ -178,6 +205,7 @@ const ProfilePage = () =>{
         
         return (
             <ThemedCard 
+                onPress={() => {setShowEditModal(true); setSelectedGoal(goal);}}
                 key={goal.type}
                 color={config.color}
                 style={[
@@ -238,6 +266,12 @@ const ProfilePage = () =>{
             </ThemedButton>    
             <Spacer height={30} />
         
+            <EditModal
+                isVisible={showEditModal}
+                onClose={() => setShowEditModal(false)}
+                onConfirm={() => handleEditGoal()}
+                onDelete={() => handleDeleteGoal()}
+            />
             <ConfirmDeleteModal
                 isVisible={showDeleteModal}
                 onClose={handleCloseModal}

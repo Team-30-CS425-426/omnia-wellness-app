@@ -116,20 +116,20 @@ export const GOAL_CONFIGS: Record<GoalType, GoalConfig> = {
         label: 'Nutrition Goal',
         icon: 'restaurant',
         color: Colors.default.white,
-        textColor: Colors.default.strongGreen,
+        textColor: Colors.default.successGreen,
         route: '/screens/nutritionGoal',
         renderDetails: (goal) => (
             <View style={goalDetailStyles.goalDetails}>
-                <ThemedText style={[goalDetailStyles.goalText, { color: Colors.default.strongGreen }]}>
+                <ThemedText style={[goalDetailStyles.goalText, { color: Colors.default.successGreen }]}>
                     Calories: {goal.calorie_goal}
                 </ThemedText>
-                <ThemedText style={[goalDetailStyles.goalText, { color: Colors.default.strongGreen }]}>
+                <ThemedText style={[goalDetailStyles.goalText, { color: Colors.default.successGreen }]}>
                     Protein: {goal.protein_goal}g
                 </ThemedText>
-                <ThemedText style={[goalDetailStyles.goalText, { color: Colors.default.strongGreen }]}>
+                <ThemedText style={[goalDetailStyles.goalText, { color: Colors.default.successGreen }]}>
                     Carbs: {goal.carb_goal}g
                 </ThemedText>
-                <ThemedText style={[goalDetailStyles.goalText, { color: Colors.default.strongGreen }]}>
+                <ThemedText style={[goalDetailStyles.goalText, { color: Colors.default.successGreen }]}>
                     Fat: {goal.fat_goal}g
                 </ThemedText>
             </View>

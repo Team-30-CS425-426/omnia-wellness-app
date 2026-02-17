@@ -37,15 +37,18 @@ import {
 } from "react-native";
 
 import { useNavigation } from "@react-navigation/native";
+import { useLocalSearchParams } from 'expo-router';
 
 import { useUser } from "../../contexts/UserContext";
 
 import { insertNutritionGoal, checkNutritionGoalExists } from "../../src/services/nutritionGoalService";
 
 const NutritionScreen = () => {
+  
   const navigation = useNavigation();
 
   const { user } = useUser();
+  const { mode } = useLocalSearchParams<{ mode?: string }>();
 
   // Hide the default React Navigation header — this screen uses a custom header
   useLayoutEffect(() => {
@@ -78,6 +81,7 @@ const NutritionScreen = () => {
     const parsedProtein = parseInt(protein, 10);
     const parsedCarbs = parseInt(carbs, 10);
     const parsedFat = parseInt(fat, 10);
+    
 
     // Validate: calories must be positive, macros must be non-negative
     if (
@@ -98,16 +102,18 @@ const NutritionScreen = () => {
 
     // DUPLICATE CHECK: query the database to see if a nutrition goal already exists
     // This prevents users from accidentally creating multiple nutrition goals
-    try {
-        const exists = await checkNutritionGoalExists(user.id);
-        if (exists) {
-          Alert.alert("Error", "Nutrition goal already exists.");
+    if (mode !== 'edit') {
+      try {
+          const exists = await checkNutritionGoalExists(user.id);
+          if (exists) {
+            Alert.alert("Error", "Nutrition goal already exists.");
+            return;
+          }
+        } catch (error) {
+          Alert.alert("Error", "Failed to check nutrition goal existence.");
           return;
         }
-      } catch (error) {
-        Alert.alert("Error", "Failed to check nutrition goal existence.");
-        return;
-      }
+    }
       
     // DATABASE INSERT: save the goal via nutritionGoalService
     // insertNutritionGoal uses .upsert() so it will update if a row somehow already exists

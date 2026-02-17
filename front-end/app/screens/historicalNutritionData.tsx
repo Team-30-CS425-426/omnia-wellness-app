@@ -149,7 +149,8 @@ const HistoricalNutritionData = () => {
                             rulesColor={Colors.default.mediumGray}
                             rulesType="dashed"
                             hideRules={false}
-                            isAnimated = {false}
+                            isAnimated = {true}
+                            animationDuration={1000}
                         />
                     </View>
                 )}

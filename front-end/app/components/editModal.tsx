@@ -28,19 +28,6 @@ import ThemedText from './ThemedText';
 import Spacer from './Spacer';
 import { GoalType, getIconColor } from '@/constants/goalConfigs';
 
-type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
-
-interface SetGoalModalProps {
-  isVisible: boolean;
-  onClose: () => void;
-  onSelect: (goalType: GoalType) => void; // Callback to profile.tsx with the selected goal type
-}
-
-interface GoalOption {
-  type: GoalType;
-  label: string;
-  icon: IoniconName;
-}
 
 /**
  * GOAL_OPTIONS
@@ -48,23 +35,28 @@ interface GoalOption {
  * Each option maps to a GoalType and provides a label + icon for the UI.
  * When a new goal type is added, add a new entry here to make it appear in the modal.
  */
-const GOAL_OPTIONS: GoalOption[] = [
-  { type: 'nutrition', label: 'Nutrition', icon: 'restaurant-outline' },
-  { type: 'sleep', label: 'Sleep', icon: 'bed-outline' },
-  { type: 'physical-activity', label: 'Physical Activity', icon: 'barbell-outline' },
-  { type: 'mood', label: 'Mood', icon: 'happy-outline' },
-];
 
-const SetGoalModal: React.FC<SetGoalModalProps> = ({
+interface EditModalProps {
+  isVisible: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  onDelete: () => void;
+}
+
+const EditModal: React.FC<EditModalProps> = ({
   isVisible,
   onClose,
-  onSelect,
+  onConfirm,
+  onDelete
 }) => {
-  // Passes the selected goal type back up to profile.tsx for routing
-  const handleSelect = (goalType: GoalType) => {
-    onSelect(goalType);
-  };
+    const handleYes = () => {
+        onConfirm();
+    };
 
+    const handleDelete = () => {
+        onDelete();
+    };
+  // Passes the selected goal type back up to profile.tsx for routing
   return (
     <Modal
       isVisible={isVisible}
@@ -79,25 +71,16 @@ const SetGoalModal: React.FC<SetGoalModalProps> = ({
       useNativeDriver={true} 
     >
       <View style={styles.content}>
-        <ThemedText style={styles.title}>What goal would you like to add?</ThemedText>
+        <ThemedText style={styles.title}>What would you like to do?</ThemedText>
         <Spacer height={20} />
         
-        <View style={styles.grid}>
-          {GOAL_OPTIONS.map((option) => (
-            <TouchableOpacity
-              key={option.type}
-              style={styles.gridItem}
-              onPress={() => handleSelect(option.type)}
-            >
-              <Ionicons 
-                name={option.icon} 
-                size={40} 
-                color={getIconColor(option.type)} 
-              />
-              <Spacer height={8} />
-              <ThemedText style={styles.gridLabel}>{option.label}</ThemedText>
+        <View style={[styles.grid, { marginHorizontal: 20, gap: 10 }]}>
+            <TouchableOpacity style={styles.yesButton} onPress={handleYes}>
+            <ThemedText style={styles.buttonText}>Edit Goal</ThemedText>
             </TouchableOpacity>
-          ))}
+            <TouchableOpacity style={styles.noButton} onPress={handleDelete}>
+            <ThemedText style={styles.buttonText}>Delete Goal</ThemedText>
+            </TouchableOpacity>
         </View>
       </View>
     </Modal>
@@ -120,6 +103,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 20,
+    fontWeight: 'bold',
     color: '#000000',
     textAlign: 'center',
   },
@@ -128,6 +112,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     width: '100%',
+    marginHorizontal: 20,
   },
   gridItem: {
     width: '48%',
@@ -141,10 +126,29 @@ const styles = StyleSheet.create({
   },
   gridLabel: {
     fontSize: 16,
-    fontWeight: '400',
+    fontWeight: '600',
     color: '#000000',
     textAlign: 'center',
   },
+  yesButton: {
+    flex: 1,
+    backgroundColor: Colors.default.primaryBlue,
+    padding: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  noButton: {
+    flex: 1,
+    backgroundColor: Colors.default.errorRed,
+    padding: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: Colors.default.white,
+    fontWeight: '600',
+    fontSize: 16,
+  },
 });
 
-export default SetGoalModal;
+export default EditModal;
