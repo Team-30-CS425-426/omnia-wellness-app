@@ -14,17 +14,15 @@ export async function checkNutritionGoalExists(userId: string): Promise<boolean>
       .from('nutritiongoals')
       .select('id')
       .eq('userid', userId)
-      .single();
+      .maybeSingle();
     
     return !!data; // Returns true if goal exists
   }
 
-
-
   export async function insertNutritionGoal(userId: string, nutritionData: NutritionGoalInput) {
     const { data, error } = await supabase
       .from('nutritiongoals')
-      .insert({
+      .upsert({
         userid: userId,
         calorie_goal: nutritionData.calories,
         protein_goal: nutritionData.protein,
@@ -43,7 +41,7 @@ export async function getUserNutritionGoals(userId: string) {
     .from('nutritiongoals')
     .select('*')
     .eq('userid', userId)
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data;

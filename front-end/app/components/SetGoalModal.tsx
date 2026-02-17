@@ -6,17 +6,18 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/Colors';
 import ThemedText from './ThemedText';
 import Spacer from './Spacer';
+import { GoalType, getIconColor } from '@/constants/goalConfigs';
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 
 interface SetGoalModalProps {
   isVisible: boolean;
   onClose: () => void;
-  onSelect: (goalType: 'nutrition' | 'sleep' | 'physical-activity' | 'mood') => void;
+  onSelect: (goalType: GoalType) => void;
 }
 
 interface GoalOption {
-  type: 'nutrition' | 'sleep' | 'physical-activity' | 'mood';
+  type: GoalType;
   label: string;
   icon: IoniconName;
 }
@@ -33,23 +34,8 @@ const SetGoalModal: React.FC<SetGoalModalProps> = ({
   onClose,
   onSelect,
 }) => {
-  const handleSelect = (goalType: 'nutrition' | 'sleep' | 'physical-activity' | 'mood') => {
+  const handleSelect = (goalType: GoalType) => {
     onSelect(goalType);
-  };
-
-  const getIconColor = (goalType: 'nutrition' | 'sleep' | 'physical-activity' | 'mood') => {
-    switch (goalType) {
-      case 'nutrition':
-        return Colors.default.strongGreen;
-      case 'sleep':
-        return Colors.default.berryBlue;
-      case 'physical-activity':
-        return Colors.default.darkBlue;
-      case 'mood':
-        return Colors.default.mustardYellow;
-      default:
-        return Colors.default.berryBlue;
-    }
   };
 
   return (

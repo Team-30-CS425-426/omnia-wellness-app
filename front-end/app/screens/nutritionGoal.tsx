@@ -118,9 +118,6 @@ const NutritionScreen = () => {
           {/* Page Title */}
           <Text style={styles.pageTitle}>Set Your Nutrition Goal</Text>
 
-
-          <Text style={styles.sectionLabel}>What's Your Caloric Goal?</Text>
-
           {/* Calories */}
           <Text style={styles.sectionLabel}>Calories</Text>
           <TextInput
@@ -228,27 +225,6 @@ const styles = StyleSheet.create({
     marginVertical: 10 
   },
 
-  mealContainer: { 
-    flexDirection: "row", 
-    flexWrap: "wrap", 
-    justifyContent: "space-between", 
-    marginBottom: 20 
-  },
-
-  mealButton: { 
-    width: "48%", 
-    padding: 12, 
-    marginBottom: 10, 
-    borderWidth: 1, 
-    borderColor: "#ccc", 
-    borderRadius: 10, 
-    alignItems: "center" 
-  },
-
-  mealSelected: { 
-    backgroundColor: "#E0F0FF", 
-    borderColor: "#007AFF" 
-  },
 
   input: { 
     borderWidth: 1, 
@@ -274,24 +250,6 @@ const styles = StyleSheet.create({
     fontSize: 14, 
     fontWeight: "500", 
     marginBottom: 5 
-  },
-
-  timeInput: { 
-    borderWidth: 1, 
-    borderColor: "#ccc", 
-    borderRadius: 8, 
-    padding: 12, 
-    marginBottom: 20 
-  },
-
-  notesInput: { 
-    borderWidth: 1, 
-    borderColor: "#ccc", 
-    borderRadius: 8, 
-    padding: 10, 
-    height: 80, 
-    marginBottom: 20, 
-    textAlignVertical: "top" 
   },
 
   saveButton: { 

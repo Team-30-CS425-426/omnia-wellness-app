@@ -1,7 +1,7 @@
-import { useContext, useState, useEffect, useCallback} from "react";
+import {  useState, useCallback} from "react";
 import { StyleProp, Text, View, ViewStyle, Pressable, StyleSheet } from "react-native";
 import { router } from "expo-router";
-import { EntryContext } from "./dashboard";
+
 
 import { Colors } from "../../../constants/Colors";
 import ThemedCard from "../ThemedCard";
@@ -14,11 +14,10 @@ import { useFocusEffect } from "@react-navigation/native";
 
 interface KeyStatsProps {
     style?: StyleProp<ViewStyle>;
-    health: any;
 }
 
-export function KeyStats({ style, health }: KeyStatsProps) {
-   const { nutrition, isLoading, error } = useNutritionStats();
+export function KeyStats({ style }: KeyStatsProps) {
+   const { nutrition } = useNutritionStats();
     return (
         <View style={style}>
             <Text style={{
@@ -41,41 +40,8 @@ export function KeyStats({ style, health }: KeyStatsProps) {
                     carbs={nutrition.carbs} 
                     fat={nutrition.fat}
                 />
-                <Pressable
-                    onPress={() =>
-                        router.push({
-                            pathname: "/health-details",
-                            params: { type: "steps" },
-                        } as any)
-                    }
-                >
-                </Pressable>
             </View>
         </View>
-    );
-}
-
-interface KeyStatsItemProps {
-    label?: string;
-    content?: string;
-}
-
-function KeyStatsItem({ label, content }: KeyStatsItemProps) {
-    return (
-        <ThemedCard style={{
-            height: 120,
-            width: 220,
-            justifyContent: 'center',
-            alignItems: 'center',
-            paddingVertical: 0,
-            paddingHorizontal: 0,
-            marginVertical: 0
-        }}>
-            <View>
-                <Text style={{fontSize: 16, color: Colors.default.berryBlue}}>{label}</Text>
-                <Text style={{fontSize: 16, color: Colors.default.berryBlue}}>{content}</Text>
-            </View>
-        </ThemedCard>
     );
 }
 
@@ -94,8 +60,6 @@ function Nutrition({ calories = 0, protein = 0, carbs = 0, fat = 0 }: NutritionP
         carb_goal: number;
         fat_goal: number;
     } | null>(null);
-    const [isLoadingGoals, setIsLoadingGoals] = useState(true);
-
     
     useFocusEffect(
         useCallback(() => {
@@ -211,11 +175,6 @@ const styles = StyleSheet.create({
     value: {
         fontSize: 12,
         fontWeight: '600',
-        color: Colors.default.berryBlue,
-    },
-    macroText: {
-        fontSize: 11,
-        fontWeight: '500',
         color: Colors.default.berryBlue,
     },
     progressBarTrack: {
