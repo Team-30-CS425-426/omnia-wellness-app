@@ -50,7 +50,9 @@ const HistoricalNutritionData = () => {
     const barData = nutritionHistory.map((d, i) => ({
         value: d.calories,
         label: d.date.slice(5),  // "MM-DD"
-        frontColor: selectedBarIndex === i ? Colors.default.berryPurple : Colors.default.berryBlue,
+        showGradient: true,
+        frontColor: selectedBarIndex === i ? Colors.default.berryPurple : Colors.default.primaryBlue,      // bottom of gradient
+        gradientColor: selectedBarIndex === i ? Colors.default.berryPurple : Colors.default.berryPurple,   // top of gradient
         onPress: () => setSelectedBarIndex(selectedBarIndex === i ? null : i),
         topLabelComponent: () => (
             <ThemedText style={{ fontSize: 10, color: Colors.default.berryBlue, marginBottom: 4 }}>
