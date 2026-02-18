@@ -51,6 +51,7 @@ const TabsLayout = () => {
         name="Profile"
         component={ProfileScreen}
         options={{
+          headerShown: false,
           tabBarLabel: 'Profile',
           tabBarIcon: ({ focused }) => (
             <MaterialIcons
