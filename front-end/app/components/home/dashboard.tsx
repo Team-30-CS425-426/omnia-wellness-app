@@ -4,6 +4,7 @@ import { StyleProp, View, ViewStyle, Text } from "react-native"
 import { DateDropDown } from "./dropdown"
 import { Metrics } from "./metrics"
 import { KeyStats } from "./keystats"
+import { Habits } from "./habits"
 import { Link, router} from 'expo-router';
 import ThemedButton from "@/app/components/ThemedButton"
 import ThemedText from "@/app/components/ThemedText"
@@ -76,8 +77,13 @@ export function WellnessDashboards({ style, health  }: WellnessDashboardsProps) 
             />
             <KeyStats style={{
                 gap: 20
-            }} health={health}
+            }}
             />
+            <Habits style={{
+                gap: 20
+            }}
+            />
+          
         </View>
     </EntryContext.Provider>
     );

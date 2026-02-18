@@ -28,7 +28,7 @@ import { View, Pressable, StyleSheet, ScrollView, Dimensions } from 'react-nativ
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '../../constants/Colors';
-import { BarChart } from 'react-native-gifted-charts';
+import { BarChart, LineChart } from 'react-native-gifted-charts';
 import { useUser } from '@/contexts/UserContext';
 import { getNutritionHistory } from '@/src/services/nutritionService';
 import { useFocusEffect } from '@react-navigation/native';
@@ -77,6 +77,21 @@ const HistoricalNutritionData = () => {
     const spacing = 12;           // gap between bars
     const availableWidth = screenWidth - yAxisLabelWidth - chartPadding;
     const barWidth = Math.floor((availableWidth - (spacing * (numBars + 1))) / numBars);
+
+    // ── LINE CHART DATA for Macros (Protein, Carbs, Fat) ──
+    // Each macro gets its own dataset with a distinct color
+    const proteinData = nutritionHistory.map((d) => ({
+        value: d.protein,
+        label: d.date.slice(5),  // "MM-DD"
+    }));
+
+    const carbsData = nutritionHistory.map((d) => ({
+        value: d.carbs,
+    }));
+
+    const fatData = nutritionHistory.map((d) => ({
+        value: d.fat,
+    }));
 
     // Transform raw nutrition data into the format expected by react-native-gifted-charts
     // Each bar gets a gradient (showGradient), a value label on top, and an onPress handler
@@ -155,6 +170,95 @@ const HistoricalNutritionData = () => {
                     </View>
                 )}
 
+                <Spacer height={30} />
+
+                {/* ── Macros Line Chart ── */}
+                <ThemedText style={{ color: Colors.default.violet, fontSize: 18, fontWeight: 'bold', marginBottom: 10, textAlign: 'center' }}>
+                    Macros
+                </ThemedText>
+
+                {nutritionHistory.length > 0 && (
+                    <View style={{ alignItems: 'center' }}>
+                        <LineChart
+                            data={proteinData}
+                            data2={carbsData}
+                            data3={fatData}
+                            color1={Colors.default.strongGreen}
+                            color2={Colors.default.primaryBlue}
+                            color3={Colors.default.berryPurple}
+                            dataPointsColor1={Colors.default.strongGreen}
+                            dataPointsColor2={Colors.default.primaryBlue}
+                            dataPointsColor3={Colors.default.berryPurple}
+                            width={availableWidth}
+                            height={200}
+                            spacing={Math.floor(availableWidth / (numBars || 1))}
+                            noOfSections={4}
+                            maxValue={300}
+                            yAxisThickness={1}
+                            xAxisThickness={1}
+                            yAxisColor={Colors.default.mediumGray}
+                            xAxisColor={Colors.default.mediumGray}
+                            yAxisTextStyle={{ color: Colors.default.berryBlue, fontSize: 10 }}
+                            xAxisLabelTextStyle={{ color: Colors.default.berryBlue, fontSize: 10 }}
+                            rulesColor={Colors.default.mediumGray}
+                            rulesType="dashed"
+                            hideRules={false}
+                            curved
+                            isAnimated
+                            animationDuration={1000}
+                            thickness={2}
+                            dataPointsRadius={4}
+                            yAxisLabelSuffix="g"
+                            pointerConfig={{
+                                pointerStripColor: Colors.default.mediumGray,
+                                pointerStripWidth: 2,
+                                pointerColor: Colors.default.berryBlue,
+                                radius: 6,
+                                activatePointersOnLongPress: false,
+                                autoAdjustPointerLabelPosition: true,
+                                pointerLabelWidth: 160,
+                                pointerLabelHeight: 100,
+                                pointerLabelComponent: (items: any[]) => {
+                                    return (
+                                        <View style={styles.tooltipContainer}>
+                                            <ThemedText style={styles.tooltipTitle}>
+                                                {items[0]?.label ?? ''}
+                                            </ThemedText>
+                                            <ThemedText style={[styles.tooltipValue, { color: Colors.default.strongGreen }]}>
+                                                Protein: {Math.round(items[0]?.value ?? 0)}g
+                                            </ThemedText>
+                                            <ThemedText style={[styles.tooltipValue, { color: Colors.default.primaryBlue }]}>
+                                                Carbs: {Math.round(items[1]?.value ?? 0)}g
+                                            </ThemedText>
+                                            <ThemedText style={[styles.tooltipValue, { color: Colors.default.berryPurple }]}>
+                                                Fat: {Math.round(items[2]?.value ?? 0)}g
+                                            </ThemedText>
+                                        </View>
+                                    );
+                                },
+                            }}
+                        />
+
+                        {/* Legend */}
+                        <View style={styles.legend}>
+                            <View style={styles.legendItem}>
+                                <View style={[styles.legendDot, { backgroundColor: Colors.default.strongGreen }]} />
+                                <ThemedText style={styles.legendText}>Protein</ThemedText>
+                            </View>
+                            <View style={styles.legendItem}>
+                                <View style={[styles.legendDot, { backgroundColor: Colors.default.primaryBlue }]} />
+                                <ThemedText style={styles.legendText}>Carbs</ThemedText>
+                            </View>
+                            <View style={styles.legendItem}>
+                                <View style={[styles.legendDot, { backgroundColor: Colors.default.berryPurple }]} />
+                                <ThemedText style={styles.legendText}>Fat</ThemedText>
+                            </View>
+                        </View>
+                    </View>
+                )}
+
+                <Spacer height={30} />
+
             </ScrollView>
 
         </ThemedView>
@@ -180,6 +284,43 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'flex-start',
         height: 50,
-    }
-    
+    },
+    legend: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        gap: 20,
+        marginTop: 12,
+    },
+    legendItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+    },
+    legendDot: {
+        width: 10,
+        height: 10,
+        borderRadius: 5,
+    },
+    legendText: {
+        fontSize: 12,
+        color: Colors.default.berryBlue,
+    },
+    tooltipContainer: {
+        backgroundColor: Colors.default.white,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: Colors.default.mediumGray,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+    },
+    tooltipTitle: {
+        fontSize: 12,
+        fontWeight: 'bold',
+        color: Colors.default.berryBlue,
+        marginBottom: 4,
+    },
+    tooltipValue: {
+        fontSize: 11,
+        fontWeight: '600',
+    },
 })
