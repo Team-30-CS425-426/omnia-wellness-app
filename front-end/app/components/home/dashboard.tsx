@@ -9,7 +9,6 @@ import { Link, router} from 'expo-router';
 import ThemedButton from "@/app/components/ThemedButton"
 import ThemedText from "@/app/components/ThemedText"
 import {Colors} from '../../../constants/Colors'
-import { testNLP } from "@/src/services/getMacros"
 
 
 interface WellnessDashboardsProps {
@@ -32,9 +31,6 @@ export function WellnessDashboards({ style, health  }: WellnessDashboardsProps) 
     const [entryId, setEntryId] = useState(-1)
     const [dropdownItems, setDropdownItems] = useState<DailyEntry[]>([])
 
-    useEffect(() => {
-        testNLP()
-    }, [])
    return (
     <EntryContext.Provider value={{ entryId }}>
         <View style={style}>

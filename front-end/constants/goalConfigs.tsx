@@ -154,6 +154,7 @@ export const GOAL_CONFIGS: Record<GoalType, GoalConfig> = {
             </View>
         )
     },
+
     // PHYSICAL ACTIVITY GOAL — placeholder, not yet implemented
     // Will display weekly activity minutes and days per week once the workout goal screen is built.
     'physical-activity': {

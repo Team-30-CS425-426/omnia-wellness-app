@@ -4,6 +4,7 @@ import { User } from '@supabase/supabase-js';
 import { supabase } from '../config/supabaseConfig';
 import * as Linking from 'expo-linking';
 import { SUPABASE_URL } from '../config/supabaseConfig'
+import { validateRegistrationInput } from '../utils/validator';
 
 //  Define what data the Context will hold
 interface UserContextType {
@@ -44,6 +45,7 @@ const extractParamsFromUrl = (url: string) => {
   });
   return params;
 };
+
 
 export function UserProvider({ children }: UserProviderProps) {
   // State now holds the Supabase User object
@@ -180,14 +182,12 @@ export function UserProvider({ children }: UserProviderProps) {
   };
 
 
+  
+
 
   const register = async (email: string, password: string): Promise<void> => {
-    if (!email || !password) {
-      throw new Error('Email and password are required for registration.');
-    }
-    if (password.length < 6) {
-      throw new Error('Password must be at least 6 characters long.');
-    }
+
+    validateRegistrationInput(email, password);
 
     const redirectUrl = Linking.createURL('/email-verified');
 
