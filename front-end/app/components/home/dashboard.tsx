@@ -1,13 +1,15 @@
-import { supabase } from "@/config/homeSupabaseConfig"
+import { supabase } from "@/config/supabaseConfig"
 import { createContext, useEffect, useState } from "react"
 import { StyleProp, View, ViewStyle, Text } from "react-native"
 import { DateDropDown } from "./dropdown"
 import { Metrics } from "./metrics"
 import { KeyStats } from "./keystats"
+import { Habits } from "./habits"
 import { Link, router} from 'expo-router';
 import ThemedButton from "@/app/components/ThemedButton"
 import ThemedText from "@/app/components/ThemedText"
 import {Colors} from '../../../constants/Colors'
+
 
 interface WellnessDashboardsProps {
     style?: StyleProp<ViewStyle>
@@ -25,25 +27,9 @@ export const EntryContext = createContext<any>(-1)
 
 
 export function WellnessDashboards({ style, health  }: WellnessDashboardsProps) {
+
     const [entryId, setEntryId] = useState(-1)
     const [dropdownItems, setDropdownItems] = useState<DailyEntry[]>([])
-
-    async function fetchDailyEntries() {
-        const response = await supabase
-            .from('DailyEntries')
-            .select()
-        if (response['error']) {
-            console.log(JSON.stringify(response['error']))
-            return;
-        }
-        else {
-            setDropdownItems(response['data']);
-        }
-    }
-    
-    useEffect(() => {
-        fetchDailyEntries()
-    }, [])
 
    return (
     <EntryContext.Provider value={{ entryId }}>
@@ -93,8 +79,13 @@ export function WellnessDashboards({ style, health  }: WellnessDashboardsProps) 
             />
             <KeyStats style={{
                 gap: 20
-            }} health={health}
+            }}
             />
+            <Habits style={{
+                gap: 20
+            }}
+            />
+          
         </View>
     </EntryContext.Provider>
     );

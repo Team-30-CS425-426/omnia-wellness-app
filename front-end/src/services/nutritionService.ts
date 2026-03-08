@@ -81,4 +81,38 @@ export async function insertNutritionLog(
   } catch (err) {
     return { success: false, error: String(err) };
   }
+
+}
+
+export async function getNutritionHistory(userId: string, days: number = 7) {
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - days);
+  const startDateStr = toPgDate(startDate);
+
+  const { data, error } = await supabase
+      .from('NutritionLog')
+      .select('date, calories, protein, carbs, fat')
+      .eq('userID', userId)
+      .gte('date', startDateStr)
+      .order('date', { ascending: true });
+
+  if (error) throw error;
+
+  // Group by date and sum totals
+  const dailyTotals: Record<string, { calories: number; protein: number; carbs: number; fat: number }> = {};
+  
+  for (const row of data || []) {
+      if (!dailyTotals[row.date]) {
+          dailyTotals[row.date] = { calories: 0, protein: 0, carbs: 0, fat: 0 };
+      }
+      dailyTotals[row.date].calories += row.calories;
+      dailyTotals[row.date].protein += row.protein;
+      dailyTotals[row.date].carbs += row.carbs;
+      dailyTotals[row.date].fat += row.fat;
+  }
+
+  return Object.entries(dailyTotals).map(([date, totals]) => ({
+      date,
+      ...totals,
+  }));
 }

@@ -11,6 +11,8 @@ interface ThemedTextProps extends TextProps {
   title?: boolean;
   gradient?: boolean;
   gradientColors?: readonly[string, string, ...string[]];
+  gradientStart?: {x: number, y:number},
+  gradientEnd?: {x: number, y: number}
 }
 
 // ThemedText component for consistent text styling
@@ -19,6 +21,8 @@ const ThemedText = ({
   title = false, 
   gradient = false,
   gradientColors = ['#4A90E2', '#8B5CF6'],
+  gradientStart = {x: -.6, y:0},
+  gradientEnd = {x: 1, y: 0},
   ...props 
 }: ThemedTextProps) => {
   const theme = Colors.default;
