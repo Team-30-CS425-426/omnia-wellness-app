@@ -1,6 +1,6 @@
 import { supabase } from "@/config/supabaseConfig";
 import { router } from "expo-router";
-import { useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useState } from "react";
 import {
   Pressable,
   StyleProp,
@@ -9,6 +9,7 @@ import {
   View,
   ViewStyle,
 } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
 import { EntryContext } from "./dashboard";
 
 import { useUser } from "@/contexts/UserContext";
@@ -19,14 +20,38 @@ interface MetricsProps {
   health: any;
 }
 
+const pad2 = (n: number) => String(n).padStart(2, "0");
+
+const todayKey = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+};
+
+const moodToEmoji = (mood: number) => {
+  switch (mood) {
+    case 1:
+      return "😞";
+    case 2:
+      return "🙁";
+    case 3:
+      return "😐";
+    case 4:
+      return "😊";
+    case 5:
+      return "😁";
+    default:
+      return "—";
+  }
+};
+
 export function Metrics({ style, health }: MetricsProps) {
   const { entryId } = useContext(EntryContext);
-  const { user } = useUser(); 
+  const { user } = useUser();
 
   const [sleep, setSleep] = useState("NaN");
-  const [activity, setActivity] = useState("0"); // show 0 by default
+  const [activity, setActivity] = useState("0");
   const [nutrition, setNutrition] = useState("NaN");
-  const [moodstress, setMoodStress] = useState("NaN");
+  const [moodstress, setMoodStress] = useState("—");
 
   const stepsToday =
     Number.isFinite(health?.stepsToday) ? Math.round(health.stepsToday) : 0;
@@ -46,15 +71,12 @@ export function Metrics({ style, health }: MetricsProps) {
       const d = response.data[0];
       setSleep(d["sleep"]);
       setNutrition(d["nutrition"]);
-      setMoodStress(d["moodstress"]);
     } else {
       setSleep("");
       setNutrition("0");
-      setMoodStress("0");
     }
   }
 
-  // Pull today's Activity minutes from ActivityLog
   async function fetchTodayActivity() {
     if (!user?.id) {
       setActivity("0");
@@ -62,7 +84,6 @@ export function Metrics({ style, health }: MetricsProps) {
     }
 
     try {
-      // last 1 day => "today"
       const arr = await getActivityMinutesLastNDays(user.id, 1);
       const mins = arr?.[0]?.minutes ?? 0;
       setActivity(String(Math.round(Number(mins) || 0)));
@@ -72,10 +93,39 @@ export function Metrics({ style, health }: MetricsProps) {
     }
   }
 
-  useEffect(() => {
-    fetchMetrics();
-    fetchTodayActivity();
-  }, [entryId, user?.id]);
+  async function fetchTodayMood() {
+    if (!user?.id) {
+      setMoodStress("—");
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from("StressLog")
+        .select("mood, date, time")
+        .eq("userID", user.id)
+        .eq("date", todayKey())
+        .order("time", { ascending: false })
+        .limit(1);
+
+      if (error) throw error;
+
+      const moodValue = Number(data?.[0]?.mood ?? 0);
+      setMoodStress(moodToEmoji(moodValue));
+    } catch (e) {
+      console.log("Mood fetch error:", e);
+      setMoodStress("—");
+    }
+  }
+
+  // Refresh every time the dashboard screen comes back into focus
+  useFocusEffect(
+    useCallback(() => {
+      fetchMetrics();
+      fetchTodayActivity();
+      fetchTodayMood();
+    }, [entryId, user?.id])
+  );
 
   return (
     <View style={style}>
@@ -129,9 +179,17 @@ export function Metrics({ style, health }: MetricsProps) {
           </Pressable>
         </View>
 
-        {/* Mood */}
+        {/* Mood (clickable) */}
         <View style={{ flex: 1, alignItems: "center", paddingHorizontal: 0 }}>
-          <MoodStress value={moodstress} />
+          <Pressable
+            onPress={() =>
+              router.push({
+                pathname: "/historicalMoodStressData",
+              } as any)
+            }
+          >
+            <MoodStress value={moodstress} />
+          </Pressable>
         </View>
       </View>
     </View>
@@ -142,13 +200,16 @@ interface MetricItemProps {
   circleLabel: string;
   label: string;
   color?: string;
+  isEmoji?: boolean;
 }
 
-function MetricItem({ circleLabel, label, color }: MetricItemProps) {
+function MetricItem({ circleLabel, label, color, isEmoji = false }: MetricItemProps) {
   return (
     <View style={{ alignItems: "center" }}>
       <View style={[styles.circle, { borderColor: color }]}>
-        <Text style={styles.circleLabel}>{circleLabel}</Text>
+        <Text style={isEmoji ? styles.emojiCircleLabel : styles.circleLabel}>
+          {circleLabel}
+        </Text>
       </View>
       <Text style={{ fontSize: 17 }}>{label}</Text>
     </View>
@@ -168,7 +229,14 @@ function Steps({ value = "" }: { value?: string }) {
 }
 
 function MoodStress({ value = "" }: { value?: string }) {
-  return <MetricItem circleLabel={value} label="Mood" color="#EB5353" />;
+  return (
+    <MetricItem
+      circleLabel={value}
+      label="Mood/Stress"
+      color="#EB5353"
+      isEmoji={true}
+    />
+  );
 }
 
 const styles = StyleSheet.create({
@@ -183,5 +251,8 @@ const styles = StyleSheet.create({
   },
   circleLabel: {
     fontSize: 16,
+  },
+  emojiCircleLabel: {
+    fontSize: 32,
   },
 });
