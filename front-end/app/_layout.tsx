@@ -30,6 +30,15 @@ const RootLayout = () => {
             <Stack.Screen name="(auth)" options={{ headerShown: false }} />
             <Stack.Screen name="onboarding/name" options={{ headerShown: false }} />
             {/*<Stack.Screen name = "index" options = {{title: 'Home'}}/>*/}
+
+            <Stack.Screen
+              name="screens/settings"
+              options={{
+                headerShown: true,
+                title: 'Settings',
+                headerBackVisible: false,
+
+              }}/>
         </Stack>
         </UserProvider>
         </>

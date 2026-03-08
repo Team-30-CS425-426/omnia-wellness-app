@@ -40,6 +40,7 @@ export default{
     "plugins": [
       "expo-router",
       "expo-notifications",
+      "@react-native-community/datetimepicker",
       [
         "expo-splash-screen",
         {

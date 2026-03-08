@@ -33,29 +33,27 @@
 import React, {useState, useEffect, useCallback} from 'react'
 import { useFocusEffect } from "@react-navigation/native";
 import { router } from 'expo-router';
-import {Alert, StyleSheet, View} from 'react-native'
+import { Alert, StyleSheet, View, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { deleteNutritionGoal, getUserNutritionGoals } from '../../src/services/nutritionGoalService';
 import { useUser } from '../../contexts/UserContext';
 import ThemedView from '../components/ThemedView'
 import ThemedText from '../components/ThemedText'
 import Spacer from '../components/Spacer'
-import ThemedButton from '../components/ThemedButton'
 import { Colors } from '../../constants/Colors';
-import ConfirmDeleteModal from '../components/DeleteConfirmationModal';
 import SetGoalModal from '../components/SetGoalModal';
 import ThemedCard from '../components/ThemedCard';
 import { Ionicons } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
 import { GoalType, GOAL_CONFIGS, UserGoal } from '../../constants/goalConfigs';
 import EditModal from '../components/editModal';
+
 
 const ProfilePage = () =>{
     const insets = useSafeAreaInsets();
     const totalTopPadding = insets.top;
 
-    const { logout, user, deleteAccount } = useUser();
-    const [showDeleteModal, setShowDeleteModal] = useState(false);
-    const [deleteConfirmText, setDeleteConfirmText] = useState('');
+    const { user } = useUser();
     const [showGoalModal, setShowGoalModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [selectedGoal, setSelectedGoal] = useState<UserGoal | null>(null);
@@ -111,26 +109,7 @@ const ProfilePage = () =>{
         }, [fetchAllGoals])
     );
 
-    const handleLogout = async () => {
-        await logout();
-        router.replace('/');
-    }
 
-    const handleDeleteAccount = async () =>{
-        try{
-            await deleteAccount();
-            setShowDeleteModal(false);
-            router.replace('/');
-        } catch (error) {
-            console.error("Error:", error);
-            alert('Failed to delete account. Please try again')
-        }
-    }
-
-    const handleCloseModal = () => {
-        setShowDeleteModal(false);
-        setDeleteConfirmText('');
-    }
 
     /**
      * handleGoalSelect
@@ -228,11 +207,20 @@ const ProfilePage = () =>{
     return (
         <ThemedView style = {[styles.container, { backgroundColor: Colors.default.lightGray }]}>
 
-            <ThemedView style = {[styles.headerBar, {paddingTop : totalTopPadding + 20}]}>
-                <ThemedText title={true} 
-                    style = {{color: Colors.default.darkBlue}}> 
-                    Your Profile 
-                </ThemedText>
+            <ThemedView style = {[styles.headerBar, { paddingTop : totalTopPadding + 12 }]}>
+                <View style={styles.headerRow}>
+                    <View style={styles.headerSide} /> 
+                    <View style={styles.headerCenter}>
+                        <ThemedText style = {[styles.headerTitle, {color: Colors.default.darkBlue}]}> 
+                            Your Profile 
+                        </ThemedText>
+                    </View>
+                    <View style={[styles.headerSide, { alignItems: "flex-end" }]}>
+                        <Pressable onPress = {() => router.navigate("/screens/settings")} hitSlop={12} >
+                            <MaterialIcons name="settings" size={26} color={Colors.default.darkBlue} />
+                    </Pressable>
+                 </View> 
+                 </View>
             </ThemedView>
             <Spacer height={15} />
 
@@ -254,30 +242,12 @@ const ProfilePage = () =>{
                 </ThemedCard>
             </View>
 
-            <Spacer height={10} />
-
-            <ThemedButton onPress={handleLogout}>  
-                <ThemedText style={{color: Colors.default.white}} > Logout </ThemedText>
-            </ThemedButton>    
-            <Spacer height={30} />
-
-            <ThemedButton color={Colors.default.errorRed} onPress = {() => setShowDeleteModal(true)}>  
-                <ThemedText style={{color: Colors.default.white}} > Delete Account </ThemedText>
-            </ThemedButton>    
-            <Spacer height={30} />
         
             <EditModal
                 isVisible={showEditModal}
                 onClose={() => setShowEditModal(false)}
                 onConfirm={() => handleEditGoal()}
                 onDelete={() => handleDeleteGoal()}
-            />
-            <ConfirmDeleteModal
-                isVisible={showDeleteModal}
-                onClose={handleCloseModal}
-                onConfirm={handleDeleteAccount}
-                confirmText={deleteConfirmText}
-                onChangeText={setDeleteConfirmText}
             />
 
             <SetGoalModal
@@ -302,15 +272,33 @@ const styles = StyleSheet.create({
         width: '100%',
         backgroundColor: Colors.default.white,
         paddingHorizontal: 20,
-        alignItems: 'center',
-        justifyContent: 'center',
+        paddingBottom: 12,
         borderBottomWidth: 1,
         borderBottomColor: Colors.default.lightGray,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
+
     },
+    headerTitle: {
+        fontSize: 36,
+        fontWeight: '700',
+        lineHeight: 40,
+        textAlign: 'center',
+    },
+    headerRow: {
+        width: '100%',
+        flexDirection: 'row',
+        alignItems: 'center',
+      },
+      headerSide: {
+        width: 40,
+      },
+      headerCenter: {
+        flex: 1,
+        alignItems: 'center',
+      },
     goalsContainer: {
         width: '90%',
         flexDirection: 'row',
