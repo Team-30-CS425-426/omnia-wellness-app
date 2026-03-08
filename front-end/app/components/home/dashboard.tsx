@@ -78,10 +78,12 @@ export function WellnessDashboards({ style, health  }: WellnessDashboardsProps) 
             <KeyStats style={{
                 gap: 20
             }}
+            health={health}
             />
             <Habits style={{
                 gap: 20
             }}
+            
             />
           
         </View>

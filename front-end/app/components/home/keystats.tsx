@@ -42,8 +42,14 @@ const handleHistoricalNutritionData = () => {
     router.push('/screens/historicalNutritionData');
 }
 
+const handleActiveEnergyData = () => {
+    console.log('active energy pressed');
+    router.push('/screens/activeEnergy' as const);
+}
+
 interface KeyStatsProps {
     style?: StyleProp<ViewStyle>;
+    health?: any;
 }
 
 /**
@@ -56,7 +62,7 @@ interface KeyStatsProps {
  * Receives today's nutrition totals from useNutritionStats() and passes
  * them down to the Nutrition component.
  */
-export function KeyStats({ style }: KeyStatsProps) {
+export function KeyStats({ style, health  }: KeyStatsProps) {
    const { nutrition } = useNutritionStats();
     return (
         <View style={style}>
@@ -70,8 +76,7 @@ export function KeyStats({ style }: KeyStatsProps) {
                 Key Stats
             </Text>
             <View style={{
-                flexDirection: 'row',
-                flexWrap: 'wrap',
+                flexDirection: 'column',
                 gap: 20,
             }}>
                 {/* Pass today's actual intake to the Nutrition card */}
@@ -80,6 +85,9 @@ export function KeyStats({ style }: KeyStatsProps) {
                     protein={nutrition.protein} 
                     carbs={nutrition.carbs} 
                     fat={nutrition.fat}
+                />
+                <ActiveEnergy
+                caloriesBurned={health?.today?.activeEnergy ?? health?.activeEnergy ?? 0}
                 />
             </View>
         </View>
@@ -177,7 +185,7 @@ function Nutrition({ calories = 0, protein = 0, carbs = 0, fat = 0 }: NutritionP
         <ThemedCard  onPress={() => handleHistoricalNutritionData()} 
         style={{
             height: 200,
-            width: 375,
+            width: '100%',
             justifyContent: 'flex-start', 
             alignItems: 'flex-start',     
             padding: 10,
@@ -234,6 +242,115 @@ function Nutrition({ calories = 0, protein = 0, carbs = 0, fat = 0 }: NutritionP
     );
 }
 
+interface ActiveEnergyProps {
+    caloriesBurned?: number;
+}
+
+function ActiveEnergy({ caloriesBurned = 0 }: ActiveEnergyProps) {
+    return (
+        <ThemedCard
+            onPress={() => handleActiveEnergyData()}
+            style={{
+                height: 145,
+                width: '100%',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                paddingHorizontal: 18,
+                paddingVertical: 14,
+            }}
+        >
+            <View style={{ width: '100%', flex: 1, justifyContent: 'space-between' }}>
+                {/* Top row */}
+                <View
+                    style={{
+                        width: '100%',
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                    }}
+                >
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <Text style={{ fontSize: 22, marginRight: 8 }}>🔥</Text>
+                        <Text
+                            style={{
+                                fontSize: 17,
+                                fontWeight: 'bold',
+                                color: '#FF5A1F',
+                            }}
+                        >
+                            Active Energy
+                        </Text>
+                    </View>
+
+                    <Text
+                        style={{
+                            fontSize: 24,
+                            color: '#B8B8BE',
+                            fontWeight: '400',
+                        }}
+                    >
+                        ›
+                    </Text>
+                </View>
+
+                {/* Bottom row */}
+                <View
+                    style={{
+                        width: '100%',
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-end',
+                        marginTop: 8,
+                    }}
+                >
+                    <View>
+                        <Text
+                            style={{
+                                fontSize: 36,
+                                fontWeight: '700',
+                                color: 'black',
+                                lineHeight: 40,
+                            }}
+                        >
+                            {Math.round(caloriesBurned)}
+                        </Text>
+                        <Text
+                            style={{
+                                fontSize: 18,
+                                color: '#8E8E93',
+                                fontWeight: '600',
+                            }}
+                        >
+                            cal
+                        </Text>
+                    </View>
+
+                    <View
+                        style={{
+                            flexDirection: 'row',
+                            alignItems: 'flex-end',
+                            gap: 8,
+                            paddingRight: 4,
+                        }}
+                    >
+                        <View style={[activeEnergyStyles.bar, { height: 28 }]} />
+                        <View style={[activeEnergyStyles.bar, { height: 52 }]} />
+                        <View style={[activeEnergyStyles.bar, { height: 52 }]} />
+                        <View style={[activeEnergyStyles.bar, { height: 38 }]} />
+                        <View style={[activeEnergyStyles.bar, { height: 68 }]} />
+                        <View
+                            style={[
+                                activeEnergyStyles.bar,
+                                { height: 5, width: 18, borderRadius: 3 },
+                            ]}
+                        />
+                    </View>
+                </View>
+            </View>
+        </ThemedCard>
+    );
+}
+
 const styles = StyleSheet.create({
     label: {
         fontSize: 12,
@@ -256,5 +373,12 @@ const styles = StyleSheet.create({
         height: '100%',
         backgroundColor: Colors.default.berryBlue,
         borderRadius: 4,
+    },
+});
+const activeEnergyStyles = StyleSheet.create({
+    bar: {
+        width: 18,
+        borderRadius: 5,
+        backgroundColor: '#E5E5EA',
     },
 });
