@@ -78,6 +78,41 @@ const HistoricalNutritionData = () => {
     const availableWidth = screenWidth - yAxisLabelWidth - chartPadding;
     const barWidth = Math.floor((availableWidth - (spacing * (numBars + 1))) / numBars);
 
+    const maxCaloriesFromData = nutritionHistory.reduce(
+        (max, d) => Math.max(max, d.calories ?? 0),
+        0
+      );
+      
+      // Add ~10% headroom and round to the nearest 100
+      const caloriesMaxValue =
+        maxCaloriesFromData > 0
+          ? Math.ceil((maxCaloriesFromData * 1.1) / 100) * 100
+          : 2500; // sensible default when there's no data
+      
+      // --- Dynamic Y-axis max for Macros ---
+      const maxProtein = nutritionHistory.reduce(
+        (max, d) => Math.max(max, d.protein ?? 0),
+        0
+      );
+      const maxCarbs = nutritionHistory.reduce(
+        (max, d) => Math.max(max, d.carbs ?? 0),
+        0
+      );
+      const maxFat = nutritionHistory.reduce(
+        (max, d) => Math.max(max, d.fat ?? 0),
+        0
+      );
+
+      const maxMacroFromData = Math.max(maxProtein, maxCarbs, maxFat);
+      const macrosMaxValue =
+        maxMacroFromData > 0
+            ? Math.ceil((maxMacroFromData * 1.1) / 25) * 25
+            : 300; // default when there's no data
+
+
+
+
+
     // ── LINE CHART DATA for Macros (Protein, Carbs, Fat) ──
     // Each macro gets its own dataset with a distinct color
     const proteinData = nutritionHistory.map((d) => ({
@@ -154,7 +189,7 @@ const HistoricalNutritionData = () => {
                             barBorderRadius={6}
                             spacing={spacing}
                             noOfSections={4}
-                            maxValue={2500}
+                            maxValue={caloriesMaxValue}
                             yAxisThickness={1}
                             xAxisThickness={1}
                             yAxisColor={Colors.default.mediumGray}
@@ -193,7 +228,7 @@ const HistoricalNutritionData = () => {
                             height={200}
                             spacing={Math.floor(availableWidth / (numBars || 1))}
                             noOfSections={4}
-                            maxValue={300}
+                            maxValue={macrosMaxValue}
                             yAxisThickness={1}
                             xAxisThickness={1}
                             yAxisColor={Colors.default.mediumGray}

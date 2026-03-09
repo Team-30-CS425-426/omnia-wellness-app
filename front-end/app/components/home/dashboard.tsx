@@ -10,6 +10,7 @@ import ThemedButton from "@/app/components/ThemedButton"
 import ThemedText from "@/app/components/ThemedText"
 import {Colors} from '../../../constants/Colors'
 
+
 interface WellnessDashboardsProps {
     style?: StyleProp<ViewStyle>
     health: any;
@@ -26,6 +27,7 @@ export const EntryContext = createContext<any>(-1)
 
 
 export function WellnessDashboards({ style, health  }: WellnessDashboardsProps) {
+
     const [entryId, setEntryId] = useState(-1)
     const [dropdownItems, setDropdownItems] = useState<DailyEntry[]>([])
 
