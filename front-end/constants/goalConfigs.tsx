@@ -39,7 +39,7 @@ import ThemedText from '../app/components/ThemedText';
  * for future development. Adding a new goal type here requires also adding
  * a corresponding entry in GOAL_CONFIGS below.
  */
-export type GoalType = 'nutrition' | 'sleep' | 'physical-activity' | 'mood';   
+export type GoalType = 'nutrition' | 'sleep' | 'steps' | 'physical-activity' | 'mood';   
 
 /**
  * GoalConfig
@@ -64,13 +64,15 @@ export interface GoalConfig {
 export const getIconColor = (goalType: GoalType) => {
         switch (goalType) {
           case 'nutrition':
-            return Colors.default.strongGreen;
+            return Colors.default.berryPurple;
           case 'sleep':
-            return Colors.default.berryBlue;
+            return '#187498';
+          case 'steps':
+                return '#F9D923';
           case 'physical-activity':
-            return Colors.default.darkBlue;
+            return '#36AE7C';
           case 'mood':
-            return Colors.default.mustardYellow;
+            return '#EB5353';
           default:
             return Colors.default.berryBlue;
         }
@@ -116,7 +118,7 @@ export const GOAL_CONFIGS: Record<GoalType, GoalConfig> = {
         label: 'Nutrition Goal',
         icon: 'restaurant',
         color: Colors.default.white,
-        textColor: Colors.default.successGreen,
+        textColor: Colors.default.berryPurple,
         route: '/screens/nutritionGoal',
         renderDetails: (goal) => (
             <View style={goalDetailStyles.goalDetails}>
@@ -140,27 +142,40 @@ export const GOAL_CONFIGS: Record<GoalType, GoalConfig> = {
     'sleep': {
         label: 'Sleep Goal',
         icon: 'bed',
-        color: Colors.default.berryBlue,
-        textColor: Colors.default.berryBlue,
-        route: '/screens/sleepGoal',
+        color: Colors.default.white,
+        textColor: '#187498',
+        route: '/screens/sleepGoals',
         renderDetails: (goal) => (
             <View style={goalDetailStyles.goalDetails}>
-                <ThemedText style={goalDetailStyles.goalText}>
-                    Target Hours: {goal.target_hours}h
-                </ThemedText>
-                <ThemedText style={goalDetailStyles.goalText}>
-                    Bedtime: {goal.bedtime || 'Not set'}
+                <ThemedText style={[goalDetailStyles.goalText, { color: Colors.default.berryBlue }]}>
+                    Goal: {goal.sleep_goal_hours}h
                 </ThemedText>
             </View>
         )
     },
+
+    'steps': {
+        label: 'Steps Goal',
+        icon: 'walk',
+        color: Colors.default.white,
+        textColor: '#F9D923',
+        route: '/screens/stepsGoals',
+        renderDetails: (goal) => (
+            <View style={goalDetailStyles.goalDetails}>
+                <ThemedText style={[goalDetailStyles.goalText, { color: Colors.default.mustardYellow }]}>
+                    Goal: {goal.steps_goal}
+                </ThemedText>
+            </View>
+        )
+    },
+
     // PHYSICAL ACTIVITY GOAL — placeholder, not yet implemented
     // Will display weekly activity minutes and days per week once the workout goal screen is built.
     'physical-activity': {
         label: 'Activity Goal',
         icon: 'barbell',
         color: Colors.default.darkBlue,
-        textColor: Colors.default.darkBlue,
+        textColor: '#36AE7C',
         route: '/screens/workoutGoal',
         renderDetails: (goal) => (
             <View style={goalDetailStyles.goalDetails}>
@@ -179,7 +194,7 @@ export const GOAL_CONFIGS: Record<GoalType, GoalConfig> = {
         label: 'Mood Goal',
         icon: 'happy',
         color: Colors.default.mustardYellow,
-        textColor: Colors.default.mustardYellow,
+        textColor: '#EB5353',
         route: '/screens/moodStressGoal',
         renderDetails: (goal) => (
             <View style={goalDetailStyles.goalDetails}>

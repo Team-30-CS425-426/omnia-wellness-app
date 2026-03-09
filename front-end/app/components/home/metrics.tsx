@@ -3,6 +3,10 @@ import { router } from "expo-router";
 import { useContext, useEffect, useState } from "react";
 import { Pressable, StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
 import { EntryContext } from "./dashboard";
+import DashboardGoalRing from "../DashboardGoalRing";
+import { useUser } from "../../../contexts/UserContext";
+import { getSleepGoal } from "@/src/services/sleepGoalService";
+import { getStepsGoal } from "@/src/services/stepsGoalService";
 
 interface MetricsProps {
     style?: StyleProp<ViewStyle>;
@@ -11,11 +15,15 @@ interface MetricsProps {
 
 
 export function Metrics({ style, health  }: MetricsProps) {
-    const { entryId } = useContext(EntryContext)
+    const { entryId } = useContext(EntryContext);
+    const { user } = useUser();
     const [sleep, setSleep] = useState("NaN")
     const [activity, setActivity] = useState("NaN")
     const [nutrition, setNutrition] = useState("NaN")
     const [moodstress, setMoodStress] = useState("NaN")
+
+    const [sleepGoalHours, setSleepGoalHours] = useState<number | null>(null);
+    const [stepsGoal, setStepsGoal] = useState<number | null>(null);
 
     const stepsToday =
     Number.isFinite(health?.stepsToday) ? Math.round(health.stepsToday) : 0;
@@ -24,6 +32,31 @@ export function Metrics({ style, health  }: MetricsProps) {
     Number.isFinite(health?.sleepToday)
       ? Number(health.sleepToday).toFixed(1)
       : "0.0";
+
+    const clampProgress = (actual: number, goal: number | null) => {
+        if (!goal || goal <= 0) return 0;
+        return Math.min(actual / goal, 1);
+    };
+
+    const formatStepsShort = (num: number) => {
+        if (num >= 1000) {
+            const value = num / 1000;
+            return Number.isInteger(value) ? `${value}k` : `${value.toFixed(1)}k`;
+        }
+        return `${num}`;
+    };
+    
+    const getSleepRingText = (actual: number, goal: number | null) => {
+        if (!goal) return actual.toFixed(1);
+        return actual >= goal ? `${actual.toFixed(1)}h` : `${actual.toFixed(1)}/${goal}h`;
+    };
+    
+    const getStepsRingText = (actual: number, goal: number | null) => {
+        if (!goal) return formatStepsShort(actual);
+        return actual >= goal
+            ? `${formatStepsShort(actual)}`
+            : `${formatStepsShort(actual)}/${formatStepsShort(goal)}`;
+    };
 
     async function fetchMetrics() {
         const response = await supabase
@@ -44,10 +77,38 @@ export function Metrics({ style, health  }: MetricsProps) {
             setMoodStress('0')
         }
     }
+    async function fetchGoals() {
+        if (!user?.id) return;
+    
+        try {
+            const sleepGoalData = await getSleepGoal(user.id);
+            const stepsGoalData = await getStepsGoal(user.id);
+    
+            setSleepGoalHours(
+                sleepGoalData?.sleep_goal_hours != null
+                    ? Number(sleepGoalData.sleep_goal_hours)
+                    : null
+            );
+    
+            setStepsGoal(
+                stepsGoalData?.steps_goal != null
+                    ? Number(stepsGoalData.steps_goal)
+                    : null
+            );
+        } catch (error) {
+            console.log("Failed to fetch goal data:", error);
+            setSleepGoalHours(null);
+            setStepsGoal(null);
+        }
+    }
 
     useEffect(() => {
         fetchMetrics()
-    }, [entryId])
+    }, [entryId]);
+
+    useEffect(() => {
+        fetchGoals();
+    }, [user?.id]);
 
     return (
         <View style={style}>
@@ -60,32 +121,62 @@ export function Metrics({ style, health  }: MetricsProps) {
             }}>
                 {/* Sleep (clickable) */}
                 <View style={{ flex: 1, alignItems: 'center', paddingHorizontal: 0 }}>
-                    <Pressable
-                        onPress={() =>
-                            router.push({
-                                pathname: "/health-details",
-                                params: { type: "sleep" },
-                            } as any)
-                        }
-                    >
-                        <Sleep value={sleepToday} />
-                    </Pressable>
+                    {sleepGoalHours ? (
+                        <DashboardGoalRing
+                            label="Sleep"
+                            valueText={getSleepRingText(Number(sleepToday), sleepGoalHours)}
+                            progress={clampProgress(Number(sleepToday), sleepGoalHours)}
+                            color="#187498"
+                            onPress={() =>
+                                router.push({
+                                    pathname: "/health-details",
+                                    params: { type: "sleep" },
+                                } as any)
+                            }
+                            />
+                         ) : (
+                            <Pressable
+                                onPress={() =>
+                                    router.push({
+                                        pathname: "/health-details",
+                                        params: { type: "sleep" },
+                                    } as any)
+                                }
+                            >
+                                <Sleep value={sleepToday} />
+                            </Pressable>
+                        )}
                 </View>
                 <View style={{ flex: 1, alignItems: 'center', paddingHorizontal: 0 }}>
                     <Activity value={activity}/>
                 </View>
                 {/* Steps (clickable) — replacing the old Nutrition slot */}
                 <View style={{ flex: 1, alignItems: 'center', paddingHorizontal: 0 }}>
-                    <Pressable
-                        onPress={() =>
-                            router.push({
-                                pathname: "/health-details",
-                                params: { type: "steps" },
-                            } as any)
-                        }
+                    {stepsGoal ? (
+                        <DashboardGoalRing
+                            label="Steps"
+                            valueText={getStepsRingText(stepsToday, stepsGoal)}
+                            progress={clampProgress(stepsToday, stepsGoal)}
+                            color="#F9D923"
+                            onPress={() =>
+                                router.push({
+                                    pathname: "/health-details",
+                                    params: { type: "steps" },
+                                } as any)
+                            }
+                        />
+                    ) : (
+                        <Pressable
+                            onPress={() =>
+                                router.push({
+                                    pathname: "/health-details",
+                                    params: { type: "steps" },
+                                } as any)
+                            }
                         >
-                        <Steps value={String(stepsToday)} />
-                    </Pressable>
+                            <Steps value={String(stepsToday)} />
+                        </Pressable>
+                    )}
                 </View>
 
                 <View style={{ flex: 1, alignItems: 'center', paddingHorizontal: 0 }}>

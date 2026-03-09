@@ -51,6 +51,7 @@ interface GoalOption {
 const GOAL_OPTIONS: GoalOption[] = [
   { type: 'nutrition', label: 'Nutrition', icon: 'restaurant-outline' },
   { type: 'sleep', label: 'Sleep', icon: 'bed-outline' },
+  { type: 'steps', label: 'Steps', icon: 'walk-outline' },
   { type: 'physical-activity', label: 'Physical Activity', icon: 'barbell-outline' },
   { type: 'mood', label: 'Mood', icon: 'happy-outline' },
 ];

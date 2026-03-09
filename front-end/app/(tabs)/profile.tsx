@@ -36,6 +36,8 @@ import { router } from 'expo-router';
 import { Alert, StyleSheet, View, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { deleteNutritionGoal, getUserNutritionGoals } from '../../src/services/nutritionGoalService';
+import { getSleepGoal, deleteSleepGoal } from '../../src/services/sleepGoalService';
+import { getStepsGoal, deleteStepsGoal } from '../../src/services/stepsGoalService';
 import { useUser } from '../../contexts/UserContext';
 import ThemedView from '../components/ThemedView'
 import ThemedText from '../components/ThemedText'
@@ -77,22 +79,46 @@ const ProfilePage = () =>{
         if (!user?.id) return;
         
         const goals: UserGoal[] = [];
-
-        // Fetch nutrition goal from the 'nutritiongoals' table
+    
+        // Nutrition
         try {
             const nutritionData = await getUserNutritionGoals(user.id);
             if (nutritionData) {
                 goals.push({
                     type: 'nutrition',
-                    data: nutritionData  // Raw DB row: { calorie_goal, protein_goal, carb_goal, fat_goal }
+                    data: nutritionData
                 });
             }
         } catch (error) {
-            // No nutrition goal exists — that's okay, the card just won't render
+            // no nutrition goal
         }
-
-        // Future: fetch sleep, activity, mood goals here and push to goals[]
-
+    
+        // Sleep
+        try {
+            const sleepData = await getSleepGoal(user.id);
+            if (sleepData) {
+                goals.push({
+                    type: 'sleep',
+                    data: sleepData
+                });
+            }
+        } catch (error) {
+            // no sleep goal
+        }
+    
+        // Steps
+        try {
+            const stepsData = await getStepsGoal(user.id);
+            if (stepsData) {
+                goals.push({
+                    type: 'steps',
+                    data: stepsData
+                });
+            }
+        } catch (error) {
+            // no steps goal
+        }
+    
         setUserGoals(goals);
     }, [user?.id]);
 
@@ -124,19 +150,18 @@ const ProfilePage = () =>{
      *    starts smoothly before the modal dismisses — prevents a visual flicker.
      */
     const handleGoalSelect = (goalType: GoalType) => {
-
-        // Guard: only nutrition is implemented — other types show an alert
-        
-        if (goalType !== 'nutrition') {
-            Alert.alert('coming Soon!', 'Only nutrition goals are currently supported');
+        if (
+            goalType !== 'nutrition' &&
+            goalType !== 'sleep' &&
+            goalType !== 'steps'
+        ) {
+            Alert.alert('Coming Soon!', 'This goal is not currently supported. only nutrition, sleep, and steps');
             return;
         }
-
-        // Look up the route for this goal type from the centralized config
+    
         const config = GOAL_CONFIGS[goalType];
         router.push(config.route as any);
-        
-        // Close modal after a brief delay to prevent visual flicker during navigation
+    
         setTimeout(() => {
             setShowGoalModal(false);
         }, 100);
@@ -155,16 +180,26 @@ const ProfilePage = () =>{
 
 
     const handleDeleteGoal = async () => {
-        if (!user?.id) return;
+        if (!user?.id || !selectedGoal) return;
+    
         try {
-            await deleteNutritionGoal(user.id);
+            if (selectedGoal.type === 'nutrition') {
+                await deleteNutritionGoal(user.id);
+            } else if (selectedGoal.type === 'sleep') {
+                await deleteSleepGoal(user.id);
+            } else if (selectedGoal.type === 'steps') {
+                await deleteStepsGoal(user.id);
+            }
+    
             setShowEditModal(false);
+            setSelectedGoal(null);
             fetchAllGoals();
         } catch (error) {
-            console.error("Error:", error);
-            alert('Failed to delete goal. Please try again')
+            console.error("Error deleting goal:", error);
+            Alert.alert('Error', 'Failed to delete goal. Please try again.');
         }
-    }
+    };
+
     /**
      * renderGoalCard
      * 
