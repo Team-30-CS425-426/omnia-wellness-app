@@ -12,9 +12,11 @@
  * 
  * FEATURES:
  *   - Dynamic bar sizing: bars automatically fill the screen width regardless of device size
- *   - Gradient bars: each bar has a gradient from primaryBlue (bottom) to berryPurple (top)
+ *   - Solid color bars: uses solid colors (no gradients) matching activity data screen style
  *   - Interactive selection: tapping a bar highlights it with a different color
  *   - Top labels: calorie value displayed above each bar
+ *   - Chart cards: white cards with borders matching activity data layout
+ *   - TOTAL block: displays selected day's total calories with date
  * 
  * DEPENDENCIES:
  *   - nutritionService.ts: getNutritionHistory() — fetches logged nutrition data
@@ -22,10 +24,9 @@
  */
 
 //Developed by Johan Ramirez
-import React, {useState, useCallback} from 'react'
+import React, {useState, useCallback, useMemo} from 'react'
 import { router } from 'expo-router';
-import { View, Pressable, StyleSheet, ScrollView, Dimensions } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View, Pressable, StyleSheet, ScrollView, Dimensions, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '../../constants/Colors';
 import { BarChart, LineChart } from 'react-native-gifted-charts';
@@ -33,14 +34,9 @@ import { useUser } from '@/contexts/UserContext';
 import { getNutritionHistory } from '@/src/services/nutritionService';
 import { useFocusEffect } from '@react-navigation/native';
 
-import ThemedView from '../components/ThemedView'
-import ThemedText from '../components/ThemedText'
-import Spacer from '../components/Spacer'
-
 
 const HistoricalNutritionData = () => {
     const insets = useSafeAreaInsets();
-    const totalTopPadding = insets.top;
     const { user } = useUser();
 
     // Stores the array of daily nutrition records fetched from the database
@@ -48,7 +44,7 @@ const HistoricalNutritionData = () => {
     const [nutritionHistory, setNutritionHistory] = useState<any[]>([]);
 
     // Tracks which bar the user has tapped (null = no selection)
-    // Used to change the selected bar's gradient color for visual feedback
+    // Used to change the selected bar's color for visual feedback
     const [selectedBarIndex, setSelectedBarIndex] = useState<number | null>(null);
 
     // Fetch nutrition history every time the screen comes into focus
@@ -69,14 +65,16 @@ const HistoricalNutritionData = () => {
     );
 
     // DYNAMIC BAR SIZING — calculates bar width and spacing so bars fill the screen
-    // Accounts for y-axis label space and chart padding
+    // Matches activity data screen sizing
     const screenWidth = Dimensions.get('window').width;
-    const yAxisLabelWidth = 40;   // approximate space for y-axis number labels
-    const chartPadding = 20;      // horizontal padding around the chart
+    const cardMarginH = 14;
+    const cardPadding = 16;
+    const yAxisLabelWidth = 40;
+    const cardInnerWidth = screenWidth - cardMarginH * 2 - cardPadding * 2;
+    const availableWidth = cardInnerWidth - yAxisLabelWidth;
     const numBars = nutritionHistory.length || 1;
-    const spacing = 12;           // gap between bars
-    const availableWidth = screenWidth - yAxisLabelWidth - chartPadding;
-    const barWidth = Math.floor((availableWidth - (spacing * (numBars + 1))) / numBars);
+    const spacing = 12;
+    const barWidth = Math.max(6, Math.floor((availableWidth - spacing * (numBars + 1)) / numBars));
 
     const maxCaloriesFromData = nutritionHistory.reduce(
         (max, d) => Math.max(max, d.calories ?? 0),
@@ -129,197 +127,229 @@ const HistoricalNutritionData = () => {
     }));
 
     // Transform raw nutrition data into the format expected by react-native-gifted-charts
-    // Each bar gets a gradient (showGradient), a value label on top, and an onPress handler
+    // Uses solid colors (no gradients) to match activity data screen style
+    const barData = useMemo(() => {
+        return nutritionHistory.map((d, i) => {
+            const isSelected = i === selectedBarIndex;
+            return {
+                value: d.calories,
+                label: d.date.slice(5),  // "MM-DD"
+                frontColor: isSelected ? "#5459AC" : "rgba(84,89,172,0.35)", // solid color, not gradient
+                onPress: () => setSelectedBarIndex(selectedBarIndex === i ? null : i),
+                topLabelComponent: () => (
+                    <Text style={styles.topLabel}>{Math.round(d.calories || 0)}</Text>
+                ),
+            };
+        });
+    }, [nutritionHistory, selectedBarIndex]);
 
-    const barData = nutritionHistory.map((d, i) => ({
-        value: d.calories,
-        label: d.date.slice(5),  // "MM-DD" — strips the year for a compact x-axis label
-        showGradient: true,
-        
-        // Gradient colors change when a bar is selected to provide visual feedback
-        frontColor: selectedBarIndex === i ? Colors.default.berryPurple : Colors.default.primaryBlue,      // bottom of gradient
-        gradientColor: selectedBarIndex === i ? Colors.default.berryPurple : Colors.default.berryPurple,   // top of gradient
+    const selected = useMemo(() => {
+        if (nutritionHistory.length === 0) return { date: '', calories: 0 };
+        return nutritionHistory[selectedBarIndex ?? nutritionHistory.length - 1];
+    }, [nutritionHistory, selectedBarIndex]);
 
-        // Toggle selection: tapping the same bar again deselects it
-        
-        onPress: () => setSelectedBarIndex(selectedBarIndex === i ? null : i),
-        // Calorie value label displayed above each bar
-        topLabelComponent: () => (
-            <ThemedText style={{ fontSize: 10, color: Colors.default.berryBlue, marginBottom: 4 }}>
-                {d.calories}
-            </ThemedText>
-        ),
-    }));
+    const selectedDateText = useMemo(() => {
+        if (!selected.date) return '';
+        const d = new Date(`${selected.date}T00:00:00`);
+        if (Number.isNaN(d.getTime())) return selected.date;
+        return d.toLocaleDateString(undefined, {
+            weekday: "short",
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+        });
+    }, [selected.date]);
 
     return (
-        <ThemedView style = {[styles.container, {paddingTop : totalTopPadding + 20}]}>
-            <ThemedView style = {[styles.header]}>
+        <View style={styles.safe}>
+            <View style={{ flex: 2,paddingTop: Math.max(8, insets.top ) }}>
+                {/* Header */}
+                <View style={styles.header}>
+                    <Pressable onPress={() => router.back()} style={styles.headerLeft}>
+                        <Text style={styles.backChevron}>‹</Text>
+                        <Text style={styles.backText}>Back</Text>
+                    </Pressable>
+                    <Text style={styles.headerTitle}>Nutrition Data</Text>
+                    <View style={{ width: 60 }} />
+                </View>
 
-                <Pressable onPress={() => router.back()}>
-                    <Ionicons name="arrow-back" size={24} color="black" />
-                </Pressable>
-
-                <ThemedView style = {{flex: 1, alignItems: 'center',}}>
-                    <ThemedText
-                        style = {{textAlign: 'center', marginBottom: 0,}}
-                        title={true} 
-                        gradient={true} 
-                        gradientColors={[Colors.default.primaryBlue, Colors.default.berryPurple]}> 
-                        Nutrition Data 
-                    </ThemedText>
-                 </ThemedView>
-
-                <View style={{ width: 24 }} />
-
-            </ThemedView>
-
-            <ScrollView style = {{width: '100%'}}>
-                <Spacer height={20} />
-
-                <ThemedText style = {{color: Colors.default.violet, fontSize: 18, fontWeight: 'bold', marginBottom:10, textAlign: 'center'}}>
-                    Calories
-                </ThemedText>
-                {nutritionHistory.length > 0 && (
-                    <View style={{ alignItems: 'center' }}>
-                        <BarChart
-                            data={barData}
-                            width={availableWidth}
-                            height={200}
-                            barWidth={barWidth}
-                            barBorderRadius={6}
-                            spacing={spacing}
-                            noOfSections={4}
-                            maxValue={caloriesMaxValue}
-                            yAxisThickness={1}
-                            xAxisThickness={1}
-                            yAxisColor={Colors.default.mediumGray}
-                            xAxisColor={Colors.default.mediumGray}
-                            yAxisTextStyle={{ color: Colors.default.berryBlue, fontSize: 10 }}
-                            xAxisLabelTextStyle={{ color: Colors.default.berryBlue, fontSize: 10 }}
-                            rulesColor={Colors.default.mediumGray}
-                            rulesType="dashed"
-                            hideRules={false}
-                            isAnimated = {true}
-                            animationDuration={1000}
-                        />
-                    </View>
-                )}
-
-                <Spacer height={30} />
-
-                {/* ── Macros Line Chart ── */}
-                <ThemedText style={{ color: Colors.default.violet, fontSize: 18, fontWeight: 'bold', marginBottom: 10, textAlign: 'center' }}>
-                    Macros
-                </ThemedText>
-
-                {nutritionHistory.length > 0 && (
-                    <View style={{ alignItems: 'center' }}>
-                        <LineChart
-                            data={proteinData}
-                            data2={carbsData}
-                            data3={fatData}
-                            color1={Colors.default.strongGreen}
-                            color2={Colors.default.primaryBlue}
-                            color3={Colors.default.berryPurple}
-                            dataPointsColor1={Colors.default.strongGreen}
-                            dataPointsColor2={Colors.default.primaryBlue}
-                            dataPointsColor3={Colors.default.berryPurple}
-                            width={availableWidth}
-                            height={200}
-                            spacing={Math.floor(availableWidth / (numBars || 1))}
-                            noOfSections={4}
-                            maxValue={macrosMaxValue}
-                            yAxisThickness={1}
-                            xAxisThickness={1}
-                            yAxisColor={Colors.default.mediumGray}
-                            xAxisColor={Colors.default.mediumGray}
-                            yAxisTextStyle={{ color: Colors.default.berryBlue, fontSize: 10 }}
-                            xAxisLabelTextStyle={{ color: Colors.default.berryBlue, fontSize: 10 }}
-                            rulesColor={Colors.default.mediumGray}
-                            rulesType="dashed"
-                            hideRules={false}
-                            curved
-                            isAnimated
-                            animationDuration={1000}
-                            thickness={2}
-                            dataPointsRadius={4}
-                            yAxisLabelSuffix="g"
-                            pointerConfig={{
-                                pointerStripColor: Colors.default.mediumGray,
-                                pointerStripWidth: 2,
-                                pointerColor: Colors.default.berryBlue,
-                                radius: 6,
-                                activatePointersOnLongPress: false,
-                                autoAdjustPointerLabelPosition: true,
-                                pointerLabelWidth: 160,
-                                pointerLabelHeight: 100,
-                                pointerLabelComponent: (items: any[]) => {
-                                    return (
-                                        <View style={styles.tooltipContainer}>
-                                            <ThemedText style={styles.tooltipTitle}>
-                                                {items[0]?.label ?? ''}
-                                            </ThemedText>
-                                            <ThemedText style={[styles.tooltipValue, { color: Colors.default.strongGreen }]}>
-                                                Protein: {Math.round(items[0]?.value ?? 0)}g
-                                            </ThemedText>
-                                            <ThemedText style={[styles.tooltipValue, { color: Colors.default.primaryBlue }]}>
-                                                Carbs: {Math.round(items[1]?.value ?? 0)}g
-                                            </ThemedText>
-                                            <ThemedText style={[styles.tooltipValue, { color: Colors.default.berryPurple }]}>
-                                                Fat: {Math.round(items[2]?.value ?? 0)}g
-                                            </ThemedText>
-                                        </View>
-                                    );
-                                },
-                            }}
-                        />
-
-                        {/* Legend */}
-                        <View style={styles.legend}>
-                            <View style={styles.legendItem}>
-                                <View style={[styles.legendDot, { backgroundColor: Colors.default.strongGreen }]} />
-                                <ThemedText style={styles.legendText}>Protein</ThemedText>
-                            </View>
-                            <View style={styles.legendItem}>
-                                <View style={[styles.legendDot, { backgroundColor: Colors.default.primaryBlue }]} />
-                                <ThemedText style={styles.legendText}>Carbs</ThemedText>
-                            </View>
-                            <View style={styles.legendItem}>
-                                <View style={[styles.legendDot, { backgroundColor: Colors.default.berryPurple }]} />
-                                <ThemedText style={styles.legendText}>Fat</ThemedText>
-                            </View>
+                <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
+                    {/* TOTAL */}
+                    <View style={styles.totalBlock}>
+                        <Text style={styles.totalLabel}>TOTAL</Text>
+                        <View style={styles.totalRow}>
+                            <Text style={styles.totalNumber}>
+                                {Math.round(selected.calories || 0)}
+                            </Text>
+                            <Text style={styles.totalUnit}> cal</Text>
                         </View>
+                        <Text style={styles.totalDate}>{selectedDateText}</Text>
                     </View>
-                )}
 
-                <Spacer height={30} />
+                    {/* Calories Chart Card */}
+                    <View style={styles.chartCard}>
+                        <Text style={styles.cardTitle}>Calories</Text>
+                        {nutritionHistory.length === 0 ? (
+                            <Text style={{ color: "#8E8E93", paddingTop: 10 }}>
+                                No nutrition data.
+                            </Text>
+                        ) : (
+                            <View style={{ alignItems: "center", paddingTop: 10 }}>
+                                <BarChart
+                                    data={barData}
+                                    width={availableWidth}
+                                    height={240}
+                                    barWidth={barWidth}
+                                    spacing={spacing}
+                                    barBorderRadius={10}
+                                    noOfSections={4}
+                                    maxValue={caloriesMaxValue}
+                                    yAxisThickness={1}
+                                    xAxisThickness={1}
+                                    yAxisColor="#E5E5EA"
+                                    xAxisColor="#E5E5EA"
+                                    rulesColor="#E5E5EA"
+                                    rulesType="dashed"
+                                    yAxisTextStyle={{ color: "#8E8E93", fontSize: 11, fontWeight: "700" }}
+                                    xAxisLabelTextStyle={{ color: "#8E8E93", fontSize: 11, fontWeight: "700" }}
+                                    hideRules={false}
+                                    isAnimated
+                                    animationDuration={250}
+                                    topLabelContainerStyle={{ marginBottom: 6 }}
+                                    hideOrigin
+                                    xAxisLabelsHeight={18}
+                                    labelsDistanceFromXaxis={8}
+                                />
+                            </View>
+                        )}
+                    </View>
 
-            </ScrollView>
+                    {/* Macros Chart Card */}
+                    <View style={styles.chartCard}>
+                        <Text style={styles.cardTitle}>Macros</Text>
+                        {nutritionHistory.length === 0 ? (
+                            <Text style={{ color: "#8E8E93", paddingTop: 10 }}>
+                                No nutrition data.
+                            </Text>
+                        ) : (
+                            <View style={{ alignItems: "center", paddingTop: 10 }}>
+                                <LineChart
+                                    data={proteinData}
+                                    data2={carbsData}
+                                    data3={fatData}
+                                    color1={Colors.default.strongGreen}
+                                    color2={Colors.default.primaryBlue}
+                                    color3={Colors.default.berryPurple}
+                                    dataPointsColor1={Colors.default.strongGreen}
+                                    dataPointsColor2={Colors.default.primaryBlue}
+                                    dataPointsColor3={Colors.default.berryPurple}
+                                    width={availableWidth}
+                                    height={200}
+                                    spacing={Math.floor(availableWidth / (numBars || 1))}
+                                    noOfSections={4}
+                                    maxValue={macrosMaxValue}
+                                    yAxisThickness={1}
+                                    xAxisThickness={1}
+                                    yAxisColor="#E5E5EA"
+                                    xAxisColor="#E5E5EA"
+                                    rulesColor="#E5E5EA"
+                                    rulesType="dashed"
+                                    yAxisTextStyle={{ color: "#8E8E93", fontSize: 11, fontWeight: "700" }}
+                                    xAxisLabelTextStyle={{ color: "#8E8E93", fontSize: 11, fontWeight: "700" }}
+                                    hideRules={false}
+                                    curved
+                                    isAnimated
+                                    animationDuration={500}
+                                    thickness={2}
+                                    dataPointsRadius={4}
+                                    yAxisLabelSuffix="g"
+                                    pointerConfig={{
+                                        pointerStripColor: "#E5E5EA",
+                                        pointerStripWidth: 2,
+                                        pointerColor: Colors.default.berryPurple,
+                                        radius: 6,
+                                        activatePointersOnLongPress: false,
+                                        autoAdjustPointerLabelPosition: true,
+                                        pointerLabelWidth: 160,
+                                        pointerLabelHeight: 100,
+                                        pointerLabelComponent: (items: any[]) => {
+                                            return (
+                                                <View style={styles.tooltipContainer}>
+                                                    <Text style={styles.tooltipTitle}>
+                                                        {items[0]?.label ?? ''}
+                                                    </Text>
+                                                    <Text style={[styles.tooltipValue, { color: Colors.default.strongGreen }]}>
+                                                        Protein: {Math.round(items[0]?.value ?? 0)}g
+                                                    </Text>
+                                                    <Text style={[styles.tooltipValue, { color: Colors.default.primaryBlue }]}>
+                                                        Carbs: {Math.round(items[1]?.value ?? 0)}g
+                                                    </Text>
+                                                    <Text style={[styles.tooltipValue, { color: Colors.default.berryPurple }]}>
+                                                        Fat: {Math.round(items[2]?.value ?? 0)}g
+                                                    </Text>
+                                                </View>
+                                            );
+                                        },
+                                    }}
+                                />
 
-        </ThemedView>
+                                {/* Legend */}
+                                <View style={styles.legend}>
+                                    <View style={styles.legendItem}>
+                                        <View style={[styles.legendDot, { backgroundColor: Colors.default.strongGreen }]} />
+                                        <Text style={styles.legendText}>Protein</Text>
+                                    </View>
+                                    <View style={styles.legendItem}>
+                                        <View style={[styles.legendDot, { backgroundColor: Colors.default.primaryBlue }]} />
+                                        <Text style={styles.legendText}>Carbs</Text>
+                                    </View>
+                                    <View style={styles.legendItem}>
+                                        <View style={[styles.legendDot, { backgroundColor: Colors.default.berryPurple }]} />
+                                        <Text style={styles.legendText}>Fat</Text>
+                                    </View>
+                                </View>
+                            </View>
+                        )}
+                    </View>
+                </ScrollView>
+            </View>
+        </View>
     )
 }
 
 export default HistoricalNutritionData
 
 const styles = StyleSheet.create({
-    container: {
-        flex:1,
-        alignItems:'center',
-        justifyContent:'flex-start'
-    },
-    subHeader:{ 
-        fontWeight : '600',
-        fontSize : 24,
-    },
+    safe: { flex: 1, backgroundColor: "white" },
     header: {
-        width: '100%',
-        paddingHorizontal: 25,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'flex-start',
-        height: 50,
+        height: 56,
+        paddingHorizontal: 14,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
     },
+    headerLeft: { flexDirection: "row", alignItems: "center", gap: 6, paddingVertical: 8 },
+    backChevron: { fontSize: 28, lineHeight: 28, fontWeight: "400" },
+    backText: { fontSize: 17, fontWeight: "500" },
+    headerTitle: { fontSize: 20, fontWeight: "700", color: "#000" },
+    totalBlock: { paddingHorizontal: 14, paddingTop: 14, paddingBottom: 6 },
+    totalLabel: { fontSize: 13, color: "#8E8E93", fontWeight: "700", letterSpacing: 0.5 },
+    totalRow: { flexDirection: "row", alignItems: "baseline" },
+    totalNumber: { fontSize: 52, fontWeight: "800", color: "#5459AC" },
+    totalUnit: { fontSize: 20, color: "#8E8E93", fontWeight: "600", marginLeft: 6 },
+    totalDate: { fontSize: 16, color: "#8E8E93", fontWeight: "600", marginTop: 2 },
+    chartCard: {
+        marginTop: 10,
+        marginHorizontal: 14,
+        backgroundColor: "white",
+        borderRadius: 18,
+        borderWidth: 1,
+        borderColor: "#E5E5EA",
+        padding: 16,
+        overflow: "hidden",
+    },
+    cardTitle: { fontSize: 16, color: "#8E8E93", fontWeight: "600", marginBottom: 6 },
+    topLabel: { fontSize: 10, color: Colors.default.berryPurple, fontWeight: "700", marginBottom: 2 },
     legend: {
         flexDirection: 'row',
         justifyContent: 'center',
@@ -338,20 +368,21 @@ const styles = StyleSheet.create({
     },
     legendText: {
         fontSize: 12,
-        color: Colors.default.berryBlue,
+        color: "#8E8E93",
+        fontWeight: "600",
     },
     tooltipContainer: {
-        backgroundColor: Colors.default.white,
+        backgroundColor: "white",
         borderRadius: 8,
         borderWidth: 1,
-        borderColor: Colors.default.mediumGray,
+        borderColor: "#E5E5EA",
         paddingHorizontal: 12,
         paddingVertical: 8,
     },
     tooltipTitle: {
         fontSize: 12,
         fontWeight: 'bold',
-        color: Colors.default.berryBlue,
+        color: "#000",
         marginBottom: 4,
     },
     tooltipValue: {
