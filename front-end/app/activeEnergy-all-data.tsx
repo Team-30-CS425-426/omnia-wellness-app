@@ -4,7 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 
-import useActiveEnergyData from "@/src/hooks/useActiveEnergyData";
+import { useActiveEnergyContext } from "@/contexts/ActiveEnergyContext";
 
 type Mode = "W" | "M";
 
@@ -27,24 +27,30 @@ export default function ActiveEnergyAllData() {
     
   const {
     isAuthorized,
+    rangeDays,
     activeEnergyRange,
     connectAndImport,
     loadRange,
-    } = useActiveEnergyData();
+    } = useActiveEnergyContext();
 
   // Load data
   useFocusEffect(
     useCallback(() => {
       async function load() {
+        const neededDays = m === "W" ? 7 : 30;
+  
         if (!isAuthorized) {
           await connectAndImport();
+          return;
         }
   
-        await loadRange(m === "W" ? 7 : 30);
+        if (rangeDays !== neededDays || activeEnergyRange.length === 0) {
+          await loadRange(neededDays);
+        }
       }
   
       load();
-    }, [isAuthorized, m])
+    }, [isAuthorized, m, rangeDays, activeEnergyRange.length])
   );
 
   /**

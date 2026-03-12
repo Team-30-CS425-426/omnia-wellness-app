@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { LogBox } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { UserProvider } from '../contexts/UserContext';
+import { ActiveEnergyProvider } from '@/contexts/ActiveEnergyContext';
 
 Notifications.setNotificationHandler({
     handleNotification: async () => ({
@@ -22,6 +23,7 @@ const RootLayout = () => {
     return (
         <>
         <UserProvider>
+        <ActiveEnergyProvider>
         <StatusBar style = "dark" />
         <Stack screenOptions={{
             headerShown: false,
@@ -40,6 +42,7 @@ const RootLayout = () => {
 
               }}/>
         </Stack>
+        </ActiveEnergyProvider>
         </UserProvider>
         </>
     )

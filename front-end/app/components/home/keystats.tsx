@@ -36,6 +36,9 @@ import { getUserNutritionGoals } from "@/src/services/nutritionGoalService";
 import { useUser } from "@/contexts/UserContext";
 import { useFocusEffect } from "@react-navigation/native";
 
+import { useActiveEnergyContext } from "@/contexts/ActiveEnergyContext";
+
+
 // Navigation handler — routes to the historical nutrition chart screen
 const handleHistoricalNutritionData = () => {
     console.log('button pressed');
@@ -46,6 +49,7 @@ const handleActiveEnergyData = () => {
     console.log('active energy pressed');
     router.push('/screens/activeEnergy' as const);
 }
+
 
 interface KeyStatsProps {
     style?: StyleProp<ViewStyle>;
@@ -64,6 +68,28 @@ interface KeyStatsProps {
  */
 export function KeyStats({ style, health  }: KeyStatsProps) {
    const { nutrition } = useNutritionStats();
+
+   const {
+    isAuthorized: isActiveEnergyAuthorized,
+    activeEnergyToday,
+    connectAndImport: connectActiveEnergy,
+    loadRange: loadActiveEnergyRange,
+  } = useActiveEnergyContext();
+
+  useFocusEffect(
+    useCallback(() => {
+        async function loadActiveEnergy() {
+            if (!isActiveEnergyAuthorized) {
+                await connectActiveEnergy();
+            }
+
+            await loadActiveEnergyRange(7);
+        }
+
+        loadActiveEnergy();
+    }, [isActiveEnergyAuthorized])
+);
+
     return (
         <View style={style}>
             <Text style={{
@@ -87,7 +113,7 @@ export function KeyStats({ style, health  }: KeyStatsProps) {
                     fat={nutrition.fat}
                 />
                 <ActiveEnergy
-                caloriesBurned={health?.today?.activeEnergy ?? health?.activeEnergy ?? 0}
+                caloriesBurned={activeEnergyToday}
                 />
             </View>
         </View>

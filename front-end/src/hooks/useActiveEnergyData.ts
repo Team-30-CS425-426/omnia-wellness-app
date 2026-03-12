@@ -129,7 +129,7 @@ const useActiveEnergyData = () => {
       }
 
       setIsAuthorized(true);
-      await loadRange(7);
+      setLoading(false);
     } catch (e: any) {
       console.error("[ActiveEnergy] Authorization error:", e);
       setIsAuthorized(false);

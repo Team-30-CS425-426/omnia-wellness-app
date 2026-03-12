@@ -11,7 +11,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { BarChart } from "react-native-gifted-charts";
 import { useFocusEffect } from "@react-navigation/native";
-import useActiveEnergyData from "@/src/hooks/useActiveEnergyData";
+import { useActiveEnergyContext } from "@/contexts/ActiveEnergyContext";
 
 type Mode = "W" | "M";
 
@@ -65,28 +65,35 @@ export default function ActiveEnergyScreen() {
   const insets = useSafeAreaInsets();
   const {
     isAuthorized,
+    rangeDays,
     loading,
     error,
     activeEnergyRange,
     connectAndImport,
     loadRange,
-  } = useActiveEnergyData();
+  } = useActiveEnergyContext();
   const [mode, setMode] = useState<Mode>("W");
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
   useFocusEffect(
     useCallback(() => {
       async function load() {
+        const neededDays = mode === "W" ? 7 : 30;
+  
         if (!isAuthorized) {
           await connectAndImport();
+          return;
         }
   
-        await loadRange(mode === "W" ? 7 : 30);
+        if (rangeDays !== neededDays || activeEnergyRange.length === 0) {
+          await loadRange(neededDays);
+        }
+  
         setSelectedIndex(null);
       }
   
       load();
-    }, [isAuthorized, mode])
+    }, [isAuthorized, mode, rangeDays, activeEnergyRange.length])
   );
 
   const averageCalories = useMemo(() => {

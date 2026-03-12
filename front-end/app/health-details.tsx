@@ -556,6 +556,16 @@ export default function HealthDetailsScreen() {
             <Text style={styles.showAllText}>Show All Data</Text>
             <Text style={styles.showAllChevron}>›</Text>
           </Pressable>
+          {!isSteps && (
+            <View style={styles.sleepQualityCard}>
+              <View style={styles.sleepQualityHeader}>
+                <Text style={styles.sleepQualityIcon}>🛏️</Text>
+                <Text style={styles.sleepQualityTitle}>Sleep Quality</Text>
+              </View>
+
+              <Text style={styles.sleepQualityBigValue}>Good</Text>
+            </View>
+          )}
         </ScrollView>
       </View>
     </SafeAreaView>
@@ -622,4 +632,41 @@ const styles = StyleSheet.create({
     color: "#C7C7CC",
     fontWeight: "400",
   },
+  
+  sleepQualityCard: {
+    marginTop: 14,
+    marginHorizontal: 14,
+    backgroundColor: "white",
+    borderRadius: 24,
+    paddingTop: 18,
+    paddingHorizontal: 18,
+    paddingBottom: 20,
+    borderWidth: 1,
+    borderColor: "#E5E5EA",
+    minHeight: 110,
+    justifyContent: "space-between",
+  },
+  
+  sleepQualityHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  
+  sleepQualityIcon: {
+    fontSize: 22,
+    marginRight: 10,
+  },
+  
+  sleepQualityTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#187498",
+  },
+  
+  sleepQualityBigValue: {
+    fontSize: 26,
+    fontWeight: "700",
+    color: "#000",
+  },
+ 
 });
