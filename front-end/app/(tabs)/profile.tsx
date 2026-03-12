@@ -48,6 +48,7 @@ import ThemedCard from '../components/ThemedCard';
 import { Ionicons } from '@expo/vector-icons';
 import { GoalType, GOAL_CONFIGS, UserGoal } from '../../constants/goalConfigs';
 import EditModal from '../components/editModal';
+import { deleteActivityGoal, getUserActivityGoals } from '../../src/services/activityGoalService';
 
 const ProfilePage = () =>{
     const insets = useSafeAreaInsets();
@@ -94,6 +95,19 @@ const ProfilePage = () =>{
         }
 
         // Future: fetch sleep, activity, mood goals here and push to goals[]
+        // for Activity
+        try {
+            const activityData = await getUserActivityGoals(user.id);
+            if (activityData) {
+                goals.push({
+                    type: 'physical-activity',
+                    data: activityData
+
+                });
+            }
+        } catch (error) {
+            // No activity goal exist
+        }
 
         setUserGoals(goals);
     }, [user?.id]);
@@ -148,8 +162,8 @@ const ProfilePage = () =>{
 
         // Guard: only nutrition is implemented — other types show an alert
         
-        if (goalType !== 'nutrition') {
-            Alert.alert('coming Soon!', 'Only nutrition goals are currently supported');
+        if (goalType !== 'nutrition' && goalType !== 'physical-activity') {
+            Alert.alert('coming Soon!', 'Only nutrition and activity goals are currently supported');
             return;
         }
 
@@ -176,9 +190,14 @@ const ProfilePage = () =>{
 
 
     const handleDeleteGoal = async () => {
-        if (!user?.id) return;
+        if (!user?.id || !selectedGoal) return;
         try {
-            await deleteNutritionGoal(user.id);
+            if (selectedGoal.type === 'nutrition') {
+                await deleteNutritionGoal(user.id);
+            } else if (selectedGoal.type === 'physical-activity') {
+                await deleteActivityGoal(user.id);
+            }
+
             setShowEditModal(false);
             fetchAllGoals();
         } catch (error) {

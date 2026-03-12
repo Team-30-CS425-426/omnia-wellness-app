@@ -1,6 +1,6 @@
 import { supabase } from "@/config/supabaseConfig";
 import { router } from "expo-router";
-import { useCallback, useContext, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import {
   Pressable,
   StyleProp,
@@ -14,6 +14,8 @@ import { EntryContext } from "./dashboard";
 
 import { useUser } from "@/contexts/UserContext";
 import { getActivityMinutesLastNDays } from "@/src/services/workoutService";
+import { getActivityGoal } from "@/src/services/activityGoalService";
+import DashboardGoalRing from "../DashboardGoalRing";
 
 interface MetricsProps {
   style?: StyleProp<ViewStyle>;
@@ -53,6 +55,10 @@ export function Metrics({ style, health }: MetricsProps) {
   const [nutrition, setNutrition] = useState("NaN");
   const [moodstress, setMoodStress] = useState("—");
 
+  // Activity goal state
+  const [activityGoalMinutes, setActivityGoalMinutes] = useState<number | null>(null);
+  const [activityDaysPerWeek, setActivityDaysPerWeek] = useState<number | null>(null);
+
   const stepsToday =
     Number.isFinite(health?.stepsToday) ? Math.round(health.stepsToday) : 0;
 
@@ -60,6 +66,16 @@ export function Metrics({ style, health }: MetricsProps) {
     Number.isFinite(health?.sleepToday)
       ? Number(health.sleepToday).toFixed(1)
       : "0.0";
+
+  const clampProgress = (actual: number, goal: number | null) => {
+    if (!goal || goal <= 0) return 0;
+    return Math.min(actual / goal, 1);
+  };
+
+  const getActivityRingText = (actual: number, goal: number | null) => {
+    if (!goal) return `${actual}m`;
+    return actual >= goal ? `${actual}m` : `${actual}/${goal}m`;
+  };
 
   async function fetchMetrics() {
     const response = await supabase
@@ -77,16 +93,48 @@ export function Metrics({ style, health }: MetricsProps) {
     }
   }
 
-  async function fetchTodayActivity() {
+  async function fetchActivityGoal() {
+    if (!user?.id) {
+      setActivityGoalMinutes(null);
+      setActivityDaysPerWeek(null);
+      return;
+    }
+
+    try {
+      const activityGoalData = await getActivityGoal(user.id);
+
+      setActivityGoalMinutes(
+        activityGoalData?.weekly_minutes != null
+          ? Number(activityGoalData.weekly_minutes)
+          : null
+      );
+
+      setActivityDaysPerWeek(
+        activityGoalData?.days_per_week != null
+          ? Number(activityGoalData.days_per_week)
+          : null
+      );
+    } catch (error) {
+      console.log("Failed to fetch activity goal data:", error);
+      setActivityGoalMinutes(null);
+      setActivityDaysPerWeek(null);
+    }
+  }
+
+  // Fetch total activity minutes from the last 7 days
+  async function fetchThisWeekActivity() {
     if (!user?.id) {
       setActivity("0");
       return;
     }
 
     try {
-      const arr = await getActivityMinutesLastNDays(user.id, 1);
-      const mins = arr?.[0]?.minutes ?? 0;
-      setActivity(String(Math.round(Number(mins) || 0)));
+      const arr = await getActivityMinutesLastNDays(user.id, 7);
+      const totalMinutes = (arr ?? []).reduce(
+        (sum, day) => sum + (Number(day.minutes) || 0),
+        0
+      );
+      setActivity(String(Math.round(totalMinutes)));
     } catch (e) {
       console.log("Activity fetch error:", e);
       setActivity("0");
@@ -118,11 +166,16 @@ export function Metrics({ style, health }: MetricsProps) {
     }
   }
 
+  useEffect(() => {
+    fetchActivityGoal();
+  }, [user?.id]);
+
   // Refresh every time the dashboard screen comes back into focus
   useFocusEffect(
     useCallback(() => {
       fetchMetrics();
-      fetchTodayActivity();
+      fetchActivityGoal();
+      fetchThisWeekActivity();
       fetchTodayMood();
     }, [entryId, user?.id])
   );
@@ -154,15 +207,29 @@ export function Metrics({ style, health }: MetricsProps) {
 
         {/* Activity (clickable) */}
         <View style={{ flex: 1, alignItems: "center", paddingHorizontal: 0 }}>
-          <Pressable
-            onPress={() =>
-              router.push({
-                pathname: "/historicalActivityData",
-              } as any)
-            }
-          >
-            <Activity value={activity} />
-          </Pressable>
+          {activityGoalMinutes ? (
+            <DashboardGoalRing
+              label="Activity"
+              valueText={getActivityRingText(Number(activity), activityGoalMinutes)}
+              progress={clampProgress(Number(activity), activityGoalMinutes)}
+              color="#36AE7C"
+              onPress={() =>
+                router.push({
+                  pathname: "/historicalActivityData",
+                } as any)
+              }
+            />
+          ) : (
+            <Pressable
+              onPress={() =>
+                router.push({
+                  pathname: "/historicalActivityData",
+                } as any)
+              }
+            >
+              <Activity value={activity} />
+            </Pressable>
+          )}
         </View>
 
         {/* Steps (clickable) */}
