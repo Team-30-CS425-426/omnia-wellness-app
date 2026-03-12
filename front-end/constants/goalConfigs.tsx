@@ -169,25 +169,26 @@ export const GOAL_CONFIGS: Record<GoalType, GoalConfig> = {
         )
     },
 
-    // PHYSICAL ACTIVITY GOAL — placeholder, not yet implemented
+    // PHYSICAL ACTIVITY GOAL — implemented
     // Will display weekly activity minutes and days per week once the workout goal screen is built.
     'physical-activity': {
-        label: 'Activity Goal',
-        icon: 'barbell',
-        color: Colors.default.darkBlue,
-        textColor: '#36AE7C',
-        route: '/screens/workoutGoal',
-        renderDetails: (goal) => (
-            <View style={goalDetailStyles.goalDetails}>
-                <ThemedText style={goalDetailStyles.goalText}>
-                    Weekly: {goal.weekly_minutes || 0} min
-                </ThemedText>
-                <ThemedText style={goalDetailStyles.goalText}>
-                    Days/Week: {goal.days_per_week || 0}
-                </ThemedText>
-            </View>
-        )
-    },
+    label: 'Activity Goal',
+    icon: 'barbell',
+    color: Colors.default.white,
+    textColor: Colors.default.successGreen,
+    route: '/screens/activityGoal',
+    renderDetails: (goal) => (
+        <View style={goalDetailStyles.goalDetails}>
+            <ThemedText style={[goalDetailStyles.goalText, { color: Colors.default.successGreen }]}>
+                Weekly: {goal.weekly_minutes || 0} min
+            </ThemedText>
+            <ThemedText style={[goalDetailStyles.goalText, { color: Colors.default.successGreen }]}>
+                Days/Week: {goal.days_per_week || 0}
+            </ThemedText>
+        </View>
+    )
+},
+
     // MOOD GOAL — placeholder, not yet implemented
     // Will display target mood and daily check-in count once the mood goal screen is built.
     'mood': {

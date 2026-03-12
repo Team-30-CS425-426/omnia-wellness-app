@@ -49,6 +49,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { MaterialIcons } from '@expo/vector-icons';
 import { GoalType, GOAL_CONFIGS, UserGoal } from '../../constants/goalConfigs';
 import EditModal from '../components/editModal';
+import { deleteActivityGoal, getUserActivityGoals } from '../../src/services/activityGoalService';
 
 
 const ProfilePage = () =>{
@@ -119,9 +120,21 @@ const ProfilePage = () =>{
             // no steps goal
         }
     
+        // Activity
+        try {
+            const activityData = await getUserActivityGoals(user.id);
+            if (activityData) {
+                goals.push({
+                    type: 'physical-activity',
+                    data: activityData
+                });
+            }
+        } catch (error) {
+            // no activity goal
+        }
+    
         setUserGoals(goals);
     }, [user?.id]);
-
     // Fetch goals on initial mount
     useEffect(() => {
         fetchAllGoals();
@@ -153,9 +166,13 @@ const ProfilePage = () =>{
         if (
             goalType !== 'nutrition' &&
             goalType !== 'sleep' &&
-            goalType !== 'steps'
+            goalType !== 'steps' &&
+            goalType !== 'physical-activity'
         ) {
-            Alert.alert('Coming Soon!', 'This goal is not currently supported. only nutrition, sleep, and steps');
+            Alert.alert(
+                'Coming Soon!',
+                'Only nutrition, sleep, steps, and activity goals are currently supported'
+            );
             return;
         }
     
@@ -189,6 +206,8 @@ const ProfilePage = () =>{
                 await deleteSleepGoal(user.id);
             } else if (selectedGoal.type === 'steps') {
                 await deleteStepsGoal(user.id);
+            } else if (selectedGoal.type === 'physical-activity') {
+                await deleteActivityGoal(user.id);
             }
     
             setShowEditModal(false);

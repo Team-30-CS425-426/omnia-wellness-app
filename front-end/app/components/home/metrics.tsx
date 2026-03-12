@@ -16,6 +16,8 @@ import { useUser } from "@/contexts/UserContext";
 import { getSleepGoal } from "@/src/services/sleepGoalService";
 import { getStepsGoal } from "@/src/services/stepsGoalService";
 import { getActivityMinutesLastNDays } from "@/src/services/workoutService";
+import { getActivityGoal } from "@/src/services/activityGoalService";
+
 
 interface MetricsProps {
   style?: StyleProp<ViewStyle>;
@@ -57,6 +59,9 @@ export function Metrics({ style, health }: MetricsProps) {
 
   const [sleepGoalHours, setSleepGoalHours] = useState<number | null>(null);
   const [stepsGoal, setStepsGoal] = useState<number | null>(null);
+  // Activity goal state
+  const [activityGoalMinutes, setActivityGoalMinutes] = useState<number | null>(null);
+  const [activityDaysPerWeek, setActivityDaysPerWeek] = useState<number | null>(null);
 
   const stepsToday =
     Number.isFinite(health?.stepsToday) ? Math.round(health.stepsToday) : 0;
@@ -89,6 +94,11 @@ export function Metrics({ style, health }: MetricsProps) {
     return actual >= goal
       ? `${formatStepsShort(actual)}`
       : `${formatStepsShort(actual)}/${formatStepsShort(goal)}`;
+  };
+
+  const getActivityRingText = (actual: number, goal: number | null) => {
+    if (!goal) return `${actual}m`;
+    return actual >= goal ? `${actual}m` : `${actual}/${goal}m`;
   };
 
   async function fetchMetrics() {
@@ -132,16 +142,48 @@ export function Metrics({ style, health }: MetricsProps) {
     }
   }
 
-  async function fetchTodayActivity() {
+  async function fetchActivityGoal() {
+    if (!user?.id) {
+      setActivityGoalMinutes(null);
+      setActivityDaysPerWeek(null);
+      return;
+    }
+
+    try {
+      const activityGoalData = await getActivityGoal(user.id);
+
+      setActivityGoalMinutes(
+        activityGoalData?.weekly_minutes != null
+          ? Number(activityGoalData.weekly_minutes)
+          : null
+      );
+
+      setActivityDaysPerWeek(
+        activityGoalData?.days_per_week != null
+          ? Number(activityGoalData.days_per_week)
+          : null
+      );
+    } catch (error) {
+      console.log("Failed to fetch activity goal data:", error);
+      setActivityGoalMinutes(null);
+      setActivityDaysPerWeek(null);
+    }
+  }
+
+  // Fetch total activity minutes from the last 7 days
+  async function fetchThisWeekActivity() {
     if (!user?.id) {
       setActivity("0");
       return;
     }
 
     try {
-      const arr = await getActivityMinutesLastNDays(user.id, 1);
-      const mins = arr?.[0]?.minutes ?? 0;
-      setActivity(String(Math.round(Number(mins) || 0)));
+      const arr = await getActivityMinutesLastNDays(user.id, 7);
+      const totalMinutes = (arr ?? []).reduce(
+        (sum, day) => sum + (Number(day.minutes) || 0),
+        0
+      );
+      setActivity(String(Math.round(totalMinutes)));
     } catch (e) {
       console.log("Activity fetch error:", e);
       setActivity("0");
@@ -175,12 +217,16 @@ export function Metrics({ style, health }: MetricsProps) {
 
   useEffect(() => {
     fetchGoals();
+    fetchActivityGoal();
   }, [user?.id]);
 
+  // Refresh every time the dashboard screen comes back into focus
   useFocusEffect(
     useCallback(() => {
       fetchMetrics();
-      fetchTodayActivity();
+      fetchGoals();
+      fetchActivityGoal();
+      fetchThisWeekActivity();
       fetchTodayMood();
     }, [entryId, user?.id])
   );
@@ -225,15 +271,29 @@ export function Metrics({ style, health }: MetricsProps) {
         </View>
 
         <View style={{ flex: 1, alignItems: "center", paddingHorizontal: 0 }}>
-          <Pressable
-            onPress={() =>
-              router.push({
-                pathname: "/historicalActivityData",
-              } as any)
-            }
-          >
-            <Activity value={activity} />
-          </Pressable>
+          {activityGoalMinutes ? (
+            <DashboardGoalRing
+              label="Activity"
+              valueText={getActivityRingText(Number(activity), activityGoalMinutes)}
+              progress={clampProgress(Number(activity), activityGoalMinutes)}
+              color="#36AE7C"
+              onPress={() =>
+                router.push({
+                  pathname: "/historicalActivityData",
+                } as any)
+              }
+            />
+          ) : (
+            <Pressable
+              onPress={() =>
+                router.push({
+                  pathname: "/historicalActivityData",
+                } as any)
+              }
+            >
+              <Activity value={activity} />
+            </Pressable>
+          )}
         </View>
 
         <View style={{ flex: 1, alignItems: "center", paddingHorizontal: 0 }}>
@@ -337,6 +397,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   emojiCircleLabel: {
-    fontSize: 32,
+    fontSize: 40,
   },
 });
