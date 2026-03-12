@@ -35,7 +35,7 @@ function getFallbackQuote(): Quote{
 //------------------------------------------------------------------
 const Quote_API_URL = 'https://api.realinspire.live/v1/quotes/random';
 //-------------------------------------------------------------------
-const DEFAULT_TIME_MS = 5000;
+const DEFAULT_TIME_MS = 3000;
 
 type ApiQuote = {
     content: string;
