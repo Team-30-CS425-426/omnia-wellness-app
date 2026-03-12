@@ -37,7 +37,7 @@ const Insights = () => {
         try {
           if (!user) throw new Error("Not logged in");
       
-          const response = await fetch("http://192.168.1.95:8000/insights", {
+          const response = await fetch("https://omnia-wellness-app.onrender.com/insights", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ user_id: user.id }),

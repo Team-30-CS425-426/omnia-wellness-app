@@ -4,8 +4,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 from datetime import date, timedelta
 
-dotenv_path = Path(__file__).resolve().parents[2] / ".env"
-load_dotenv(dotenv_path)
+
+load_dotenv()
 
 url: str = os.environ.get("SUPABASE_URL")
 key: str = os.environ.get("SUPABASE_SERVICE")

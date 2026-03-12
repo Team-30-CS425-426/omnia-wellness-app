@@ -1,6 +1,7 @@
 // code written by Alexis Mae Asuncion
 
 import React, { useState, useLayoutEffect } from "react";
+import { Ionicons } from '@expo/vector-icons';
 import {
   View,
   StyleSheet,
@@ -121,7 +122,14 @@ const NutritionScreen = () => {
               <Text style={styles.backText}>Back</Text>
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Nutrition Tracker</Text>
-            <View style={{ width: 60 }} />
+            <TouchableOpacity 
+                style={{ width: 60, alignItems: 'flex-end', justifyContent: 'center' }}
+                onPress={() => {
+                  console.log('Barcode scanner pressed');
+                }}
+                >
+            <Ionicons name="barcode-outline" size={27} color="black" />
+            </TouchableOpacity>
           </View>
 
           {/* Page Title */}
