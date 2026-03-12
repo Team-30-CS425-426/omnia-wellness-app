@@ -13,7 +13,6 @@ import {Colors} from '../../../constants/Colors'
 
 interface WellnessDashboardsProps {
     style?: StyleProp<ViewStyle>
-    health: any;
 }
 
 
@@ -26,7 +25,7 @@ type DailyEntry ={
 export const EntryContext = createContext<any>(-1)
 
 
-export function WellnessDashboards({ style, health  }: WellnessDashboardsProps) {
+export function WellnessDashboards({ style }: WellnessDashboardsProps) {
 
     const [entryId, setEntryId] = useState(-1)
     const [dropdownItems, setDropdownItems] = useState<DailyEntry[]>([])
@@ -75,12 +74,11 @@ export function WellnessDashboards({ style, health  }: WellnessDashboardsProps) 
 
             <Metrics style={{
                 gap: 20
-            }} health={health}
+            }}
             />
             <KeyStats style={{
                 gap: 20
             }}
-            health={health}
             />
             <Habits style={{
                 gap: 20
