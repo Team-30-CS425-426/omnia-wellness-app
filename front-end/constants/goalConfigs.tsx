@@ -122,16 +122,16 @@ export const GOAL_CONFIGS: Record<GoalType, GoalConfig> = {
         route: '/screens/nutritionGoal',
         renderDetails: (goal) => (
             <View style={goalDetailStyles.goalDetails}>
-                <ThemedText style={[goalDetailStyles.goalText, { color: Colors.default.berryBlue }]}>
+                <ThemedText style={[goalDetailStyles.goalText, { color: Colors.default.successGreen }]}>
                     Calories: {goal.calorie_goal}
                 </ThemedText>
-                <ThemedText style={[goalDetailStyles.goalText, { color: Colors.default.berryBlue }]}>
+                <ThemedText style={[goalDetailStyles.goalText, { color: Colors.default.successGreen }]}>
                     Protein: {goal.protein_goal}g
                 </ThemedText>
-                <ThemedText style={[goalDetailStyles.goalText, { color: Colors.default.berryBlue }]}>
+                <ThemedText style={[goalDetailStyles.goalText, { color: Colors.default.successGreen }]}>
                     Carbs: {goal.carb_goal}g
                 </ThemedText>
-                <ThemedText style={[goalDetailStyles.goalText, { color: Colors.default.berryBlue }]}>
+                <ThemedText style={[goalDetailStyles.goalText, { color: Colors.default.successGreen }]}>
                     Fat: {goal.fat_goal}g
                 </ThemedText>
             </View>
@@ -147,7 +147,7 @@ export const GOAL_CONFIGS: Record<GoalType, GoalConfig> = {
         route: '/screens/sleepGoals',
         renderDetails: (goal) => (
             <View style={goalDetailStyles.goalDetails}>
-                <ThemedText style={[goalDetailStyles.goalText, { color: Colors.default.paleBlue }]}>
+                <ThemedText style={[goalDetailStyles.goalText, { color: Colors.default.berryBlue }]}>
                     Goal: {goal.sleep_goal_hours}h
                 </ThemedText>
             </View>
@@ -162,7 +162,7 @@ export const GOAL_CONFIGS: Record<GoalType, GoalConfig> = {
         route: '/screens/stepsGoals',
         renderDetails: (goal) => (
             <View style={goalDetailStyles.goalDetails}>
-                <ThemedText style={[goalDetailStyles.goalText, { color: Colors.default.paleYellow }]}>
+                <ThemedText style={[goalDetailStyles.goalText, { color: Colors.default.mustardYellow }]}>
                     Goal: {goal.steps_goal}
                 </ThemedText>
             </View>

@@ -19,6 +19,7 @@ import { getActivityMinutesLastNDays } from "@/src/services/workoutService";
 
 interface MetricsProps {
   style?: StyleProp<ViewStyle>;
+  health: any;
 }
 
 const pad2 = (n: number) => String(n).padStart(2, "0");
@@ -45,7 +46,7 @@ const moodToEmoji = (mood: number) => {
   }
 };
 
-export function Metrics({ style }: MetricsProps) {
+export function Metrics({ style, health }: MetricsProps) {
   const { entryId } = useContext(EntryContext);
   const { user } = useUser();
 
@@ -57,8 +58,13 @@ export function Metrics({ style }: MetricsProps) {
   const [sleepGoalHours, setSleepGoalHours] = useState<number | null>(null);
   const [stepsGoal, setStepsGoal] = useState<number | null>(null);
 
-  const stepsToday = 0;
-  const sleepToday = "0.0";
+  const stepsToday =
+    Number.isFinite(health?.stepsToday) ? Math.round(health.stepsToday) : 0;
+
+  const sleepToday =
+    Number.isFinite(health?.sleepToday)
+      ? Number(health.sleepToday).toFixed(1)
+      : "0.0";
 
   const clampProgress = (actual: number, goal: number | null) => {
     if (!goal || goal <= 0) return 0;
@@ -197,9 +203,24 @@ export function Metrics({ style }: MetricsProps) {
               valueText={getSleepRingText(Number(sleepToday), sleepGoalHours)}
               progress={clampProgress(Number(sleepToday), sleepGoalHours)}
               color="#187498"
+              onPress={() =>
+                router.push({
+                  pathname: "/health-details",
+                  params: { type: "sleep" },
+                } as any)
+              }
             />
           ) : (
-            <Sleep value={sleepToday} />
+            <Pressable
+              onPress={() =>
+                router.push({
+                  pathname: "/health-details",
+                  params: { type: "sleep" },
+                } as any)
+              }
+            >
+              <Sleep value={sleepToday} />
+            </Pressable>
           )}
         </View>
 
@@ -222,9 +243,24 @@ export function Metrics({ style }: MetricsProps) {
               valueText={getStepsRingText(stepsToday, stepsGoal)}
               progress={clampProgress(stepsToday, stepsGoal)}
               color="#F9D923"
+              onPress={() =>
+                router.push({
+                  pathname: "/health-details",
+                  params: { type: "steps" },
+                } as any)
+              }
             />
           ) : (
-            <Steps value={String(stepsToday)} />
+            <Pressable
+              onPress={() =>
+                router.push({
+                  pathname: "/health-details",
+                  params: { type: "steps" },
+                } as any)
+              }
+            >
+              <Steps value={String(stepsToday)} />
+            </Pressable>
           )}
         </View>
 

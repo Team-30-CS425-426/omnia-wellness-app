@@ -16,7 +16,9 @@ export default{
       "supportsTablet": true,
       "bundleIdentifier": "com.anonymous.front-end",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSHealthShareUsageDescription": "Omnia reads your Health data (steps/sleep) to show your real-time wellness stats.",
+        "NSHealthUpdateUsageDescription": "Omnia can write workout data to Health when you log workouts."
       }
       
     },
@@ -49,6 +51,16 @@ export default{
           "dark": {
             "backgroundColor": "#000000"
           }
+        }
+      ],
+      [
+        "@kingstinct/react-native-healthkit",
+        {
+          NSHealthShareUsageDescription:
+            "Omnia reads your Health data (steps/sleep) to show your real-time wellness stats.",
+          NSHealthUpdateUsageDescription:
+            "Omnia can write wellness data to Health when you enable it.",
+          background: false
         }
       ]
     ],

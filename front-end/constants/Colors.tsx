@@ -29,15 +29,11 @@ export const Colors = {
 
   oceanBlue: "#187498",
 
-  paleBlue: "#5F8EA2",
-
   strongGreen: "#36AE7C",
 
   lightGreen: "#93c2b0",
 
   mustardYellow: "#F9D923",
-
-  paleYellow: "#F9C958",
 
   candyRed: "#EB5353",
 

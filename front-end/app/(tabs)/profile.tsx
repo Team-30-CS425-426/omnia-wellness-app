@@ -251,7 +251,7 @@ const ProfilePage = () =>{
                         </ThemedText>
                     </View>
                     <View style={[styles.headerSide, { alignItems: "flex-end" }]}>
-                        <Pressable onPress = {() => router.navigate("../screens/settings")} hitSlop={12} >
+                        <Pressable onPress = {() => router.navigate("/screens/settings")} hitSlop={12} >
                             <MaterialIcons name="settings" size={26} color={Colors.default.darkBlue} />
                     </Pressable>
                  </View> 
