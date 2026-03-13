@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from src.services import supabase_client
 from src.services import llm
+import json
 
 
 def time_to_minutes(t: str) -> float:
@@ -123,7 +124,14 @@ def format_for_llm(df: pd.DataFrame, correlations: dict) -> str:
     """
     Build a clean prompt-ready string summarizing findings.
     """
-    lines = ["Here are health pattern correlations for this user over the past 30 days:\n"]
+    lines = [
+    "You are a JSON generator. You MUST return ONLY valid minified JSON.",
+    "Do not return any explanations, markdown, bullets, or text outside the JSON.",
+    'The JSON format is exactly: {"insights":[{"title":"...","body":"..."}, ...]}',
+    "You will receive correlation stats and context. Use them to fill in that JSON.",
+    "",
+    "Here are health pattern correlations for this user over the past 30 days:\n",
+]
 
     for question, value in correlations.items():
         if value is None:
@@ -141,7 +149,17 @@ def format_for_llm(df: pd.DataFrame, correlations: dict) -> str:
     lines.append(df[["calories", "protein", "hoursSlept", "sleepQuality", "duration", "intensity"]].describe().round(1).to_string())
 
     lines.append("\nBased on these patterns, provide 3-5 plain English insights for the user about how their habits are affecting each other. Be specific and actionable.")
-    
+    lines.append(
+    'Return ONLY a JSON object in this exact format: '
+    '{"insights":[{"title":"...","body":"..."}, {"title":"...","body":"..."}]}'
+    )
+    lines.append(
+    'Your response must be valid JSON that `json.loads()` can parse without errors.'
+    )
+    lines.append("""
+    Example output:
+    {"insights":[{"title":"Late Workout and Sleep Quality","body":"This user tends to sleep better after late workouts due to physical exhaustion"},{"title":"High Protein and Sleep Quality","body":"This user tends to sleep better after eating high protein meals"}]}
+    """)
     lines.append("""
         User context:
         - A late workout is defined as any workout after 7:30pm
@@ -151,6 +169,7 @@ def format_for_llm(df: pd.DataFrame, correlations: dict) -> str:
         - sleepQuality is scored 1-3 (1=poor, 3=good)
         - intensity is scored 1-3 (1=low, 3=high)
     """)
+    
 
     return "\n".join(lines)
 
@@ -165,4 +184,4 @@ def run_correlation_pipeline(data: dict) -> str:
     correlations = compute_targeted_correlations(df)
     prompt = format_for_llm(df, correlations)
     response = llm.generate_response(prompt)
-    return response
+    return json.loads(response)

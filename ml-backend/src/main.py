@@ -25,5 +25,5 @@ def insights(req: InsightsRequest):
     """
     Returns weekly insights text for the given user.
     """
-    text = generate_weekly_summary(req.user_id)  # this is your LLM text
-    return {"insights": text}
+
+    return {generate_weekly_summary(req.user_id)}
