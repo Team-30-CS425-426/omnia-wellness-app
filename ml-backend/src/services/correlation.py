@@ -166,7 +166,3 @@ def run_correlation_pipeline(data: dict) -> str:
     prompt = format_for_llm(df, correlations)
     response = llm.generate_response(prompt)
     return response
-
-if __name__ == "__main__":
-    data = supabase_client.get_30_days_data("088d9af5-2e5d-4f36-a3a3-863bfa8a0c54")
-    print(run_correlation_pipeline(data))
