@@ -9,6 +9,8 @@ import { ActivityIndicator, ScrollView } from 'react-native';
 import { useUser } from '../contexts/UserContext'
 
 
+
+
 //import { onAuthStateChanged, signOut, User } from 'firebase/auth';
 //import { auth } from '../config/firebaseConfig';
 
@@ -17,19 +19,22 @@ import ThemedText from './components/ThemedText'
 import ThemedTextInput from './components/ThemedTextInput'
 import Spacer from './components/Spacer'
 import ThemedButton from './components/ThemedButton'
+import ThemedCard from './components/ThemedCard';
+import { Colors } from '../constants/Colors';
 
 const Insights = () => {
 
   type Insight= {
     title: string;
     body: string;
-}
+} 
     const [insights, setInsights] = useState<Insight[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const insets = useSafeAreaInsets();
     const totalTopPadding = insets.top;
     const { user } = useUser();
+    const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
     
 
     //const [user, setUser] = useState<User | null>(null);
@@ -73,50 +78,79 @@ const Insights = () => {
         }
       };
 
-    return (
-        <ThemedView style = {[styles.container, {paddingTop : totalTopPadding, paddingBottom: insets.bottom + 150}]}>
-            <Pressable onPress={() => router.back()} style={{ marginBottom: 20 }}>
-            <Ionicons name="arrow-back" size={24} color="black" />
-            </Pressable>
-            <ThemedText title = {true}>Test Insights Page </ThemedText>
-            <Spacer height={30} />
-            <ThemedButton onPress={fetchInsights} disabled={loading}>
-            {loading ? "Generating..." : "Generate Insights"}
+      return (
+        <ScrollView
+          contentContainerStyle={{
+            paddingTop: insets.top +10,
+            paddingBottom: insets.bottom,
+            paddingHorizontal: 16,
+          }}
+          style={{ backgroundColor: 'white' }}
+        >
+          <ThemedView>
+              {/* Header */}
+              <View style={styles.header}>
+                <Pressable onPress={() => router.back()} style={styles.headerLeft}>
+                  <ThemedText style={[styles.backChevron, { color: 'black' }]}>‹</ThemedText>
+                  <ThemedText style={[styles.backText, { color: 'black' }]}>Back</ThemedText>
+                </Pressable>
+                <ThemedText
+                  style={styles.headerTitle}
+                  gradient
+                  gradientColors={[Colors.default.successGreen, Colors.default.strongGreen]}
+                >
+                  Insights
+                </ThemedText>
+                <View style={{ width: 60 }} />
+              </View>
+            <ThemedButton color={Colors.default.successGreen} onPress={fetchInsights} disabled={loading}>
+              {loading ? "Generating..." : "Generate Insights"}
             </ThemedButton>
+    
             <Spacer height={20} />
             {loading && <ActivityIndicator size="large" />}
             {error && <ThemedText style={{ color: 'red' }}>{error}</ThemedText>}
-            {insights.length > 0 && (
-              <ScrollView
-                style={{ width: '100%', paddingHorizontal: 16 }}
-                contentContainerStyle={{ paddingBottom: 32 }}
+    
+            {insights.length > 0 &&
+          insights.map((item, idx) => {
+            const isExpanded = expandedIndex === idx;
+            return (
+              <ThemedCard
+                key={idx}
+                onPress={() =>
+                  setExpandedIndex(isExpanded ? null : idx)
+                }
+                style={{
+                  marginTop: 9,
+                  padding: 16,
+                  borderRadius: 16,
+                  width: '100%',
+                  justifyContent: 'flex-start',
+                  alignItems: 'flex-start',
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.05,
+                  shadowRadius: 6,
+                  elevation: 4,
+                }}
               >
-                {insights.map((item, idx) => (
-                  <View
-                    key={idx}
-                    style={{
-                      marginBottom: 16,
-                      padding: 16,
-                      borderRadius: 12,
-                      backgroundColor: '#fff',
-                      shadowColor: '#000',
-                      shadowOpacity: 0.08,
-                      shadowRadius: 4,
-                      elevation: 2,
-                    }}
-                  >
-                    <ThemedText style={{ fontWeight: '600', fontSize: 16, marginBottom: 8 }}>
-                      {item.title}
-                    </ThemedText>
-                    <ThemedText style={{ fontSize: 14, color: '#555' }}>
-                      {item.body}
-                    </ThemedText>
-                  </View>
-                ))}
-              </ScrollView>
-            )}
-        </ThemedView>
-    )
+                <ThemedText
+                  style={{ fontWeight: '600', fontSize: 16, marginBottom: isExpanded ? 8 : 0, color: "#47a647" }}
+                >
+                  {item.title}
+                </ThemedText>
+
+                {isExpanded && (
+                  <ThemedText style={{ fontSize: 14, color: Colors.default.darkGray }}>
+                    {item.body}
+                  </ThemedText>
+                )}
+              </ThemedCard>
+            );
+          })}
+          </ThemedView>
+        </ScrollView>
+      );
 }
 
 export default Insights
@@ -125,11 +159,45 @@ const styles = StyleSheet.create({
     container: {
         flex:1,
         alignItems:'center',
-        justifyContent:'center'
+        justifyContent:'flex-start'
     },
     subHeader:{ 
         fontWeight : '600',
         fontSize : 24,
     },
+    header: {
+      height: 40,
+      paddingHorizontal: 14,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',  // centers title between left + right
+    },
+    headerMain: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      paddingVertical: 8,
+    },
+    headerLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      paddingVertical: 8,
+    },
+    backChevron: {
+      fontSize: 28,
+      lineHeight: 28,
+      fontWeight: '400',
+    },
+    backText: {
+      fontSize: 17,
+      fontWeight: '500',
+    },
+    headerTitle: {
+      fontSize: 36,
+      fontWeight: '700',
+      lineHeight: 40,
+      textAlign: 'center',
+  },
     
 })
