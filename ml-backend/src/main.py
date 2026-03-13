@@ -25,5 +25,7 @@ def insights(req: InsightsRequest):
     """
     Returns weekly insights text for the given user.
     """
-
-    return {generate_weekly_summary(req.user_id)}
+    # generate_weekly_summary already returns a JSON-serializable object
+    # (the parsed LLM output: {"insights": [...]})
+    insights = generate_weekly_summary(req.user_id)
+    return insights
