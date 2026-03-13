@@ -20,23 +20,28 @@ import ThemedButton from './components/ThemedButton'
 
 const Insights = () => {
 
-    const [insights, setInsights] = useState<string | null>(null);
+  type Insight= {
+    title: string;
+    body: string;
+}
+    const [insights, setInsights] = useState<Insight[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const insets = useSafeAreaInsets();
     const totalTopPadding = insets.top;
     const { user } = useUser();
+    
 
     //const [user, setUser] = useState<User | null>(null);
     //const [loading, setLoading] = useState(true);
     const fetchInsights = async () => {
         setLoading(true);
         setError(null);
-        setInsights(null);
+        setInsights([]);
       
         try {
           if (!user) throw new Error("Not logged in");
-      
+          console.log("User is logged in, making backend call to generate insights");
           const response = await fetch("https://omnia-wellness-app.onrender.com/insights", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -46,9 +51,20 @@ const Insights = () => {
           if (!response.ok) {
             throw new Error(`Backend error: ${response.status}`);
           }
-      
+          
           const data = await response.json();        // { insights: "<text from LLM>" }
-          setInsights(data.insights);
+          console.log(data);
+
+          const apiInsights = data.insights;
+
+          if (Array.isArray(apiInsights)) {
+            setInsights(apiInsights);                           // [{ title, body }, ...]
+          } else if (typeof apiInsights === "string") {
+            // Fallback: wrap a single string insight into one card
+            setInsights([{ title: "Weekly Insights", body: apiInsights }]);
+          } else {
+            setInsights([]); 
+        }
         } catch (e: any) {
           console.error("Insights call error:", e);
           setError(e.message || "Could not load insights.");
@@ -70,11 +86,35 @@ const Insights = () => {
             <Spacer height={20} />
             {loading && <ActivityIndicator size="large" />}
             {error && <ThemedText style={{ color: 'red' }}>{error}</ThemedText>}
-            {insights && (
-                <ScrollView style={{ width: '100%', backgroundColor: '#f5f5f5', borderRadius: 12, padding: 16 }}>
-                    <ThemedText>{insights}</ThemedText>
-                </ScrollView>
-)}
+            {insights.length > 0 && (
+              <ScrollView
+                style={{ width: '100%', paddingHorizontal: 16 }}
+                contentContainerStyle={{ paddingBottom: 32 }}
+              >
+                {insights.map((item, idx) => (
+                  <View
+                    key={idx}
+                    style={{
+                      marginBottom: 16,
+                      padding: 16,
+                      borderRadius: 12,
+                      backgroundColor: '#fff',
+                      shadowColor: '#000',
+                      shadowOpacity: 0.08,
+                      shadowRadius: 4,
+                      elevation: 2,
+                    }}
+                  >
+                    <ThemedText style={{ fontWeight: '600', fontSize: 16, marginBottom: 8 }}>
+                      {item.title}
+                    </ThemedText>
+                    <ThemedText style={{ fontSize: 14, color: '#555' }}>
+                      {item.body}
+                    </ThemedText>
+                  </View>
+                ))}
+              </ScrollView>
+            )}
         </ThemedView>
     )
 }
