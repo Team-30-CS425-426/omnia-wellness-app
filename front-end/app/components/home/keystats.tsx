@@ -49,6 +49,7 @@ const handleActiveEnergyData = () => {
 
 interface KeyStatsProps {
     style?: StyleProp<ViewStyle>;
+    health?: any;
 }
 
 /**
@@ -61,7 +62,7 @@ interface KeyStatsProps {
  * Receives today's nutrition totals from useNutritionStats() and passes
  * them down to the Nutrition component.
  */
-export function KeyStats({ style }: KeyStatsProps) {
+export function KeyStats({ style, health }: KeyStatsProps) {
    const { nutrition } = useNutritionStats();
     return (
         <View style={style}>
@@ -86,7 +87,7 @@ export function KeyStats({ style }: KeyStatsProps) {
                     fat={nutrition.fat}
                 />
                 <ActiveEnergy
-                caloriesBurned={0}
+                caloriesBurned={health?.today?.activeEnergy ?? health?.activeEnergy ?? 0}
                 />
             </View>
         </View>
