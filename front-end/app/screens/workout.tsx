@@ -2,6 +2,8 @@
 import React, { useState, useLayoutEffect } from "react"; 
 import { insertWorkout } from '../../src/services/workoutService';
 import { useUser } from '../../contexts/UserContext';
+import { router } from "expo-router";
+import WorkoutSuccess from "./SuccessScreens/WorkoutSuccess"
 
 import {
   View,
@@ -36,6 +38,10 @@ const WorkoutScreen = () => {
   const [duration, setDuration] = useState("");
   const [intensity, setIntensity] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
+  const [successVisible, setSuccessVisible] = useState(false);
+  const [successWorkoutType, setSuccessWorkoutType] = useState<string>("");
+  const [successDuration, setSuccessDuration] = useState<number>(0);
+  const [successIntensity, setSuccessIntensity] = useState<"Low" | "Medium" | "High">("Low");
 
   const INTENSITIES = [
     {label: "Low", value: "1"},
@@ -101,10 +107,10 @@ const WorkoutScreen = () => {
     });
 
     if (result.success) {
-      Alert.alert(
-        "Workout Saved!",
-        `Type: ${finalWorkoutType}\nDuration: ${parsedDuration} minutes\nIntensity: ${intensity}`
-      );
+      setSuccessWorkoutType(finalWorkoutType);
+      setSuccessDuration(parsedDuration);
+      setSuccessIntensity(intensityLabel)
+      setSuccessVisible(true);
 
       // Reset form
       setWorkoutType(null);
@@ -122,6 +128,19 @@ const WorkoutScreen = () => {
       style={{ flex: 1 }}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
+      {successVisible ? (
+      <WorkoutSuccess
+          visible={successVisible}
+          workoutType={successWorkoutType}
+          duration={successDuration}
+          intensity={successIntensity}
+          onClose={() => setSuccessVisible(false)}
+          onViewActivity={() => {
+            setSuccessVisible(false);
+            router.push("/historicalActivityData" as const);
+          }}
+          />
+        ): (
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.container}>
 
@@ -213,9 +232,9 @@ const WorkoutScreen = () => {
           <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
             <Text style={styles.saveButtonText}>Save Workout</Text>
           </TouchableOpacity>
-
         </View>
       </TouchableWithoutFeedback>
+        )}
     </KeyboardAvoidingView>
   );
 };

@@ -66,7 +66,7 @@ interface KeyStatsProps {
  * Receives today's nutrition totals from useNutritionStats() and passes
  * them down to the Nutrition component.
  */
-export function KeyStats({ style, health  }: KeyStatsProps) {
+export function KeyStats({ style, health }: KeyStatsProps) {
    const { nutrition } = useNutritionStats();
 
    const {

@@ -18,7 +18,9 @@ export default{
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSHealthShareUsageDescription": "Omnia reads your Health data (steps/sleep) to show your real-time wellness stats.",
-        "NSHealthUpdateUsageDescription": "Omnia can write workout data to Health when you log workouts."
+        "NSHealthUpdateUsageDescription": "Omnia can write workout data to Health when you log workouts.",
+        "NSHealthUpdateUsageDescription": "Omnia can write workout data to Health when you log workouts.",
+        "ITSAppUsesNonExemptEncryption": false
       }
       
     },
