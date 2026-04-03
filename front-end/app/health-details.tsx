@@ -2,7 +2,7 @@
 import useHealthData from "@/src/hooks/useHealthData";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View, Platform } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { VictoryAxis, VictoryBar, VictoryChart, VictoryLabel } from "victory-native";
 
@@ -141,6 +141,16 @@ function SleepTimeline({ span }: { span: { start: Date; end: Date } | null }) {
 
 
 export default function HealthDetailsScreen() {
+
+  if (Platform.OS !== "ios") {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <Text>Health data is only available on iOS.</Text>
+      </View>
+    );
+  }
+
+
   const { type } = useLocalSearchParams<{ type?: string }>();
   const isSteps = (type ?? "steps") === "steps";
   const title = isSteps ? "Steps" : "Sleep";

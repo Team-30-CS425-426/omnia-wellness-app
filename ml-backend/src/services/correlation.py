@@ -161,6 +161,10 @@ def format_for_llm(df: pd.DataFrame, correlations: dict) -> str:
     {"insights":[{"title":"Late Workout and Sleep Quality","body":"This user tends to sleep better after late workouts due to physical exhaustion"},{"title":"High Protein and Sleep Quality","body":"This user tends to sleep better after eating high protein meals"}]}
     """)
     lines.append("""
+    Try to bring an enthusiastic, inviting, friendly tone to the messages to excite the user! and maybe dont include
+    the negative and positive words in the response.           
+    """)
+    lines.append("""
         User context:
         - A late workout is defined as any workout after 7:30pm
         - A late bedtime is defined as after 11pm
