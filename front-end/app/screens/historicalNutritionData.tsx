@@ -54,7 +54,7 @@ const HistoricalNutritionData = () => {
             async function fetchHistory() {
                 if (!user?.id) return;
                 try {
-                    const data = await getNutritionHistory(user.id, 7);
+                    const data = await getNutritionHistory(user.id, 6);
                     setNutritionHistory(data);
                 } catch (error) {
                     console.error('Error fetching nutrition history:', error);
