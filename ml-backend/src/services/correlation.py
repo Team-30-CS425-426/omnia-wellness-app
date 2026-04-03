@@ -212,7 +212,7 @@ def format_for_llm(df: pd.DataFrame, correlations: dict, open_correlations:dict)
         lines.append(f"- {pair}: {value} ({strength} {direction})")
 
     lines.append("\nDescriptive stats:")
-    lines.append(df[["calories", "protein", "hoursSlept", "sleepQuality", "duration", "intensity", "stressLevel", "Mood"]].describe().round(1).to_string())
+    lines.append(df[["calories", "protein", "hoursSlept", "sleepQuality", "duration", "intensity", "stressLevel", "mood"]].describe().round(1).to_string())
 
     lines.append("\nBased on these patterns, provide 3-5 plain English insights for the user about how their habits are affecting each other. Be specific and actionable.")
     lines.append(
