@@ -39,6 +39,8 @@ export const Colors = {
 
   paleYellow: "#F9C958",
 
+  testYellow: "#CA9C1F",
+
   candyRed: "#EB5353",
 
   hotPink: "#FF46A2"

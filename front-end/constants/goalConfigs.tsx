@@ -158,11 +158,11 @@ export const GOAL_CONFIGS: Record<GoalType, GoalConfig> = {
         label: 'Steps Goal',
         icon: 'walk',
         color: Colors.default.white,
-        textColor: '#F9D923',
+        textColor: '#F9C958',
         route: '/screens/stepsGoals',
         renderDetails: (goal) => (
             <View style={goalDetailStyles.goalDetails}>
-                <ThemedText style={[goalDetailStyles.goalText, { color: Colors.default.paleYellow }]}>
+                <ThemedText style={[goalDetailStyles.goalText, { color: Colors.default.testYellow }]}>
                     Goal: {goal.steps_goal}
                 </ThemedText>
             </View>
@@ -222,6 +222,7 @@ export const goalDetailStyles = {
     },
     goalText: {
         fontSize: 16,
+        fontWeight: "600" as const,
         color: Colors.default.white,
         marginVertical: 4,
         width: '48%' as const,
