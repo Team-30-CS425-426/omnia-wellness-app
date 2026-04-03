@@ -42,6 +42,14 @@ export default{
       "expo-notifications",
       "@react-native-community/datetimepicker",
       [
+        "expo-camera",
+        {
+          cameraPermission:
+            "Allow Omnia to access your camera so you can scan food barcodes.",
+          barcodeScannerEnabled: true
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "image": "./assets/images/splash-icon.png",

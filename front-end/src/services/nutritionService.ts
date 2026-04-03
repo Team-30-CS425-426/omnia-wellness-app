@@ -71,6 +71,7 @@ export async function insertNutritionLog(
         nutritionEventType,
         mealName: trimmedMealName,
         notes: entry.notes?.trim() || null,
+        source: "manual",
       })
       .select("*")
       .single();

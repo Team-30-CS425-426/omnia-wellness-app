@@ -1,5 +1,4 @@
 // code written by Alexis Mae Asuncion
-
 import React, { useState, useLayoutEffect } from "react";
 import {
   View,
@@ -15,6 +14,8 @@ import {
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation } from "@react-navigation/native";
+import { router } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 
 import { useUser } from "../../contexts/UserContext";
 
@@ -116,13 +117,20 @@ const NutritionScreen = () => {
         <View style={styles.container}>
           {/* Header */}
           <View style={styles.header}>
-            <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-              <Text style={styles.backArrow}>{"←"}</Text>
-              <Text style={styles.backText}>Back</Text>
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Nutrition Tracker</Text>
-            <View style={{ width: 60 }} />
-          </View>
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+            <Text style={styles.backArrow}>{"←"}</Text>
+            <Text style={styles.backText}>Back</Text>
+          </TouchableOpacity>
+
+          <Text style={styles.headerTitle}>Nutrition Tracker</Text>
+
+          <TouchableOpacity
+            style={styles.barcodeButton}
+            onPress={() => router.push("/barcode-scanner" as any)}
+          >
+            <Ionicons name="barcode-outline" size={26} color="#000" />
+          </TouchableOpacity>
+        </View>
 
           {/* Page Title */}
           <Text style={styles.pageTitle}>Log Your Meal</Text>
@@ -252,6 +260,12 @@ const styles = StyleSheet.create({
   backButton: { 
     flexDirection: "row", 
     alignItems: "center" 
+  },
+
+  barcodeButton: {
+    width: 60,
+    alignItems: "flex-end",
+    justifyContent: "center",
   },
 
   backArrow: { 
