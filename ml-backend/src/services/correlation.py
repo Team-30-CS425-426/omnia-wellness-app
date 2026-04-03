@@ -26,7 +26,19 @@ def build_daily_df(data: dict) -> pd.DataFrame:
     nutrition = pd.DataFrame(data["nutrition"])
     activity = pd.DataFrame(data["activity"])
     sleep = pd.DataFrame(data["sleep"])
+    stress = pd.DataFrame(data["stress"])
 
+
+    #---- Stress: ---
+    if not stress.empty:
+        stress["meditated"] = stress["meditated"].astype(bool)
+        str_agg = stress.groupby("date").agg(
+            stressLevel=("stressLevel", "mean"),
+            mood=("mood", "mean"),
+            meditated=("meditated", "any")   # True if they meditated at all that day
+        )
+    else:
+        str_agg = pd.DataFrame(columns=["stressLevel", "mood", "meditated"])
     # --- Nutrition: sum macros per day ---
     nut = (
         nutrition
@@ -49,7 +61,7 @@ def build_daily_df(data: dict) -> pd.DataFrame:
     bed = sleep[["hoursSlept", "sleepQuality", "bedTimeMinutes", "wakeTimeMinutes"]]
 
     # --- Merge into one daily df ---
-    df = nut.join(act, how="outer").join(bed, how="outer")
+    df = nut.join(act, how="outer").join(bed, how="outer").join(str_agg, how = "outer")
     df = df.sort_index()
 
     return df
@@ -64,12 +76,17 @@ def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
     df["prev_sleepQuality"] = df["sleepQuality"].shift(1)
     df["prev_calories"] = df["calories"].shift(1)
     df["prev_intensity"] = df["intensity"].shift(1)
+    df["prev_stressLevel"] = df["stressLevel"].shift(1)
+    df["prev_mood"] = df["mood"].shift(1)
+    
 
     # --- Hypothesis features ---
     df["late_workout"] = df["workoutTimeMinutes"] > 1080        # workout after 8pm
     df["high_calorie_day"] = df["calories"] > df["calories"].mean()
-    df["well_rested"] = df["hoursSlept"] >= 7
+    df["well_rested"] = df["hoursSlept"] >= 6.5
     df["late_bedtime"] = df["bedTimeMinutes"] > 1380            # bed after 11pm
+    df["high_stress_day"] = df["stressLevel"] > 6      # stress above 6/10
+    df["good_mood_day"]   = df["mood"] >= 4
 
     return df
 
@@ -106,6 +123,12 @@ def compute_targeted_correlations(df: pd.DataFrame) -> dict:
 
         "high protein → better sleep quality":
             (df["protein"], df["sleepQuality"]),
+        
+        "meditated → lower stress that day": 
+            (df["meditated"].astype(float), df["stressLevel"]),
+            
+        "meditated → better sleep quality": 
+            (df["meditated"].astype(float), df["sleepQuality"]),
     }
 
     results = {}
@@ -119,8 +142,43 @@ def compute_targeted_correlations(df: pd.DataFrame) -> dict:
 
     return results
 
+def compute_open_correlations(df: pd.DataFrame, threshold: float = 0.3) -> dict:
+    """
+    Compute all pairwise Pearson correlations across numeric columns.
+    Returns only pairs where |r| >= threshold and n >= 5 overlapping rows.
+    This surfaces relationships not captured by targeted hypotheses.
+    """
+    numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
 
-def format_for_llm(df: pd.DataFrame, correlations: dict) -> str:
+    df = df.copy()
+    bool_cols = df.select_dtypes(include=[bool]).columns
+    df[bool_cols] = df[bool_cols].astype(int)
+    
+    
+    results = {}
+
+    seen = set()
+    for col_a in numeric_cols:
+        for col_b in numeric_cols:
+            if col_a == col_b:
+                continue
+            pair = tuple(sorted([col_a, col_b]))
+            if pair in seen:
+                continue
+            seen.add(pair)
+
+            valid = df[col_a].notna() & df[col_b].notna()
+            if valid.sum() < 5:
+                continue
+
+            r = df.loc[valid, col_a].corr(df.loc[valid, col_b])
+            if abs(r) >= threshold:
+                results[f"{col_a} ↔ {col_b}"] = round(r, 2)
+
+    return dict(sorted(results.items(), key=lambda x: abs(x[1]), reverse=True))
+
+
+def format_for_llm(df: pd.DataFrame, correlations: dict, open_correlations:dict) -> str:
     """
     Build a clean prompt-ready string summarizing findings.
     """
@@ -144,9 +202,17 @@ def format_for_llm(df: pd.DataFrame, correlations: dict) -> str:
                 else "weak"
             )
             lines.append(f"- {question}: {value} ({strength} {direction} correlation)")
+            
+            
+            
+    lines.append("\nOpen correlations (data-driven, all significant pairs):\n")
+    for pair, value in open_correlations.items():
+        direction = "positive" if value > 0 else "negative"
+        strength = "strong" if abs(value) > 0.5 else "moderate" if abs(value) > 0.25 else "weak"
+        lines.append(f"- {pair}: {value} ({strength} {direction})")
 
     lines.append("\nDescriptive stats:")
-    lines.append(df[["calories", "protein", "hoursSlept", "sleepQuality", "duration", "intensity"]].describe().round(1).to_string())
+    lines.append(df[["calories", "protein", "hoursSlept", "sleepQuality", "duration", "intensity", "stressLevel", "Mood"]].describe().round(1).to_string())
 
     lines.append("\nBased on these patterns, provide 3-5 plain English insights for the user about how their habits are affecting each other. Be specific and actionable.")
     lines.append(
@@ -186,6 +252,7 @@ def run_correlation_pipeline(data: dict) -> str:
     df = build_daily_df(data)
     df = engineer_features(df)
     correlations = compute_targeted_correlations(df)
-    prompt = format_for_llm(df, correlations)
+    open_correlations = compute_open_correlations(df, threshold = .3)
+    prompt = format_for_llm(df, correlations, open_correlations)
     response = llm.generate_response(prompt)
     return json.loads(response)
