@@ -16,10 +16,11 @@ import {
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation } from "@react-navigation/native";
+import { router } from "expo-router";
 
 import { useUser } from "../../contexts/UserContext";
-
 import { insertNutritionLog } from "../../src/services/nutritionService";
+import NutritionSuccess from "./SuccessScreens/NutritionSuccess";
 
 const MEAL_TYPES = ["Breakfast", "Lunch", "Dinner", "Snack"] as const;
 type MealType = (typeof MEAL_TYPES)[number];
@@ -42,6 +43,15 @@ const NutritionScreen = () => {
   const [notes, setNotes] = useState("");
   const [mealTime, setMealTime] = useState(new Date());
   const [showTimePicker, setShowTimePicker] = useState(false);
+
+  // Success screen state
+  const [successVisible, setSuccessVisible] = useState(false);
+  const [successMealName, setSuccessMealName] = useState("");
+  const [successMealType, setSuccessMealType] = useState("");
+  const [successCalories, setSuccessCalories] = useState(0);
+  const [successProtein, setSuccessProtein] = useState(0);
+  const [successCarbs, setSuccessCarbs] = useState(0);
+  const [successFat, setSuccessFat] = useState(0);
 
   // Async because we call Supabase
   const handleSave = async () => {
@@ -88,11 +98,14 @@ const NutritionScreen = () => {
     });
 
     if (result.success) {
-      Alert.alert(
-        "Nutrition Entry Saved!",
-        `Meal: ${mealName}\nType: ${mealType}\nCalories: ${parsedCalories}\nProtein: ${parsedProtein}g\nCarbs: ${parsedCarbs}g\nFat: ${parsedFat}g` +
-          (notes.trim() ? `\nNotes: ${notes.trim()}` : "")
-      );
+      // Populate success screen state
+      setSuccessMealName(mealName);
+      setSuccessMealType(mealType);
+      setSuccessCalories(parsedCalories);
+      setSuccessProtein(parsedProtein);
+      setSuccessCarbs(parsedCarbs);
+      setSuccessFat(parsedFat);
+      setSuccessVisible(true);
 
       // Reset form
       setMealName("");
@@ -113,6 +126,22 @@ const NutritionScreen = () => {
       style={{ flex: 1 }}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
+      {successVisible ? (
+        <NutritionSuccess
+          visible={successVisible}
+          mealName={successMealName}
+          mealType={successMealType}
+          calories={successCalories}
+          protein={successProtein}
+          carbs={successCarbs}
+          fat={successFat}
+          onClose={() => setSuccessVisible(false)}
+          onViewHistory={() => {
+            setSuccessVisible(false);
+            router.push("/screens/historicalNutritionData" as any);
+          }}
+        />
+      ) : (
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.container}>
           {/* Header */}
@@ -239,6 +268,7 @@ const NutritionScreen = () => {
           </TouchableOpacity>
         </View>
       </TouchableWithoutFeedback>
+      )}
     </KeyboardAvoidingView>
   );
 };

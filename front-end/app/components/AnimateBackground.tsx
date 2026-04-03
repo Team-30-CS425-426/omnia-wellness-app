@@ -1,76 +1,58 @@
-import React, { useEffect, useRef } from 'react';
-import { Animated, Easing, Dimensions, StyleSheet } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
+// app/components/AnimateBackground.tsx
+import React, { useRef, useEffect } from 'react';
+import { View, Animated, StyleSheet, Dimensions } from 'react-native';
+import LottieView from 'lottie-react-native';
 
 const { width: W, height: H } = Dimensions.get('window');
 
-// Wrap Path so we can animate its props
-const AnimatedPath = Animated.createAnimatedComponent(Path);
+interface Props {
+  visible: boolean;
+  source?: any; // require('...animation.json')
+}
 
-// 1500 ensures the dash covers the full length of the curve on most screens
-const STROKE_LENGTH = 1500; 
-
-export default function AnimatedBackground({ visible }: { visible: boolean }) {
-  const dash1 = useRef(new Animated.Value(STROKE_LENGTH)).current;
-  const dash2 = useRef(new Animated.Value(STROKE_LENGTH)).current;
+export default function AnimatedBackground({ visible, source }: Props) {
+  const lottieRef = useRef<LottieView>(null);
+  const opacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    if (!visible) {
-      // Reset to hidden state
-      dash1.setValue(STROKE_LENGTH);
-      dash2.setValue(STROKE_LENGTH);
-      return;
-    }
+    if (visible) {
+      opacity.setValue(1);
+      lottieRef.current?.reset();
+      lottieRef.current?.play();
 
-    const drawLine = (anim: Animated.Value, delay: number) =>
-      Animated.timing(anim, {
+      // Start fading out after a delay (adjust to match your Lottie's peak)
+      Animated.timing(opacity, {
         toValue: 0,
-        duration: 4000,
-        delay,
-        easing: Easing.out(Easing.cubic), // exponential easing feels more "premium"
-        useNativeDriver: false, 
-      });
-
-    Animated.parallel([
-      drawLine(dash1, 0),
-      drawLine(dash2, 300), // Staggered start for a more natural look
-    ]).start();
+        duration: 800,       // how long the fade takes
+        delay: 2000,         // how long to wait before fading
+        useNativeDriver: true,
+      }).start();
+    }
   }, [visible]);
 
-  return (
-    <Svg
-      width={W}
-      height={H}
-      style={StyleSheet.absoluteFill} // Positions it behind your content
-      viewBox={`0 0 ${W} ${H}`}
-    >
-      {/* Top Wave: Arcs UP then flattens */}
-      <AnimatedPath
-        d={`M -20 ${H * 0.22} 
-            C ${W * 0.3} ${H * 0.05}, 
-              ${W * 0.7} ${H * 0.25}, 
-              ${W + 50} ${H * 0.15}`}
-        stroke="#005BB5"
-        strokeWidth={55} // Thicker stroke to match the asset
-        strokeLinecap="round"
-        fill="none"
-        strokeDasharray={STROKE_LENGTH}
-        strokeDashoffset={dash1}
-      />
+  if (!visible) return null;
 
-      {/* Bottom Wave: Arcs DOWN then peaks UP */}
-      <AnimatedPath
-        d={`M -20 ${H * 0.75} 
-            C ${W * 0.3} ${H * 0.95}, 
-              ${W * 0.7} ${H * 0.65}, 
-              ${W + 50} ${H * 0.85}`}
-        stroke="#005BB5"
-        strokeWidth={55}
-        strokeLinecap="round"
-        fill="none"
-        strokeDasharray={STROKE_LENGTH}
-        strokeDashoffset={dash2}
+  return (
+    <Animated.View style={[styles.container, { opacity }]}>
+      <LottieView
+        ref={lottieRef}
+        source={source ?? require('../../assets/animations/workout.json')}
+        loop={false}
+        autoPlay={false}
+        style={styles.lottie}
+        resizeMode="contain"
       />
-    </Svg>
+    </Animated.View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    ...StyleSheet.absoluteFillObject,
+    overflow: 'hidden',
+  },
+  lottie: {
+    width: '100%',
+    height: '100%',
+  },
+});

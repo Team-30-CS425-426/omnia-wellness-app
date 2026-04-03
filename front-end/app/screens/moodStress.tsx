@@ -10,13 +10,17 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
   Text,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
+import { router } from "expo-router";
 
 // user + service import
 import { useUser } from "../../contexts/UserContext";
 import { insertStressLog } from "../../src/services/moodStressService";
+import MoodStressSuccess from "./SuccessScreens/MoodStressSuccess";
 
 const MOODS = [
   { label: "Very Low", emoji: "😞" },
@@ -43,6 +47,12 @@ const MoodStressScreen = () => {
   const [selectedMood, setSelectedMood] = useState<MoodLabel | null>(null);
   const [stressLevel, setStressLevel] = useState(5);
   const [notes, setNotes] = useState("");
+
+  // Success screen state
+  const [successVisible, setSuccessVisible] = useState(false);
+  const [successMood, setSuccessMood] = useState("");
+  const [successMoodEmoji, setSuccessMoodEmoji] = useState("");
+  const [successStressLevel, setSuccessStressLevel] = useState(5);
 
   // Save handler (backend connection)
   const handleSave = async () => {
@@ -74,10 +84,12 @@ const MoodStressScreen = () => {
 
     // Handle backend response
     if (result.success) {
-      Alert.alert(
-        "Mood & Stress Saved!",
-        `Mood: ${selectedMood}\nStress Level: ${stressLevel}`
-      );
+      // Find the emoji for the selected mood
+      const moodEntry = MOODS.find((m) => m.label === selectedMood);
+      setSuccessMood(selectedMood);
+      setSuccessMoodEmoji(moodEntry?.emoji ?? "");
+      setSuccessStressLevel(stressLevel);
+      setSuccessVisible(true);
 
       // Reset form after successful save
       setSelectedMood(null);
@@ -90,79 +102,98 @@ const MoodStressScreen = () => {
   };
 
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <View style={styles.container}>
-        {/* Custom Header */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Text style={styles.backArrow}>←</Text>
-            <Text style={styles.backText}>Back</Text>
-          </TouchableOpacity>
-
-          <Text style={styles.headerTitle}>Mood & Stress</Text>
-
-          <View style={{ width: 60 }}>{/* Layout balancer */}</View>
-        </View>
-
-        {/* Page Title */}
-        <Text style={styles.pageTitle}>Log Your Mood & Stress</Text>
-
-        {/* Mood Selector */}
-        <Text style={styles.sectionLabel}>Select Your Mood</Text>
-        <View style={styles.moodContainer}>
-          {MOODS.map((mood) => (
-            <TouchableOpacity
-              key={mood.label}
-              style={[
-                styles.moodButton,
-                selectedMood === mood.label && styles.moodSelected,
-              ]}
-              onPress={() => setSelectedMood(mood.label)}
-            >
-              <Text style={styles.emoji}>{mood.emoji}</Text>
-              <Text style={styles.moodLabel}>{mood.label}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* Stress Level */}
-        <Text style={styles.sectionLabel}>Stress Level: {stressLevel}</Text>
-        <View style={styles.stressControls}>
-          <TouchableOpacity
-            onPress={() => setStressLevel((prev) => Math.max(1, prev - 1))}
-          >
-            <Ionicons name="remove-circle-outline" size={36} />
-          </TouchableOpacity>
-
-          <Text style={styles.stressValue}>{stressLevel}</Text>
-
-          <TouchableOpacity
-            onPress={() => setStressLevel((prev) => Math.min(10, prev + 1))}
-          >
-            <Ionicons name="add-circle-outline" size={36} />
-          </TouchableOpacity>
-        </View>
-
-        {/* Notes */}
-        <Text style={styles.sectionLabel}>Notes (Optional)</Text>
-        <TextInput
-          style={styles.notesInput}
-          placeholder="Add notes..."
-          placeholderTextColor="#999"
-          value={notes}
-          onChangeText={setNotes}
-          multiline
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    >
+      {successVisible ? (
+        <MoodStressSuccess
+          visible={successVisible}
+          mood={successMood}
+          moodEmoji={successMoodEmoji}
+          stressLevel={successStressLevel}
+          onClose={() => setSuccessVisible(false)}
+          onViewHistory={() => {
+            setSuccessVisible(false);
+            router.push("/historicalMoodStressData" as any);
+          }}
         />
+      ) : (
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <View style={styles.container}>
+            {/* Custom Header */}
+            <View style={styles.header}>
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => navigation.goBack()}
+              >
+                <Text style={styles.backArrow}>←</Text>
+                <Text style={styles.backText}>Back</Text>
+              </TouchableOpacity>
 
-        {/* Save Button */}
-        <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-          <Text style={styles.saveButtonText}>Save</Text>
-        </TouchableOpacity>
-      </View>
-    </TouchableWithoutFeedback>
+              <Text style={styles.headerTitle}>Mood & Stress</Text>
+
+              <View style={{ width: 60 }}>{/* Layout balancer */}</View>
+            </View>
+
+            {/* Page Title */}
+            <Text style={styles.pageTitle}>Log Your Mood & Stress</Text>
+
+            {/* Mood Selector */}
+            <Text style={styles.sectionLabel}>Select Your Mood</Text>
+            <View style={styles.moodContainer}>
+              {MOODS.map((mood) => (
+                <TouchableOpacity
+                  key={mood.label}
+                  style={[
+                    styles.moodButton,
+                    selectedMood === mood.label && styles.moodSelected,
+                  ]}
+                  onPress={() => setSelectedMood(mood.label)}
+                >
+                  <Text style={styles.emoji}>{mood.emoji}</Text>
+                  <Text style={styles.moodLabel}>{mood.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Stress Level */}
+            <Text style={styles.sectionLabel}>Stress Level: {stressLevel}</Text>
+            <View style={styles.stressControls}>
+              <TouchableOpacity
+                onPress={() => setStressLevel((prev) => Math.max(1, prev - 1))}
+              >
+                <Ionicons name="remove-circle-outline" size={36} />
+              </TouchableOpacity>
+
+              <Text style={styles.stressValue}>{stressLevel}</Text>
+
+              <TouchableOpacity
+                onPress={() => setStressLevel((prev) => Math.min(10, prev + 1))}
+              >
+                <Ionicons name="add-circle-outline" size={36} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Notes */}
+            <Text style={styles.sectionLabel}>Notes (Optional)</Text>
+            <TextInput
+              style={styles.notesInput}
+              placeholder="Add notes..."
+              placeholderTextColor="#999"
+              value={notes}
+              onChangeText={setNotes}
+              multiline
+            />
+
+            {/* Save Button */}
+            <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+              <Text style={styles.saveButtonText}>Save</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableWithoutFeedback>
+      )}
+    </KeyboardAvoidingView>
   );
 };
 
