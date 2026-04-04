@@ -49,6 +49,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { GoalType, GOAL_CONFIGS, UserGoal } from '../../constants/goalConfigs';
 import EditModal from '../components/editModal';
 import { deleteActivityGoal, getUserActivityGoals } from '../../src/services/activityGoalService';
+import { deleteMoodGoal, getUserMoodGoals } from '../../src/services/moodGoalService';
 
 const ProfilePage = () =>{
     const insets = useSafeAreaInsets();
@@ -109,6 +110,19 @@ const ProfilePage = () =>{
             // No activity goal exist
         }
 
+        // for Mood and Stress Goal
+        try {
+            const moodData = await getUserMoodGoals(user.id);
+            if (moodData) {
+                goals.push({
+                    type: 'mood',
+                    data: moodData
+                });
+            }
+        } catch (error) {
+            // No mood goal exists
+        }
+
         setUserGoals(goals);
     }, [user?.id]);
 
@@ -162,8 +176,8 @@ const ProfilePage = () =>{
 
         // Guard: only nutrition is implemented — other types show an alert
         
-        if (goalType !== 'nutrition' && goalType !== 'physical-activity') {
-            Alert.alert('coming Soon!', 'Only nutrition and activity goals are currently supported');
+        if (goalType !== 'nutrition' && goalType !== 'physical-activity' && goalType !== 'mood') {
+            Alert.alert('coming Soon!', 'Only nutrition, activity goals, and mood goals are currently supported');
             return;
         }
 
@@ -196,6 +210,8 @@ const ProfilePage = () =>{
                 await deleteNutritionGoal(user.id);
             } else if (selectedGoal.type === 'physical-activity') {
                 await deleteActivityGoal(user.id);
+            } else if (selectedGoal.type == 'mood') {
+                await deleteMoodGoal(user.id)
             }
 
             setShowEditModal(false);
