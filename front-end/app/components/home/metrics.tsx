@@ -1,4 +1,9 @@
 import { supabase } from "@/config/supabaseConfig";
+import { useUser } from "@/contexts/UserContext";
+import { getSleepGoal } from "@/src/services/sleepGoalService";
+import { getStepsGoal } from "@/src/services/stepsGoalService";
+import { getActivityMinutesLastNDays } from "@/src/services/workoutService";
+import { useFocusEffect } from "@react-navigation/native";
 import { router } from "expo-router";
 import { useCallback, useContext, useEffect, useState } from "react";
 import {
@@ -9,13 +14,8 @@ import {
   View,
   ViewStyle,
 } from "react-native";
-import { useFocusEffect } from "@react-navigation/native";
-import { EntryContext } from "./dashboard";
 import DashboardGoalRing from "../DashboardGoalRing";
-import { useUser } from "@/contexts/UserContext";
-import { getSleepGoal } from "@/src/services/sleepGoalService";
-import { getStepsGoal } from "@/src/services/stepsGoalService";
-import { getActivityMinutesLastNDays } from "@/src/services/workoutService";
+import { EntryContext } from "./dashboard";
 
 interface MetricsProps {
   style?: StyleProp<ViewStyle>;
@@ -205,7 +205,7 @@ export function Metrics({ style, health }: MetricsProps) {
               color="#187498"
               onPress={() =>
                 router.push({
-                  pathname: "/health-details",
+                  pathname: "/historicalSleepData",
                   params: { type: "sleep" },
                 } as any)
               }
@@ -214,7 +214,7 @@ export function Metrics({ style, health }: MetricsProps) {
             <Pressable
               onPress={() =>
                 router.push({
-                  pathname: "/health-details",
+                  pathname: "/historicalSleepData",
                   params: { type: "sleep" },
                 } as any)
               }
@@ -245,7 +245,7 @@ export function Metrics({ style, health }: MetricsProps) {
               color="#F9D923"
               onPress={() =>
                 router.push({
-                  pathname: "/health-details",
+                  pathname: "/historicalStepData",
                   params: { type: "steps" },
                 } as any)
               }
@@ -254,7 +254,7 @@ export function Metrics({ style, health }: MetricsProps) {
             <Pressable
               onPress={() =>
                 router.push({
-                  pathname: "/health-details",
+                  pathname: "/historicalStepData",
                   params: { type: "steps" },
                 } as any)
               }

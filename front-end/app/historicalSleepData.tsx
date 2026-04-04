@@ -1,6 +1,5 @@
-
 import useHealthData from "@/src/hooks/useHealthData";
-import { router, useLocalSearchParams } from "expo-router";
+import { router } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
@@ -22,6 +21,7 @@ const toLocalDayKeyFromAny = (v: any) => {
 };
 
 const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
 const addDays = (d: Date, n: number) => {
   const x = new Date(d);
   x.setDate(x.getDate() + n);
@@ -51,6 +51,7 @@ function SegmentedDWM({
   onChange: (v: Mode) => void;
 }) {
   const options: Mode[] = ["D", "W", "M"];
+
   return (
     <View style={styles.segmentWrap}>
       {options.map((opt) => {
@@ -70,19 +71,18 @@ function SegmentedDWM({
     </View>
   );
 }
+
 function SleepTimeline({ span }: { span: { start: Date; end: Date } | null }) {
-  // Build the window based on the span's *end* date (morning of the sleep)
   const base = span?.end ? new Date(span.end) : new Date();
 
-  // Window: previous day 10 PM -> base day 10 AM
   const winStart = new Date(base.getFullYear(), base.getMonth(), base.getDate() - 1, 22, 0, 0, 0);
-  const winEnd   = new Date(base.getFullYear(), base.getMonth(), base.getDate(),     10, 0, 0, 0);
+  const winEnd = new Date(base.getFullYear(), base.getMonth(), base.getDate(), 10, 0, 0, 0);
 
   const totalMins = (winEnd.getTime() - winStart.getTime()) / (1000 * 60);
   const clamp = (v: number) => Math.max(0, Math.min(totalMins, v));
 
   const startMins = span ? clamp((span.start.getTime() - winStart.getTime()) / (1000 * 60)) : 0;
-  const endMins   = span ? clamp((span.end.getTime()   - winStart.getTime()) / (1000 * 60)) : 0;
+  const endMins = span ? clamp((span.end.getTime() - winStart.getTime()) / (1000 * 60)) : 0;
 
   const leftPct = (startMins / totalMins) * 100;
   const widthPct = Math.max(0, ((endMins - startMins) / totalMins) * 100);
@@ -139,36 +139,30 @@ function SleepTimeline({ span }: { span: { start: Date; end: Date } | null }) {
   );
 }
 
-
-export default function HealthDetailsScreen() {
-  const { type } = useLocalSearchParams<{ type?: string }>();
-  const isSteps = (type ?? "steps") === "steps";
-  const title = isSteps ? "Steps" : "Sleep";
+export default function SleepDetailsScreen() {
+  const title = "Sleep";
+  const activeColor = "#187498";
+  const inactiveColor = "rgba(24,116,152,0.35)";
 
   const insets = useSafeAreaInsets();
   const health = useHealthData();
   const { sleepDaySpan } = health;
-  console.log("[UI] sleepDaySpan:", sleepDaySpan);
-
 
   const [mode, setMode] = useState<Mode>("D");
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
 
-  // Ensure connected
   useEffect(() => {
     if (!health.isAuthorized && !health.loading) {
       health.connectAndImport();
     }
   }, [health.isAuthorized, health.loading]);
 
-  // Load ranges for W/M
   useEffect(() => {
     if (!health.isAuthorized) return;
     if (mode === "W") health.loadRange(7);
     if (mode === "M") health.loadRange(30);
   }, [mode, health.isAuthorized]);
 
-  // Reset selection when mode changes (Apple Health defaults to latest/rightmost)
   useEffect(() => {
     if (mode === "D") setSelectedIndex(0);
     if (mode === "W") setSelectedIndex(6);
@@ -177,63 +171,9 @@ export default function HealthDetailsScreen() {
 
   const dayBaseDate = useMemo(() => {
     const today = startOfDay(new Date());
-    return isSteps ? today : addDays(today, -1);
-  }, [isSteps]);
+    return addDays(today, -1);
+  }, []);
 
-  // --- STEPS series ---
-  const dayBins = useMemo(() => {
-    const arr = (health.stepsDayBins || []).map((x: any) => clampNonNeg(x));
-    return arr.length === 24 ? arr : new Array(24).fill(0);
-  }, [health.stepsDayBins]);
-
-  const weekSeries = useMemo(() => {
-    const end = startOfDay(new Date());
-    const start = addDays(end, -6);
-
-    const map = new Map<string, number>();
-    (health.stepsRange || []).forEach((p: any) => {
-      const key = toLocalDayKeyFromAny(p.startDate);
-      if (key) map.set(key, clampNonNeg(p.value));
-    });
-
-    const values: number[] = [];
-    const labels: string[] = [];
-    const dates: Date[] = [];
-
-    for (let i = 0; i < 7; i++) {
-      const d = addDays(start, i);
-      const key = localDayKey(d);
-      dates.push(d);
-      values.push(map.get(key) ?? 0);
-      labels.push(["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][d.getDay()]);
-    }
-
-    return { values, labels, dates };
-  }, [health.stepsRange]);
-
-  const monthSeries = useMemo(() => {
-    const end = startOfDay(new Date());
-    const start = addDays(end, -29);
-
-    const map = new Map<string, number>();
-    (health.stepsRange || []).forEach((p: any) => {
-      const key = toLocalDayKeyFromAny(p.startDate);
-      if (key) map.set(key, clampNonNeg(p.value));
-    });
-
-    const values: number[] = [];
-    const dates: Date[] = [];
-    for (let i = 0; i < 30; i++) {
-      const d = addDays(start, i);
-      dates.push(d);
-      values.push(map.get(localDayKey(d)) ?? 0);
-    }
-
-    return { values, dates };
-  }, [health.stepsRange]);
-
-  // --- SLEEP series ---
-  // NOTE: this expects your hook to provide health.sleepDayBins (minutes per hour)
   const sleepDayBins = useMemo(() => {
     const arr = (health.sleepDayBins || []).map((x: any) => clampNonNeg(x));
     return arr.length === 24 ? arr : new Array(24).fill(0);
@@ -243,7 +183,6 @@ export default function HealthDetailsScreen() {
     return (sleepDayBins || []).reduce((sum, v) => sum + clampNonNeg(v), 0);
   }, [sleepDayBins]);
 
-  // sleepRange daily totals are HOURS in your hook, so convert to minutes for charting
   const sleepWeekSeries = useMemo(() => {
     const end = startOfDay(new Date());
     const start = addDays(end, -6);
@@ -281,6 +220,7 @@ export default function HealthDetailsScreen() {
 
     const values: number[] = [];
     const dates: Date[] = [];
+
     for (let i = 0; i < 30; i++) {
       const d = addDays(start, i);
       dates.push(d);
@@ -290,21 +230,11 @@ export default function HealthDetailsScreen() {
     return { values, dates };
   }, [health.sleepRange]);
 
-  // Which bars are we showing?
   const chartValues = useMemo(() => {
-    if (mode === "D") return isSteps ? dayBins : sleepDayBins;
-    if (mode === "W") return isSteps ? weekSeries.values : sleepWeekSeries.values;
-    return isSteps ? monthSeries.values : sleepMonthSeries.values;
-  }, [
-    mode,
-    isSteps,
-    dayBins,
-    weekSeries.values,
-    monthSeries.values,
-    sleepDayBins,
-    sleepWeekSeries.values,
-    sleepMonthSeries.values,
-  ]);
+    if (mode === "D") return sleepDayBins;
+    if (mode === "W") return sleepWeekSeries.values;
+    return sleepMonthSeries.values;
+  }, [mode, sleepDayBins, sleepWeekSeries.values, sleepMonthSeries.values]);
 
   const safeSelectedIndex = useMemo(() => {
     if (chartValues.length === 0) return 0;
@@ -317,9 +247,9 @@ export default function HealthDetailsScreen() {
   }, [chartValues, safeSelectedIndex]);
 
   const displayValue = useMemo(() => {
-    if (!isSteps && mode === "D") return sleepDayTotalMins; // total minutes for the whole night
+    if (mode === "D") return sleepDayTotalMins;
     return selectedValue;
-  }, [isSteps, mode, sleepDayTotalMins, selectedValue]);
+  }, [mode, sleepDayTotalMins, selectedValue]);
 
   const selectedDateText = useMemo(() => {
     if (mode === "D") {
@@ -332,8 +262,7 @@ export default function HealthDetailsScreen() {
     }
 
     if (mode === "W") {
-      const d =
-        (isSteps ? weekSeries.dates : sleepWeekSeries.dates)[safeSelectedIndex] ?? new Date();
+      const d = sleepWeekSeries.dates[safeSelectedIndex] ?? new Date();
       return d.toLocaleDateString(undefined, {
         weekday: "short",
         month: "short",
@@ -342,37 +271,30 @@ export default function HealthDetailsScreen() {
       });
     }
 
-    const d =
-      (isSteps ? monthSeries.dates : sleepMonthSeries.dates)[safeSelectedIndex] ?? new Date();
+    const d = sleepMonthSeries.dates[safeSelectedIndex] ?? new Date();
     return d.toLocaleDateString(undefined, {
       weekday: "short",
       month: "short",
       day: "numeric",
       year: "numeric",
     });
-  }, [
-    mode,
-    isSteps,
-    safeSelectedIndex,
-    dayBaseDate,
-    weekSeries.dates,
-    monthSeries.dates,
-    sleepWeekSeries.dates,
-    sleepMonthSeries.dates,
-  ]);
+  }, [mode, safeSelectedIndex, dayBaseDate, sleepWeekSeries.dates, sleepMonthSeries.dates]);
 
   const barData = useMemo(() => {
     if (mode === "D") {
       return chartValues.map((y, i) => ({ x: i, y: clampNonNeg(y) }));
     }
-    if (mode === "W") {
-      const labels = isSteps ? weekSeries.labels : sleepWeekSeries.labels;
-      return chartValues.map((y, i) => ({ x: labels[i] ?? String(i), y: clampNonNeg(y) }));
-    }
-    return chartValues.map((y, i) => ({ x: i + 1, y: clampNonNeg(y) }));
-  }, [chartValues, mode, isSteps, weekSeries.labels, sleepWeekSeries.labels]);
 
-  // D axis ticks(12 AM / 6 / 12 PM / 6)
+    if (mode === "W") {
+      return chartValues.map((y, i) => ({
+        x: sleepWeekSeries.labels[i] ?? String(i),
+        y: clampNonNeg(y),
+      }));
+    }
+
+    return chartValues.map((y, i) => ({ x: i + 1, y: clampNonNeg(y) }));
+  }, [chartValues, mode, sleepWeekSeries.labels]);
+
   const dayTickValues = [0, 6, 12, 18];
   const dayTickFormat = (t: number) => {
     if (t === 0) return "12 AM";
@@ -382,17 +304,12 @@ export default function HealthDetailsScreen() {
     return "";
   };
 
-  // Month tick labels (weekly markers)
   const monthTickValues = [1, 8, 15, 22, 29];
   const monthTickFormat = (t: number) => String(t);
-
-  const activeColor = isSteps ? "#F9D923" : "#187498";
-  const inactiveColor = isSteps ? "rgba(249,217,35,0.35)" : "rgba(24,116,152,0.35)";
 
   return (
     <SafeAreaView style={styles.safe}>
       <View style={{ paddingTop: Math.max(8, insets.top * 0.2) }}>
-        {/* Header */}
         <View style={styles.header}>
           <Pressable onPress={() => router.back()} style={styles.headerLeft}>
             <Text style={styles.backChevron}>‹</Text>
@@ -403,59 +320,44 @@ export default function HealthDetailsScreen() {
           <View style={{ width: 60 }} />
         </View>
 
-        {/* Same UI for BOTH steps and sleep */}
         <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
-          {/* D/W/M */}
           <View style={{ paddingHorizontal: 14, marginTop: 6 }}>
             <SegmentedDWM value={mode} onChange={setMode} />
           </View>
 
-          {/* TOTAL block */}
           <View style={styles.totalBlock}>
             <Text style={styles.totalLabel}>
-              {isSteps ? "TOTAL" : mode === "D" ? "TIME IN BED" : "AVG. TIME IN BED"}
+              {mode === "D" ? "TIME IN BED" : "AVG. TIME IN BED"}
             </Text>
 
             <View style={styles.totalRow}>
-              {isSteps ? (
-                <>
-                  <Text style={styles.totalNumber}>{Math.round(displayValue)}</Text>
-                  <Text style={styles.totalUnit}> steps</Text>
-                </>
-              ) : (
-                <Text style={styles.totalNumber}>{minutesToHrMin(displayValue)}</Text>
-              )}
+              <Text style={styles.totalNumber}>{minutesToHrMin(displayValue)}</Text>
             </View>
 
             <Text style={styles.totalDate}>{selectedDateText}</Text>
           </View>
 
-          {/* Status */}
           {health.loading && <Text style={{ paddingHorizontal: 14 }}>Loading...</Text>}
           {!!health.error && (
             <Text style={{ paddingHorizontal: 14, color: "red" }}>{health.error}</Text>
           )}
 
-          {/* Chart */}
           <View style={styles.chartWrap}>
-            {!isSteps && mode === "D" ? (
+            {mode === "D" ? (
               <SleepTimeline span={sleepDaySpan} />
             ) : barData.length === 0 && !health.loading ? (
-              <Text style={{ paddingHorizontal: 6, color: "#8E8E93" }}>
-                {isSteps ? "No steps data." : "No sleep data."}
-              </Text>
+              <Text style={{ paddingHorizontal: 6, color: "#8E8E93" }}>No sleep data.</Text>
             ) : (
               <VictoryChart
                 height={340}
                 padding={{ top: 10, left: 34, right: 70, bottom: 50 }}
-                domainPadding={{ x: mode === "D" ? 14 : 16, y: 10 }}
+                domainPadding={{ x: 16, y: 10 }}
               >
                 <VictoryAxis
                   dependentAxis
                   orientation="right"
                   tickLabelComponent={<VictoryLabel dx={-16} />}
                   tickFormat={(t: any) => {
-                    if (isSteps) return `${Math.round(Number(t))}`;
                     const mins = Number(t);
                     if (!Number.isFinite(mins)) return "";
                     return mins === 0 ? "0" : `${Math.round(mins / 60)}h`;
@@ -467,23 +369,6 @@ export default function HealthDetailsScreen() {
                     tickLabels: { fill: "#C7C7CC", fontSize: 12, fontWeight: "700" as any },
                   }}
                 />
-
-                {mode === "D" && (
-                  <VictoryAxis
-                    tickValues={dayTickValues}
-                    tickFormat={(t: any) => dayTickFormat(Number(t))}
-                    style={{
-                      axis: { stroke: "#E5E5EA" },
-                      tickLabels: {
-                        fill: "#C7C7CC",
-                        fontSize: 13,
-                        fontWeight: "700" as any,
-                        padding: 8,
-                      },
-                      grid: { stroke: "transparent" },
-                    }}
-                  />
-                )}
 
                 {mode === "W" && (
                   <VictoryAxis
@@ -519,7 +404,7 @@ export default function HealthDetailsScreen() {
 
                 <VictoryBar
                   data={barData}
-                  barRatio={mode === "D" ? 0.55 : 0.7}
+                  barRatio={0.7}
                   style={{
                     data: {
                       fill: ({ index }: any) =>
@@ -543,29 +428,28 @@ export default function HealthDetailsScreen() {
               </VictoryChart>
             )}
           </View>
-          {/* Show all */}
+
           <Pressable
             style={styles.showAllCard}
             onPress={() =>
               router.push({
                 pathname: "/health-all-data",
-                params: { type: isSteps ? "steps" : "sleep", mode },
+                params: { type: "sleep", mode },
               } as any)
             }
           >
             <Text style={styles.showAllText}>Show All Data</Text>
             <Text style={styles.showAllChevron}>›</Text>
           </Pressable>
-          {!isSteps && (
-            <View style={styles.sleepQualityCard}>
-              <View style={styles.sleepQualityHeader}>
-                <Text style={styles.sleepQualityIcon}>🛏️</Text>
-                <Text style={styles.sleepQualityTitle}>Sleep Quality</Text>
-              </View>
 
-              <Text style={styles.sleepQualityBigValue}>Good</Text>
+          <View style={styles.sleepQualityCard}>
+            <View style={styles.sleepQualityHeader}>
+              <Text style={styles.sleepQualityIcon}>🛏️</Text>
+              <Text style={styles.sleepQualityTitle}>Sleep Quality</Text>
             </View>
-          )}
+
+            <Text style={styles.sleepQualityBigValue}>Good</Text>
+          </View>
         </ScrollView>
       </View>
     </SafeAreaView>
@@ -632,7 +516,7 @@ const styles = StyleSheet.create({
     color: "#C7C7CC",
     fontWeight: "400",
   },
-  
+
   sleepQualityCard: {
     marginTop: 14,
     marginHorizontal: 14,
@@ -646,27 +530,26 @@ const styles = StyleSheet.create({
     minHeight: 110,
     justifyContent: "space-between",
   },
-  
+
   sleepQualityHeader: {
     flexDirection: "row",
     alignItems: "center",
   },
-  
+
   sleepQualityIcon: {
     fontSize: 22,
     marginRight: 10,
   },
-  
+
   sleepQualityTitle: {
     fontSize: 18,
     fontWeight: "700",
     color: "#187498",
   },
-  
+
   sleepQualityBigValue: {
     fontSize: 26,
     fontWeight: "700",
     color: "#000",
   },
- 
 });
