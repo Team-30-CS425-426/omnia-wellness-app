@@ -43,6 +43,8 @@ export const Colors = {
 
   candyRed: "#EB5353",
 
+  vibrantOrange: "#EB7A53",
+
   hotPink: "#FF46A2"
   }
 };
