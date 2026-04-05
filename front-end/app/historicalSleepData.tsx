@@ -433,7 +433,7 @@ export default function SleepDetailsScreen() {
             style={styles.showAllCard}
             onPress={() =>
               router.push({
-                pathname: "/health-all-data",
+                pathname: "/sleep-all-data",
                 params: { type: "sleep", mode },
               } as any)
             }

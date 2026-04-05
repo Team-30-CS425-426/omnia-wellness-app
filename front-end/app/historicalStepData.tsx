@@ -362,7 +362,7 @@ export default function StepDetailsScreen() {
             style={styles.showAllCard}
             onPress={() =>
               router.push({
-                pathname: "/health-all-data",
+                pathname: "/step-all-data",
                 params: { type: "steps", mode },
               } as any)
             }

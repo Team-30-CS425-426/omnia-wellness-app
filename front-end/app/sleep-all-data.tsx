@@ -9,6 +9,7 @@ type Row = { left: string; right: string };
 
 const pad2 = (n: number) => String(n).padStart(2, "0");
 const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
 const addDays = (d: Date, n: number) => {
   const x = new Date(d);
   x.setDate(x.getDate() + n);
@@ -50,57 +51,47 @@ const minutesToHrMin = (mins: number) => {
   return `${hr} hr ${rem} min`;
 };
 
-export default function HealthAllDataScreen() {
-  const { type, mode } = useLocalSearchParams<{ type?: string; mode?: Mode }>();
-  const isSteps = (type ?? "steps") === "steps";
+export default function SleepAllDataScreen() {
+  const { mode } = useLocalSearchParams<{ mode?: Mode }>();
   const m: Mode = (mode as Mode) ?? "D";
 
   const insets = useSafeAreaInsets();
   const health = useHealthData();
 
-  // Ensure connected
   useEffect(() => {
     if (!health.isAuthorized && !health.loading) {
       health.connectAndImport();
     }
   }, [health.isAuthorized, health.loading]);
 
-  // Ensure we have the right range loaded for W/M
   useEffect(() => {
     if (!health.isAuthorized) return;
     if (m === "W") health.loadRange(7);
     if (m === "M") health.loadRange(30);
   }, [m, health.isAuthorized]);
 
-  // Build list rows (Steps OR Sleep)
   const rows = useMemo<Row[]>(() => {
-    // D: 24 hourly bins
     if (m === "D") {
-      const binsRaw = isSteps ? health.stepsDayBins : health.sleepDayBins;
-      const bins = (binsRaw || []).map((x: any) => clampNonNeg(x));
+      const bins = (health.sleepDayBins || []).map((x: any) => clampNonNeg(x));
       const safe: number[] = bins.length === 24 ? (bins as number[]) : new Array(24).fill(0);
 
       return safe
         .map((v: number, h: number) => ({
-          left: isSteps ? `${Math.round(v).toLocaleString()}` : minutesToHrMin(v),
+          left: minutesToHrMin(v),
           right: hourLabel(h),
         }))
         .reverse();
     }
 
-    // W/M
     const end = startOfDay(new Date());
     const days = m === "W" ? 7 : 30;
     const start = addDays(end, -(days - 1));
 
-    const range = isSteps ? health.stepsRange : health.sleepRange;
-
     const map = new Map<string, number>();
-    (range || []).forEach((p: any) => {
+    (health.sleepRange || []).forEach((p: any) => {
       const key = toLocalDayKeyFromAny(p.startDate);
       if (!key) return;
-      const value = clampNonNeg(p.value);
-      map.set(key, isSteps ? value : value * 60); // sleep hours -> minutes
+      map.set(key, clampNonNeg(p.value) * 60);
     });
 
     const out: Row[] = [];
@@ -110,7 +101,7 @@ export default function HealthAllDataScreen() {
       const v = map.get(key) ?? 0;
 
       out.push({
-        left: isSteps ? `${Math.round(v).toLocaleString()}` : minutesToHrMin(v),
+        left: minutesToHrMin(v),
         right: d.toLocaleDateString(undefined, {
           month: "short",
           day: "numeric",
@@ -119,23 +110,14 @@ export default function HealthAllDataScreen() {
       });
     }
 
-    // newest first
     return out.reverse();
-  }, [
-    isSteps,
-    m,
-    health.stepsDayBins,
-    health.sleepDayBins,
-    health.stepsRange,
-    health.sleepRange,
-  ]);
+  }, [m, health.sleepDayBins, health.sleepRange]);
 
   const title = "All Recorded Data";
 
   return (
     <SafeAreaView style={styles.safe}>
       <View style={{ paddingTop: Math.max(8, insets.top * 0.2) }}>
-        {/* Header */}
         <View style={styles.header}>
           <Pressable onPress={() => router.back()} style={styles.headerLeft}>
             <Text style={styles.backChevron}>‹</Text>
@@ -150,7 +132,7 @@ export default function HealthAllDataScreen() {
         )}
 
         <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
-          <Text style={styles.sectionLabel}>{isSteps ? "Steps" : "Sleep"}</Text>
+          <Text style={styles.sectionLabel}>Sleep</Text>
 
           <View style={styles.card}>
             {rows.map((r: Row, idx: number) => (
