@@ -1,5 +1,5 @@
 // code written by Alexis Mae Asuncion
-
+ 
 import React, { useState, useLayoutEffect } from "react";
 import {
   View,
@@ -17,15 +17,16 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation } from "@react-navigation/native";
 
 import { useUser } from "../../contexts/UserContext";
-
 import { insertNutritionLog } from "../../src/services/nutritionService";
+
+// nutrition streak refresh
+import { refreshNutritionStreak } from "../../src/services/nutritionStreakService";
 
 const MEAL_TYPES = ["Breakfast", "Lunch", "Dinner", "Snack"] as const;
 type MealType = (typeof MEAL_TYPES)[number];
 
 const NutritionScreen = () => {
   const navigation = useNavigation();
-
   const { user } = useUser();
 
   useLayoutEffect(() => {
@@ -42,9 +43,18 @@ const NutritionScreen = () => {
   const [mealTime, setMealTime] = useState(new Date());
   const [showTimePicker, setShowTimePicker] = useState(false);
 
-  // Async because we call Supabase
+  const resetForm = () => {
+    setMealName("");
+    setMealType(null);
+    setCalories("");
+    setProtein("");
+    setCarbs("");
+    setFat("");
+    setNotes("");
+    setMealTime(new Date());
+  };
+
   const handleSave = async () => {
-    // Check required fields
     if (!mealName.trim() || !mealType || !calories || !protein || !carbs || !fat) {
       Alert.alert(
         "Please enter all required fields: Meal Name, Meal Type, Calories, Protein, Carbs, and Fat."
@@ -57,26 +67,30 @@ const NutritionScreen = () => {
     const parsedCarbs = parseInt(carbs, 10);
     const parsedFat = parseInt(fat, 10);
 
-    // Validate numeric input
     if (
-      isNaN(parsedCalories) || parsedCalories <= 0 ||
-      isNaN(parsedProtein) || parsedProtein < 0 ||
-      isNaN(parsedCarbs) || parsedCarbs < 0 ||
-      isNaN(parsedFat) || parsedFat < 0
+      isNaN(parsedCalories) ||
+      parsedCalories <= 0 ||
+      isNaN(parsedProtein) ||
+      parsedProtein < 0 ||
+      isNaN(parsedCarbs) ||
+      parsedCarbs < 0 ||
+      isNaN(parsedFat) ||
+      parsedFat < 0
     ) {
       Alert.alert("Please enter valid numbers for Calories, Protein, Carbs, and Fat.");
       return;
     }
 
-    // Ensure user is logged in 
     if (!user?.id) {
       Alert.alert("Error", "User not authenticated.");
       return;
     }
 
-    // Insert into Supabase NutritionLog
+    const trimmedMealName = mealName.trim();
+    const trimmedNotes = notes.trim();
+
     const result = await insertNutritionLog(user.id, {
-      mealName,
+      mealName: trimmedMealName,
       mealType,
       calories: parsedCalories,
       protein: parsedProtein,
@@ -87,21 +101,20 @@ const NutritionScreen = () => {
     });
 
     if (result.success) {
+      // STEP 1: show success immediately
       Alert.alert(
         "Nutrition Entry Saved!",
-        `Meal: ${mealName}\nType: ${mealType}\nCalories: ${parsedCalories}\nProtein: ${parsedProtein}g\nCarbs: ${parsedCarbs}g\nFat: ${parsedFat}g` +
-          (notes.trim() ? `\nNotes: ${notes.trim()}` : "")
+        `Meal: ${trimmedMealName}\nType: ${mealType}\nCalories: ${parsedCalories}\nProtein: ${parsedProtein}g\nCarbs: ${parsedCarbs}g\nFat: ${parsedFat}g` +
+          (trimmedNotes ? `\nNotes: ${trimmedNotes}` : "")
       );
 
-      // Reset form
-      setMealName("");
-      setMealType(null);
-      setCalories("");
-      setProtein("");
-      setCarbs("");
-      setFat("");
-      setNotes("");
-      setMealTime(new Date());
+      // STEP 2: reset form immediately
+      resetForm();
+
+      // STEP 3: refresh streak in background (non-blocking)
+      refreshNutritionStreak(user.id).catch((streakError) => {
+        console.error("Failed to refresh nutrition streak:", streakError);
+      });
     } else {
       Alert.alert("Error", result.error || "Failed to save nutrition entry");
     }
@@ -116,7 +129,10 @@ const NutritionScreen = () => {
         <View style={styles.container}>
           {/* Header */}
           <View style={styles.header}>
-            <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+            >
               <Text style={styles.backArrow}>{"←"}</Text>
               <Text style={styles.backText}>Back</Text>
             </TouchableOpacity>
@@ -143,7 +159,10 @@ const NutritionScreen = () => {
             {MEAL_TYPES.map((meal) => (
               <TouchableOpacity
                 key={meal}
-                style={[styles.mealButton, mealType === meal && styles.mealSelected]}
+                style={[
+                  styles.mealButton,
+                  mealType === meal && styles.mealSelected,
+                ]}
                 onPress={() => setMealType(meal)}
               >
                 <Text>{meal}</Text>
@@ -201,15 +220,25 @@ const NutritionScreen = () => {
 
           {/* Meal Time */}
           <Text style={styles.sectionLabel}>Meal Time</Text>
-          <TouchableOpacity style={styles.timeInput} onPress={() => setShowTimePicker(true)}>
-            <Text>{mealTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</Text>
+          <TouchableOpacity
+            style={styles.timeInput}
+            onPress={() => setShowTimePicker(true)}
+          >
+            <Text>
+              {mealTime.toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </Text>
           </TouchableOpacity>
+
           {showTimePicker && (
             <DateTimePicker
               value={mealTime}
               mode="time"
               onChange={(event, selectedDate) => {
                 if (selectedDate) setMealTime(selectedDate);
+                setShowTimePicker(false);
               }}
             />
           )}
@@ -236,9 +265,10 @@ const NutritionScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, 
-    padding: 20, 
-    backgroundColor: "#fff" 
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: "#fff",
   },
 
   header: {
@@ -249,120 +279,119 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
 
-  backButton: { 
-    flexDirection: "row", 
-    alignItems: "center" 
+  backButton: {
+    flexDirection: "row",
+    alignItems: "center",
   },
 
-  backArrow: { 
-    fontSize: 22, 
-    fontWeight: "600", 
-    marginRight: 6 
+  backArrow: {
+    fontSize: 22,
+    fontWeight: "600",
+    marginRight: 6,
   },
 
-  backText: { 
-    fontSize: 18 
+  backText: {
+    fontSize: 18,
   },
 
-  headerTitle: { 
-    fontSize: 20, 
-    fontWeight: "bold", 
-    textAlign: "center", 
-    flex: 1 
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    textAlign: "center",
+    flex: 1,
   },
 
-  pageTitle: { 
-    textAlign: "center", 
-    fontSize: 22, 
-    fontWeight: "bold", 
-    marginBottom: 20 
+  pageTitle: {
+    textAlign: "center",
+    fontSize: 22,
+    fontWeight: "bold",
+    marginBottom: 20,
   },
 
-  sectionLabel: { 
-    fontSize: 16, 
-    fontWeight: "500", 
-    marginVertical: 10 
+  sectionLabel: {
+    fontSize: 16,
+    fontWeight: "500",
+    marginVertical: 10,
   },
 
-  mealContainer: { 
-    flexDirection: "row", 
-    flexWrap: "wrap", 
-    justifyContent: "space-between", 
-    marginBottom: 20 
+  mealContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    marginBottom: 20,
   },
 
-  mealButton: { 
-    width: "48%", 
-    padding: 12, 
-    marginBottom: 10, 
-    borderWidth: 1, 
-    borderColor: "#ccc", 
-    borderRadius: 10, 
-    alignItems: "center" 
+  mealButton: {
+    width: "48%",
+    padding: 12,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 10,
+    alignItems: "center",
   },
 
-  mealSelected: { 
-    backgroundColor: "#E0F0FF", 
-    borderColor: "#007AFF" 
+  mealSelected: {
+    backgroundColor: "#E0F0FF",
+    borderColor: "#007AFF",
   },
 
-  input: { 
-    borderWidth: 1, 
-    borderColor: "#ccc", 
-    borderRadius: 8, 
-    padding: 10, 
-    marginBottom: 10, 
-    fontSize: 16 
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 10,
+    fontSize: 16,
   },
 
-  macroContainer: { 
-    flexDirection: "row", 
-    justifyContent: "space-between", 
-    marginBottom: 20 
-  },
-  
-  macroInputContainer: { 
-    flex: 1, 
-    marginHorizontal: 5 
+  macroContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 20,
   },
 
-  macroLabel: { 
-    fontSize: 14, 
-    fontWeight: "500", 
-    marginBottom: 5 
+  macroInputContainer: {
+    flex: 1,
+    marginHorizontal: 5,
   },
 
-  timeInput: { 
-    borderWidth: 1, 
-    borderColor: "#ccc", 
-    borderRadius: 8, 
-    padding: 12, 
-    marginBottom: 20 
+  macroLabel: {
+    fontSize: 14,
+    fontWeight: "500",
+    marginBottom: 5,
   },
 
-  notesInput: { 
-    borderWidth: 1, 
-    borderColor: "#ccc", 
-    borderRadius: 8, 
-    padding: 10, 
-    height: 80, 
-    marginBottom: 20, 
-    textAlignVertical: "top" 
+  timeInput: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 20,
   },
 
-  saveButton: { 
-    backgroundColor: "#007AFF", 
-    padding: 15, 
-    borderRadius: 12, 
-    alignItems: "center" 
+  notesInput: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    padding: 10,
+    height: 80,
+    marginBottom: 20,
+    textAlignVertical: "top",
   },
 
-  saveButtonText: { 
-    color: "#fff", 
-    fontSize: 16, 
-    fontWeight: "bold" 
+  saveButton: {
+    backgroundColor: "#007AFF",
+    padding: 15,
+    borderRadius: 12,
+    alignItems: "center",
   },
 
+  saveButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
 });
 
 export default NutritionScreen;

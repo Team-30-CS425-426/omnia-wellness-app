@@ -1,3 +1,4 @@
+
 import { supabase } from "@/config/supabaseConfig"
 import { createContext, useEffect, useState } from "react"
 import { StyleProp, View, ViewStyle, Text } from "react-native"

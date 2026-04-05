@@ -1,3 +1,4 @@
+
 /**
  * profile.tsx
  * 
@@ -27,13 +28,13 @@
  *   - goalConfigs.tsx: GoalType, GOAL_CONFIGS, UserGoal (display configuration)
  *   - nutritionGoalService.ts: getUserNutritionGoals() (data fetching)
  *   - SetGoalModal.tsx: modal UI for goal category selection
- */
+ **/
 
 //Developed by Johan Ramirez
 import React, {useState, useEffect, useCallback} from 'react'
 import { useFocusEffect } from "@react-navigation/native";
 import { router } from 'expo-router';
-import {Alert, StyleSheet, View} from 'react-native'
+import {Alert, StyleSheet, View, ScrollView, Text} from 'react-native' // ADDED: ScrollView
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { deleteNutritionGoal, getUserNutritionGoals } from '../../src/services/nutritionGoalService';
 import { useUser } from '../../contexts/UserContext';
@@ -51,6 +52,14 @@ import EditModal from '../components/editModal';
 import { deleteActivityGoal, getUserActivityGoals } from '../../src/services/activityGoalService';
 import { deleteMoodGoal, getUserMoodGoals } from '../../src/services/moodGoalService';
 
+// ADDED: imports for category streaks
+import { getCategoryStreak } from "../../src/services/categoryStreakService";
+import CategoryStreakCard from "../components/CategoryStreakCard";
+
+// Added for Nutrition category streak
+import { calculateNutritionStreak } from "../../src/services/nutritionStreakService";
+
+
 const ProfilePage = () =>{
     const insets = useSafeAreaInsets();
     const totalTopPadding = insets.top;
@@ -66,6 +75,11 @@ const ProfilePage = () =>{
     // Each entry is a UserGoal { type: GoalType, data: database row }
     const [userGoals, setUserGoals] = useState<UserGoal[]>([]);
 
+    // ADDED: state for category streaks shown in Profile tab
+    const [moodStreak, setMoodStreak] = useState(0);
+    const [workoutStreak, setWorkoutStreak] = useState(0);
+    const [nutritionStreak, setNutritionStreak] = useState(0);
+
     /**
      * fetchAllGoals
      * 
@@ -76,7 +90,7 @@ const ProfilePage = () =>{
      * 
      * Wrapped in useCallback so it can be safely used as a dependency
      * in useEffect and useFocusEffect without causing infinite re-renders.
-     */
+    **/
     const fetchAllGoals = useCallback(async () => {
         if (!user?.id) return;
         
@@ -126,17 +140,38 @@ const ProfilePage = () =>{
         setUserGoals(goals);
     }, [user?.id]);
 
-    // Fetch goals on initial mount
+    // ADDED: fetch category streaks for Profile tab
+    const fetchCategoryStreaks = useCallback(async () => {
+        if (!user?.id) return;
+
+        try {
+            const [mood, workout, nutrition] = await Promise.all([
+                getCategoryStreak(user.id, "mood"),
+                getCategoryStreak(user.id, "workout"),
+                getCategoryStreak(user.id, "nutrition"),
+            ]);
+
+            setMoodStreak(mood?.current_streak ?? 0);
+            setWorkoutStreak(workout?.current_streak ?? 0);
+            setNutritionStreak(nutrition?.current_streak ?? 0);
+          } catch (error) {
+            console.error("Failed to fetch category streaks:", error);
+          }
+        }, [user?.id]);
+    
+    // Fetch goals + streaks on initial mount
     useEffect(() => {
         fetchAllGoals();
-    }, [fetchAllGoals]);
+        fetchCategoryStreaks(); // ADDED
+    }, [fetchAllGoals, fetchCategoryStreaks]); // ADDED
 
-    // Re-fetch goals every time the profile tab comes into focus
+    // Re-fetch goals + streaks every time the profile tab comes into focus
     // This ensures new goals show up immediately after being created on the goal screen
     useFocusEffect(
         useCallback(() => {
             fetchAllGoals();
-        }, [fetchAllGoals])
+            fetchCategoryStreaks(); // ADDED
+        }, [fetchAllGoals, fetchCategoryStreaks]) // ADDED
     );
 
     const handleLogout = async () => {
@@ -171,7 +206,7 @@ const ProfilePage = () =>{
      *    to the goal-setting screen (e.g. '/screens/nutritionGoal').
      * 3. Closes the modal with a small delay (100ms) so the navigation animation
      *    starts smoothly before the modal dismisses — prevents a visual flicker.
-     */
+    **/
     const handleGoalSelect = (goalType: GoalType) => {
 
         // Guard: only nutrition is implemented — other types show an alert
@@ -201,7 +236,6 @@ const ProfilePage = () =>{
             setShowEditModal(false);
         }, 100);
     }
-
 
     const handleDeleteGoal = async () => {
         if (!user?.id || !selectedGoal) return;
@@ -234,7 +268,7 @@ const ProfilePage = () =>{
      * 
      * This design means NO code changes are needed here when adding new goal types —
      * just add the config to GOAL_CONFIGS and the card renders automatically.
-     */
+    **/
     const renderGoalCard = (goal: UserGoal) => {
         const config = GOAL_CONFIGS[goal.type];
         
@@ -271,35 +305,77 @@ const ProfilePage = () =>{
             </ThemedView>
             <Spacer height={15} />
 
-            {/* Container for goal cards - allows 2 cards per row */}
-            <View style={styles.goalsContainer}>
-                {/* Display all existing goals dynamically */}
-                {userGoals.map(goal => renderGoalCard(goal))}
+            {/* ADDED: ScrollView so goals + streaks all fit nicely */}
+            <ScrollView
+                contentContainerStyle={styles.scrollContent}
+                showsVerticalScrollIndicator={false}
+            >
+                <Spacer height={15} />
 
-                {/* Add Goal Card */}
-                <ThemedCard 
-                    style={styles.addGoalCard}
-                    onPress={() => setShowGoalModal(true)}
-                >
-                    <Ionicons 
-                        name="add" 
-                        size={48} 
-                        color={Colors.default.berryBlue}
+                {/* Container for goal cards - allows 2 cards per row */}
+                <View style={styles.goalsContainer}>
+                    {/* Display all existing goals dynamically */}
+                    {userGoals.map(goal => renderGoalCard(goal))}
+
+                    {/* Add Goal Card */}
+                    <ThemedCard 
+                        style={styles.addGoalCard}
+                        onPress={() => setShowGoalModal(true)}
+                    >
+                        <Ionicons 
+                            name="add" 
+                            size={48} 
+                            color={Colors.default.berryBlue}
+                        />
+                    </ThemedCard>
+                </View>
+
+                <Spacer height={10} />
+
+
+                {/* ADDED: New Streaks section */}
+                <View style={styles.sectionTitleContainer}>
+                    <Text style={styles.sectionTitle}>
+                        Streaks
+                    </Text>
+                </View>
+
+                {/* ADDED: Streak cards */}
+                <View style={styles.streaksContainer}>
+                    <CategoryStreakCard
+                        title="Mood"
+                        streakCount={moodStreak}
+                        subtitle="Daily mood check-in streak"
                     />
-                </ThemedCard>
-            </View>
 
-            <Spacer height={10} />
+                    <CategoryStreakCard
+                        title="Workout"
+                        streakCount={workoutStreak}
+                        subtitle="Workout weekly streak"
+                        unit="week"
+                    />
 
-            <ThemedButton onPress={handleLogout}>  
-                <ThemedText style={{color: Colors.default.white}} > Logout </ThemedText>
-            </ThemedButton>    
-            <Spacer height={30} />
+                    <CategoryStreakCard
+                        title="Nutrition"
+                        streakCount={nutritionStreak}
+                        subtitle="Nutrition goal streak"
+                    />
+                </View>
 
-            <ThemedButton color={Colors.default.errorRed} onPress = {() => setShowDeleteModal(true)}>  
-                <ThemedText style={{color: Colors.default.white}} > Delete Account </ThemedText>
-            </ThemedButton>    
-            <Spacer height={30} />
+                <Spacer height={10} />
+
+
+                <ThemedButton onPress={handleLogout}>  
+                    <ThemedText style={{color: Colors.default.white}} > Logout </ThemedText>
+                </ThemedButton>    
+                <Spacer height={30} />
+
+                <ThemedButton color={Colors.default.errorRed} onPress = {() => setShowDeleteModal(true)}>  
+                    <ThemedText style={{color: Colors.default.white}} > Delete Account </ThemedText>
+                </ThemedButton>    
+                <Spacer height={30} />
+            
+            </ScrollView>
         
             <EditModal
                 isVisible={showEditModal}
@@ -330,7 +406,7 @@ export default ProfilePage
 const styles = StyleSheet.create({
     container: {
         flex:1,
-        alignItems:'center',
+        //alignItems:'center',
         justifyContent:'flex-start'
     }, 
     headerBar: {
@@ -346,6 +422,31 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 4,
     },
+
+    // ADDED: lets the whole profile page scroll
+    scrollContent: {
+        width: "100%",
+        alignItems: "center",
+        paddingBottom: 20,
+    },
+
+    // ADDED: reusable section title wrapper
+    sectionTitleContainer: {
+        width: "100%",
+        paddingHorizontal: "5%",
+        marginBottom: 10,  
+    },
+
+    // ADDED: section title style for "Streaks"
+    sectionTitle: {
+        //width: "100%",
+        fontSize: 22,
+        fontWeight: "700",
+        color: Colors.default.darkBlue,
+        //marginBottom: 10,
+        textAlign: "left"
+    },
+
     goalsContainer: {
         width: '90%',
         flexDirection: 'row',
@@ -367,4 +468,10 @@ const styles = StyleSheet.create({
         padding: 10,
         marginBottom: 10,
     },
+
+    // ADDED: container for the new streak cards section
+    streaksContainer: {
+        width: "90%",
+        marginBottom: 16,
+  },
 })

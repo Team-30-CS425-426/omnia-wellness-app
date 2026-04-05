@@ -1,5 +1,5 @@
 // code written by Alexis Mae Asuncion
-
+ 
 import React, { useState, useLayoutEffect } from "react";
 import {
   View,
@@ -18,6 +18,9 @@ import { useNavigation } from "@react-navigation/native";
 import { useUser } from "../../contexts/UserContext";
 import { insertStressLog } from "../../src/services/moodStressService";
 
+// ADDED: import the mood streak refresh function
+import { refreshMoodStreak } from "../../src/services/categoryCompletionService";
+
 const MOODS = [
   { label: "Very Low", emoji: "😞" },
   { label: "Low", emoji: "🙁" },
@@ -32,7 +35,7 @@ type MoodLabel = (typeof MOODS)[number]["label"];
 const MoodStressScreen = () => {
   const navigation = useNavigation();
 
-  // Get logged-in user 
+  // Get logged-in user
   const { user } = useUser();
 
   // Hide default header
@@ -64,25 +67,42 @@ const MoodStressScreen = () => {
     }
 
     // Call Supabase (via service)
-    // This sends the data to Supabase using a service function, the service handles the actual database insert
     const result = await insertStressLog(user.id, {
       moodLabel: selectedMood,
       stressLevel,
       notes: notes || undefined,
-      meditated: false, 
+      meditated: false,
     });
 
     // Handle backend response
     if (result.success) {
-      Alert.alert(
-        "Mood & Stress Saved!",
-        `Mood: ${selectedMood}\nStress Level: ${stressLevel}`
-      );
+      try {
+        // ADDED: refresh the mood category streak after successful save
+        await refreshMoodStreak(user.id);
 
-      // Reset form after successful save
-      setSelectedMood(null);
-      setStressLevel(5);
-      setNotes("");
+        Alert.alert(
+          "Mood & Stress Saved!",
+          `Mood: ${selectedMood}\nStress Level: ${stressLevel}`
+        );
+
+        // Reset form after successful save
+        setSelectedMood(null);
+        setStressLevel(5);
+        setNotes("");
+      } catch (streakError) {
+        console.error("Failed to refresh mood streak:", streakError);
+
+        // The mood entry still saved successfully, so let the user know that
+        Alert.alert(
+          "Mood & Stress Saved!",
+          "Your entry was saved, but the mood streak could not be updated right now."
+        );
+
+        // Reset form after successful save
+        setSelectedMood(null);
+        setStressLevel(5);
+        setNotes("");
+      }
     } else {
       // If Supabase returns an error, show it to the user
       Alert.alert("Error", result.error || "Failed to save mood & stress entry");

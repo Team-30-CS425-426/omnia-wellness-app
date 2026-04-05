@@ -1,7 +1,11 @@
 // code written by Alexis Mae Asuncion
-import React, { useState, useLayoutEffect } from "react"; 
-import { insertWorkout } from '../../src/services/workoutService';
-import { useUser } from '../../contexts/UserContext';
+
+import React, { useState, useLayoutEffect } from "react";
+import { insertWorkout } from "../../src/services/workoutService";
+import { useUser } from "../../contexts/UserContext";
+
+// Using workout streak service
+import { refreshWorkoutStreak } from "../../src/services/workoutStreakService";
 
 import {
   View,
@@ -22,15 +26,10 @@ const WorkoutScreen = () => {
   const navigation = useNavigation();
   const { user } = useUser();
 
-
-
-  
-  // Hide default header
   useLayoutEffect(() => {
     navigation.setOptions({ headerShown: false });
   }, [navigation]);
 
-  // State
   const [workoutType, setWorkoutType] = useState<string | null>(null);
   const [customWorkout, setCustomWorkout] = useState("");
   const [duration, setDuration] = useState("");
@@ -38,9 +37,9 @@ const WorkoutScreen = () => {
   const [notes, setNotes] = useState("");
 
   const INTENSITIES = [
-    {label: "Low", value: "1"},
-    {label: "Medium", value: "2"},
-    {label: "High", value: "3"},
+    { label: "Low", value: "1" },
+    { label: "Medium", value: "2" },
+    { label: "High", value: "3" },
   ];
 
   const workoutOptions = [
@@ -60,7 +59,6 @@ const WorkoutScreen = () => {
     if (!workoutType || !duration || !intensity) {
       Alert.alert("Please fill out all required fields.");
       return;
-      
     }
 
     const parsedDuration = parseInt(duration, 10);
@@ -84,15 +82,13 @@ const WorkoutScreen = () => {
       return;
     }
 
-    // Convert numeric intensity value to label
-    const intensityMap: { [key: string]: 'Low' | 'Medium' | 'High' } = {
-      '1': 'Low',
-      '2': 'Medium',
-      '3': 'High',
+    const intensityMap: { [key: string]: "Low" | "Medium" | "High" } = {
+      "1": "Low",
+      "2": "Medium",
+      "3": "High",
     };
-    const intensityLabel = intensityMap[intensity || ''];
+    const intensityLabel = intensityMap[intensity || ""];
 
-    // Save to Supabase
     const result = await insertWorkout(user.id, {
       workout_type: finalWorkoutType,
       duration: parsedDuration,
@@ -101,17 +97,24 @@ const WorkoutScreen = () => {
     });
 
     if (result.success) {
+      // STEP 1: Show success immediately (no delay)
       Alert.alert(
         "Workout Saved!",
-        `Type: ${finalWorkoutType}\nDuration: ${parsedDuration} minutes\nIntensity: ${intensity}`
+        `Type: ${finalWorkoutType}\nDuration: ${parsedDuration} minutes\nIntensity: ${intensityLabel}`
       );
 
-      // Reset form
+      // STEP 2: Reset form immediately
       setWorkoutType(null);
       setCustomWorkout("");
       setDuration("");
       setIntensity(null);
       setNotes("");
+
+      // STEP 3: Refresh streak in background (non-blocking)
+      refreshWorkoutStreak(user.id).catch((streakError) => {
+        console.error("Failed to refresh workout streak:", streakError);
+      });
+
     } else {
       Alert.alert("Error", result.error || "Failed to save workout");
     }
@@ -124,10 +127,12 @@ const WorkoutScreen = () => {
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.container}>
-
-          {/* Custom Header */}
+          {/* Header */}
           <View style={styles.header}>
-            <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+            >
               <Text style={styles.backArrow}>{"←"}</Text>
               <Text style={styles.backText}>Back</Text>
             </TouchableOpacity>
@@ -136,7 +141,6 @@ const WorkoutScreen = () => {
             <View style={{ width: 60 }} />
           </View>
 
-          {/* Page Title */}
           <Text style={styles.pageTitle}>Log Your Workout</Text>
 
           {/* Workout Type */}
@@ -154,7 +158,7 @@ const WorkoutScreen = () => {
             onChange={(item) => setWorkoutType(item.value)}
           />
 
-          {/* Custom workout entry */}
+          {/* Custom workout */}
           {workoutType === "Other" && (
             <TextInput
               style={styles.notesInput}
@@ -213,7 +217,6 @@ const WorkoutScreen = () => {
           <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
             <Text style={styles.saveButtonText}>Save Workout</Text>
           </TouchableOpacity>
-
         </View>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
@@ -221,10 +224,10 @@ const WorkoutScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    padding: 20, 
-    backgroundColor: "#fff" 
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: "#fff",
   },
 
   header: {
@@ -235,39 +238,39 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
 
-  backButton: { 
-    flexDirection: "row", 
-    alignItems: "center" 
+  backButton: {
+    flexDirection: "row",
+    alignItems: "center",
   },
 
-  backArrow: { 
-    fontSize: 22, 
-    fontWeight: "600", 
-    marginRight: 6 
+  backArrow: {
+    fontSize: 22,
+    fontWeight: "600",
+    marginRight: 6,
   },
 
-  backText: { 
-    fontSize: 18 
+  backText: {
+    fontSize: 18,
   },
 
-  headerTitle: { 
-    fontSize: 20, 
-    fontWeight: "bold", 
-    textAlign: "center", 
-    flex: 1 
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    textAlign: "center",
+    flex: 1,
   },
 
-  pageTitle: { 
-    textAlign: "center", 
-    fontSize: 22, 
-    fontWeight: "bold", 
-    marginBottom: 20 
+  pageTitle: {
+    textAlign: "center",
+    fontSize: 22,
+    fontWeight: "bold",
+    marginBottom: 20,
   },
 
-  sectionLabel: { 
-    fontSize: 16, 
-    fontWeight: "500", 
-    marginVertical: 10 
+  sectionLabel: {
+    fontSize: 16,
+    fontWeight: "500",
+    marginVertical: 10,
   },
 
   dropdown: {
@@ -279,20 +282,20 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
 
-  placeholderStyle: { 
-    fontSize: 16, 
-    color: "#999" 
-  },
-  
-  selectedTextStyle: { 
-    fontSize: 16, 
-    color: "#000" 
+  placeholderStyle: {
+    fontSize: 16,
+    color: "#999",
   },
 
-  durationContainer: { 
-    flexDirection: "row", 
-    alignItems: "center", 
-    marginBottom: 20 
+  selectedTextStyle: {
+    fontSize: 16,
+    color: "#000",
+  },
+
+  durationContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 20,
   },
 
   durationInput: {
@@ -304,16 +307,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 
-  durationLabel: { 
-    marginLeft: 10, 
-    fontSize: 16, 
-    color: "#555" 
+  durationLabel: {
+    marginLeft: 10,
+    fontSize: 16,
+    color: "#555",
   },
 
-  intensityContainer: { 
-    flexDirection: "row", 
-    justifyContent: "space-between", 
-    marginBottom: 25 
+  intensityContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 25,
   },
 
   intensityButton: {
@@ -326,13 +329,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  intensitySelected: { 
-    backgroundColor: "#E0F0FF", 
-    borderColor: "#007AFF" 
+  intensitySelected: {
+    backgroundColor: "#E0F0FF",
+    borderColor: "#007AFF",
   },
 
-  intensityText: { 
-    fontSize: 16 
+  intensityText: {
+    fontSize: 16,
   },
 
   notesInput: {
@@ -352,10 +355,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  saveButtonText: { 
-    color: "#fff", 
-    fontSize: 16, 
-    fontWeight: "bold" 
+  saveButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });
 
