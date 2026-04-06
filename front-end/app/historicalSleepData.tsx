@@ -1,13 +1,22 @@
-import useSleepDisplayed from "@/src/hooks/useHealthKit/sleepDisplayed";
+import React, { useCallback, useMemo, useState } from "react";
 import { router } from "expo-router";
-import React, { useEffect, useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  Dimensions,
+} from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { VictoryAxis, VictoryBar, VictoryChart, VictoryLabel } from "victory-native";
+import { BarChart } from "react-native-gifted-charts";
+import { useFocusEffect } from "@react-navigation/native";
+import useSleepDisplayed from "@/src/hooks/useHealthKit/sleepDisplayed";
 
-type Mode = "D" | "W" | "M";
+type Mode = "W" | "M";
 
 const pad2 = (n: number) => String(n).padStart(2, "0");
+
 const localDayKey = (d: Date) =>
   `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 
@@ -43,27 +52,42 @@ const minutesToHrMin = (mins: number) => {
   return `${hr} hr ${rem} min`;
 };
 
-function SegmentedDWM({
+const weekdayShort = (dateStr: string) => {
+  const d = new Date(`${dateStr}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleDateString(undefined, { weekday: "short" });
+};
+
+const monthDayNumber = (dateStr: string) => {
+  const d = new Date(`${dateStr}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return "";
+  return String(d.getDate());
+};
+
+function SegmentedWM({
   value,
   onChange,
 }: {
   value: Mode;
   onChange: (v: Mode) => void;
 }) {
-  const options: Mode[] = ["D", "W", "M"];
+  const options: { key: Mode; label: string }[] = [
+    { key: "W", label: "Week" },
+    { key: "M", label: "Month" },
+  ];
 
   return (
     <View style={styles.segmentWrap}>
       {options.map((opt) => {
-        const selected = opt === value;
+        const selected = opt.key === value;
         return (
           <Pressable
-            key={opt}
-            onPress={() => onChange(opt)}
+            key={opt.key}
+            onPress={() => onChange(opt.key)}
             style={[styles.segmentItem, selected && styles.segmentItemSelected]}
           >
             <Text style={[styles.segmentText, selected && styles.segmentTextSelected]}>
-              {opt}
+              {opt.label}
             </Text>
           </Pressable>
         );
@@ -72,116 +96,33 @@ function SegmentedDWM({
   );
 }
 
-function SleepTimeline({ span }: { span: { start: Date; end: Date } | null }) {
-  const base = span?.end ? new Date(span.end) : new Date();
-
-  const winStart = new Date(base.getFullYear(), base.getMonth(), base.getDate() - 1, 22, 0, 0, 0);
-  const winEnd = new Date(base.getFullYear(), base.getMonth(), base.getDate(), 10, 0, 0, 0);
-
-  const totalMins = (winEnd.getTime() - winStart.getTime()) / (1000 * 60);
-  const clamp = (v: number) => Math.max(0, Math.min(totalMins, v));
-
-  const startMins = span ? clamp((span.start.getTime() - winStart.getTime()) / (1000 * 60)) : 0;
-  const endMins = span ? clamp((span.end.getTime() - winStart.getTime()) / (1000 * 60)) : 0;
-
-  const leftPct = (startMins / totalMins) * 100;
-  const widthPct = Math.max(0, ((endMins - startMins) / totalMins) * 100);
-
-  return (
-    <View style={{ marginTop: 8 }}>
-      <View
-        style={{
-          height: 160,
-          backgroundColor: "white",
-          borderRadius: 18,
-          borderWidth: 1,
-          borderColor: "#E5E5EA",
-          padding: 16,
-        }}
-      >
-        <Text style={{ fontSize: 16, color: "#8E8E93", fontWeight: "600", marginBottom: 12 }}>
-          In Bed
-        </Text>
-
-        <View
-          style={{
-            height: 56,
-            borderRadius: 14,
-            backgroundColor: "rgba(0,0,0,0.04)",
-            overflow: "hidden",
-            justifyContent: "center",
-          }}
-        >
-          {span && widthPct > 0 ? (
-            <View
-              style={{
-                position: "absolute",
-                left: `${leftPct}%`,
-                width: `${widthPct}%`,
-                height: 40,
-                borderRadius: 12,
-                backgroundColor: "#187498",
-                opacity: 0.85,
-              }}
-            />
-          ) : null}
-        </View>
-
-        <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 14 }}>
-          {["10 PM", "1 AM", "4 AM", "7 AM", "10 AM"].map((t) => (
-            <Text key={t} style={{ color: "#C7C7CC", fontWeight: "700" }}>
-              {t}
-            </Text>
-          ))}
-        </View>
-      </View>
-    </View>
-  );
-}
-
 export default function SleepDetailsScreen() {
-  const title = "Sleep";
-  const activeColor = "#187498";
-  const inactiveColor = "rgba(24,116,152,0.35)";
-
   const insets = useSafeAreaInsets();
   const health = useSleepDisplayed();
-  const { sleepDaySpan } = health;
 
-  const [mode, setMode] = useState<Mode>("D");
-  const [selectedIndex, setSelectedIndex] = useState<number>(0);
+  const [mode, setMode] = useState<Mode>("W");
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
-  useEffect(() => {
-    if (!health.isAuthorized && !health.loading) {
-      health.connectAndImport();
-    }
-  }, [health.isAuthorized, health.loading]);
+  useFocusEffect(
+    useCallback(() => {
+      async function load() {
+        const neededDays = mode === "W" ? 7 : 30;
 
-  useEffect(() => {
-    if (!health.isAuthorized) return;
-    if (mode === "W") health.loadRange(7);
-    if (mode === "M") health.loadRange(30);
-  }, [mode, health.isAuthorized]);
+        if (!health.isAuthorized) {
+          await health.connectAndImport();
+          return;
+        }
 
-  useEffect(() => {
-    if (mode === "D") setSelectedIndex(0);
-    if (mode === "W") setSelectedIndex(6);
-    if (mode === "M") setSelectedIndex(29);
-  }, [mode]);
+        if (health.rangeDays !== neededDays || health.sleepRange.length === 0) {
+          await health.loadRange(neededDays);
+        }
 
-  const dayBaseDate = useMemo(() => {
-    const today = startOfDay(new Date());
-    return addDays(today, -1);
-  }, []);
+        setSelectedIndex(null);
+      }
 
-  const sleepDayBins = useMemo(() => {
-    const arr = (health.sleepDayBins || []).map((x: any) => clampNonNeg(x));
-    return arr.length === 24 ? arr : new Array(24).fill(0);
-  }, [health.sleepDayBins]);
-
-  const sleepDayTotalMins = useMemo(() => {
-    return (sleepDayBins || []).reduce((sum, v) => sum + clampNonNeg(v), 0);
-  }, [sleepDayBins]);
+      load();
+    }, [health.isAuthorized, mode, health.rangeDays, health.sleepRange.length])
+  );
 
   const sleepWeekSeries = useMemo(() => {
     const end = startOfDay(new Date());
@@ -194,18 +135,15 @@ export default function SleepDetailsScreen() {
     });
 
     const values: number[] = [];
-    const labels: string[] = [];
     const dates: Date[] = [];
 
     for (let i = 0; i < 7; i++) {
       const d = addDays(start, i);
-      const key = localDayKey(d);
       dates.push(d);
-      values.push(map.get(key) ?? 0);
-      labels.push(["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][d.getDay()]);
+      values.push(map.get(localDayKey(d)) ?? 0);
     }
 
-    return { values, labels, dates };
+    return { values, dates };
   }, [health.sleepRange]);
 
   const sleepMonthSeries = useMemo(() => {
@@ -230,82 +168,149 @@ export default function SleepDetailsScreen() {
     return { values, dates };
   }, [health.sleepRange]);
 
-  const chartValues = useMemo(() => {
-    if (mode === "D") return sleepDayBins;
-    if (mode === "W") return sleepWeekSeries.values;
-    return sleepMonthSeries.values;
-  }, [mode, sleepDayBins, sleepWeekSeries.values, sleepMonthSeries.values]);
-
-  const safeSelectedIndex = useMemo(() => {
-    if (chartValues.length === 0) return 0;
-    return Math.max(0, Math.min(selectedIndex, chartValues.length - 1));
-  }, [selectedIndex, chartValues.length]);
-
-  const selectedValue = useMemo(() => {
-    if (chartValues.length === 0) return 0;
-    return clampNonNeg(chartValues[safeSelectedIndex]);
-  }, [chartValues, safeSelectedIndex]);
-
-  const displayValue = useMemo(() => {
-    if (mode === "D") return sleepDayTotalMins;
-    return selectedValue;
-  }, [mode, sleepDayTotalMins, selectedValue]);
-
-  const selectedDateText = useMemo(() => {
-    if (mode === "D") {
-      return dayBaseDate.toLocaleDateString(undefined, {
-        weekday: "short",
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      });
-    }
-
+  const displayedRange = useMemo(() => {
     if (mode === "W") {
-      const d = sleepWeekSeries.dates[safeSelectedIndex] ?? new Date();
-      return d.toLocaleDateString(undefined, {
-        weekday: "short",
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      });
-    }
-
-    const d = sleepMonthSeries.dates[safeSelectedIndex] ?? new Date();
-    return d.toLocaleDateString(undefined, {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  }, [mode, safeSelectedIndex, dayBaseDate, sleepWeekSeries.dates, sleepMonthSeries.dates]);
-
-  const barData = useMemo(() => {
-    if (mode === "D") {
-      return chartValues.map((y, i) => ({ x: i, y: clampNonNeg(y) }));
-    }
-
-    if (mode === "W") {
-      return chartValues.map((y, i) => ({
-        x: sleepWeekSeries.labels[i] ?? String(i),
-        y: clampNonNeg(y),
+      return sleepWeekSeries.dates.map((d, i) => ({
+        date: localDayKey(d),
+        value: sleepWeekSeries.values[i] ?? 0, // minutes
       }));
     }
 
-    return chartValues.map((y, i) => ({ x: i + 1, y: clampNonNeg(y) }));
-  }, [chartValues, mode, sleepWeekSeries.labels]);
+    return sleepMonthSeries.dates.map((d, i) => ({
+      date: localDayKey(d),
+      value: sleepMonthSeries.values[i] ?? 0, // minutes
+    }));
+  }, [mode, sleepWeekSeries, sleepMonthSeries]);
 
-  const dayTickValues = [0, 6, 12, 18];
-  const dayTickFormat = (t: number) => {
-    if (t === 0) return "12 AM";
-    if (t === 6) return "6";
-    if (t === 12) return "12 PM";
-    if (t === 18) return "6";
-    return "";
-  };
+  const averageValue = useMemo(() => {
+    if (displayedRange.length === 0) return 0;
+    const total = displayedRange.reduce((sum, item) => sum + (Number(item.value) || 0), 0);
+    return total / displayedRange.length;
+  }, [displayedRange]);
 
-  const monthTickValues = [1, 8, 15, 22, 29];
-  const monthTickFormat = (t: number) => String(t);
+  const averageRangeText = useMemo(() => {
+    if (displayedRange.length === 0) {
+      const today = new Date();
+      return today.toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+    }
+
+    const first = new Date(`${displayedRange[0].date}T00:00:00`);
+    const last = new Date(`${displayedRange[displayedRange.length - 1].date}T00:00:00`);
+
+    if (Number.isNaN(first.getTime()) || Number.isNaN(last.getTime())) return "";
+
+    const sameYear = first.getFullYear() === last.getFullYear();
+    const sameMonth = first.getMonth() === last.getMonth();
+
+    if (sameYear && sameMonth) {
+      return `${first.toLocaleDateString(undefined, {
+        month: "short",
+      })} ${first.getDate()}–${last.getDate()}, ${last.getFullYear()}`;
+    }
+
+    return `${first.toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+    })}–${last.toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    })}`;
+  }, [displayedRange]);
+
+  const displaySummary = useMemo(() => {
+    if (selectedIndex === null || displayedRange.length === 0) {
+      return {
+        label: "AVERAGE",
+        value: averageValue,
+        dateText: averageRangeText,
+      };
+    }
+
+    const item = displayedRange[selectedIndex];
+    if (!item) {
+      return {
+        label: "AVERAGE",
+        value: averageValue,
+        dateText: averageRangeText,
+      };
+    }
+
+    const d = new Date(`${item.date}T00:00:00`);
+    const dateText = Number.isNaN(d.getTime())
+      ? item.date
+      : d.toLocaleDateString(undefined, {
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        });
+
+    return {
+      label: "TOTAL",
+      value: Number(item.value) || 0,
+      dateText,
+    };
+  }, [selectedIndex, displayedRange, averageValue, averageRangeText]);
+
+  const screenWidth = Dimensions.get("window").width;
+  const cardMarginH = 14;
+  const cardPadding = 16;
+  const yAxisLabelWidth = 40;
+
+  const cardInnerWidth = screenWidth - cardMarginH * 2 - cardPadding * 2;
+  const availableWidth = cardInnerWidth - yAxisLabelWidth;
+
+  const numBars = displayedRange.length || 1;
+  const spacing = mode === "W" ? 12 : 6;
+
+  const barWidth = Math.max(
+    6,
+    Math.floor((availableWidth - spacing * (numBars + 1)) / numBars)
+  );
+
+  const maxValue = Math.max(0, ...displayedRange.map((d) => Number(d.value) || 0));
+  const chartMax = Math.max(60, Math.ceil((maxValue + 60) / 60) * 60);
+
+  const monthMarkerIdx = useMemo(() => [0, 7, 14, 21, 28], []);
+  const monthMarkerLabels = useMemo(() => {
+    return monthMarkerIdx.map((i) =>
+      displayedRange[i]?.date ? monthDayNumber(displayedRange[i].date) : ""
+    );
+  }, [displayedRange, monthMarkerIdx]);
+
+  const weekLabels = useMemo(() => {
+    return displayedRange.map((item) => weekdayShort(item.date));
+  }, [displayedRange]);
+
+  const barData = useMemo(() => {
+    return displayedRange.map((d, i) => {
+      const isSelected = selectedIndex === i;
+
+      return {
+        value: Number(d.value) || 0,
+        label: `\u200B${i}`,
+        frontColor: isSelected ? "#187498" : "rgba(24,116,152,0.35)",
+        onPress: () => setSelectedIndex(i),
+        topLabelComponent: () =>
+          mode === "W" && isSelected ? (
+            <Text style={styles.topLabel}>{minutesToHrMin(Number(d.value) || 0)}</Text>
+          ) : null,
+      };
+    });
+  }, [displayedRange, selectedIndex, mode]);
+
+  const xAxisLabelTextStyle = useMemo(() => {
+    return {
+      color: "transparent",
+      fontSize: 11,
+      fontWeight: "700" as const,
+    };
+  }, []);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -316,116 +321,88 @@ export default function SleepDetailsScreen() {
             <Text style={styles.backText}>Back</Text>
           </Pressable>
 
-          <Text style={styles.headerTitle}>{title}</Text>
+          <Text style={styles.headerTitle}>Sleep</Text>
           <View style={{ width: 60 }} />
         </View>
 
         <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
           <View style={{ paddingHorizontal: 14, marginTop: 6 }}>
-            <SegmentedDWM value={mode} onChange={setMode} />
+            <SegmentedWM value={mode} onChange={setMode} />
           </View>
 
           <View style={styles.totalBlock}>
-            <Text style={styles.totalLabel}>
-              {mode === "D" ? "TIME IN BED" : "AVG. TIME IN BED"}
-            </Text>
+            <Text style={styles.totalLabel}>{displaySummary.label}</Text>
 
             <View style={styles.totalRow}>
-              <Text style={styles.totalNumber}>{minutesToHrMin(displayValue)}</Text>
+              <Text style={styles.totalNumber}>{minutesToHrMin(displaySummary.value)}</Text>
             </View>
 
-            <Text style={styles.totalDate}>{selectedDateText}</Text>
+            <Text style={styles.totalDate}>{displaySummary.dateText}</Text>
           </View>
 
-          {health.loading && <Text style={{ paddingHorizontal: 14 }}>Loading...</Text>}
+          {!!health.loading && <Text style={{ paddingHorizontal: 14 }}>Loading...</Text>}
           {!!health.error && (
             <Text style={{ paddingHorizontal: 14, color: "red" }}>{health.error}</Text>
           )}
 
-          <View style={styles.chartWrap}>
-            {mode === "D" ? (
-              <SleepTimeline span={sleepDaySpan} />
-            ) : barData.length === 0 && !health.loading ? (
-              <Text style={{ paddingHorizontal: 6, color: "#8E8E93" }}>No sleep data.</Text>
+          <View style={styles.chartCard}>
+            <Text style={styles.cardTitle}>Time In Bed</Text>
+
+            {displayedRange.length === 0 && !health.loading ? (
+              <Text style={{ color: "#8E8E93", paddingTop: 10 }}>No sleep data.</Text>
             ) : (
-              <VictoryChart
-                height={340}
-                padding={{ top: 10, left: 34, right: 70, bottom: 50 }}
-                domainPadding={{ x: 16, y: 10 }}
-              >
-                <VictoryAxis
-                  dependentAxis
-                  orientation="right"
-                  tickLabelComponent={<VictoryLabel dx={-16} />}
-                  tickFormat={(t: any) => {
-                    const mins = Number(t);
-                    if (!Number.isFinite(mins)) return "";
-                    return mins === 0 ? "0" : `${Math.round(mins / 60)}h`;
+              <View style={{ alignItems: "center", paddingTop: 10 }}>
+                <BarChart
+                  key={`${mode}-${displayedRange.map((h) => `${h.date}:${h.value}`).join("|")}`}
+                  data={barData}
+                  width={availableWidth}
+                  height={240}
+                  barWidth={barWidth}
+                  spacing={spacing}
+                  barBorderRadius={10}
+                  noOfSections={4}
+                  maxValue={chartMax}
+                  yAxisThickness={1}
+                  xAxisThickness={1}
+                  yAxisColor="#E5E5EA"
+                  xAxisColor="#E5E5EA"
+                  rulesColor="#E5E5EA"
+                  rulesType="dashed"
+                  yAxisTextStyle={{
+                    color: "#8E8E93",
+                    fontSize: 11,
+                    fontWeight: "700",
                   }}
-                  style={{
-                    axis: { stroke: "transparent" },
-                    grid: { stroke: "#E5E5EA" },
-                    ticks: { stroke: "transparent" },
-                    tickLabels: { fill: "#C7C7CC", fontSize: 12, fontWeight: "700" as any },
-                  }}
+                  xAxisLabelTextStyle={xAxisLabelTextStyle}
+                  hideRules={false}
+                  isAnimated
+                  animationDuration={250}
+                  topLabelContainerStyle={{ marginBottom: 6 }}
+                  hideOrigin
+                  xAxisLabelsHeight={6}
+                  labelsDistanceFromXaxis={2}
                 />
 
                 {mode === "W" && (
-                  <VictoryAxis
-                    style={{
-                      axis: { stroke: "#E5E5EA" },
-                      tickLabels: {
-                        fill: "#C7C7CC",
-                        fontSize: 13,
-                        fontWeight: "700" as any,
-                        padding: 10,
-                      },
-                      grid: { stroke: "transparent" },
-                    }}
-                  />
+                  <View style={[styles.weekLabelRow, { width: availableWidth }]}>
+                    {weekLabels.map((label, idx) => (
+                      <Text key={`${label}-${idx}`} style={styles.weekLabelText}>
+                        {label}
+                      </Text>
+                    ))}
+                  </View>
                 )}
 
                 {mode === "M" && (
-                  <VictoryAxis
-                    tickValues={monthTickValues}
-                    tickFormat={(t: any) => monthTickFormat(Number(t))}
-                    style={{
-                      axis: { stroke: "#E5E5EA" },
-                      tickLabels: {
-                        fill: "#C7C7CC",
-                        fontSize: 13,
-                        fontWeight: "700" as any,
-                        padding: 10,
-                      },
-                      grid: { stroke: "transparent" },
-                    }}
-                  />
+                  <View style={[styles.monthLabelRow, { width: availableWidth }]}>
+                    {monthMarkerLabels.map((t, idx) => (
+                      <Text key={`${t}-${idx}`} style={styles.monthLabelText}>
+                        {t || " "}
+                      </Text>
+                    ))}
+                  </View>
                 )}
-
-                <VictoryBar
-                  data={barData}
-                  barRatio={0.7}
-                  style={{
-                    data: {
-                      fill: ({ index }: any) =>
-                        index === safeSelectedIndex ? activeColor : inactiveColor,
-                    },
-                  }}
-                  events={[
-                    {
-                      target: "data",
-                      eventHandlers: {
-                        onPressIn: (_evt: any, props: any) => {
-                          const idx = props?.index ?? 0;
-                          setSelectedIndex(idx);
-                          return [];
-                        },
-                      },
-                    },
-                  ]}
-                  animate={{ duration: 200 }}
-                />
-              </VictoryChart>
+              </View>
             )}
           </View>
 
@@ -441,15 +418,6 @@ export default function SleepDetailsScreen() {
             <Text style={styles.showAllText}>Show All Data</Text>
             <Text style={styles.showAllChevron}>›</Text>
           </Pressable>
-
-          <View style={styles.sleepQualityCard}>
-            <View style={styles.sleepQualityHeader}>
-              <Text style={styles.sleepQualityIcon}>🛏️</Text>
-              <Text style={styles.sleepQualityTitle}>Sleep Quality</Text>
-            </View>
-
-            <Text style={styles.sleepQualityBigValue}>Good</Text>
-          </View>
         </ScrollView>
       </View>
     </SafeAreaView>
@@ -466,10 +434,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  headerLeft: { flexDirection: "row", alignItems: "center", gap: 6, paddingVertical: 8 },
+  headerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingVertical: 8,
+  },
   backChevron: { fontSize: 28, lineHeight: 28, fontWeight: "400" },
   backText: { fontSize: 17, fontWeight: "500" },
-  headerTitle: { fontSize: 18, fontWeight: "700" },
+  headerTitle: { fontSize: 20, fontWeight: "700", color: "#000" },
 
   segmentWrap: {
     height: 38,
@@ -479,19 +452,79 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 6,
   },
-  segmentItem: { flex: 1, borderRadius: 16, alignItems: "center", justifyContent: "center" },
+  segmentItem: {
+    flex: 1,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   segmentItemSelected: { backgroundColor: "white" },
   segmentText: { fontSize: 15, fontWeight: "600", color: "#111" },
   segmentTextSelected: { color: "#000" },
 
   totalBlock: { paddingHorizontal: 14, paddingTop: 14, paddingBottom: 6 },
-  totalLabel: { fontSize: 13, color: "#8E8E93", fontWeight: "700", letterSpacing: 0.5 },
+  totalLabel: {
+    fontSize: 13,
+    color: "#8E8E93",
+    fontWeight: "700",
+    letterSpacing: 0.5,
+  },
   totalRow: { flexDirection: "row", alignItems: "baseline" },
   totalNumber: { fontSize: 52, fontWeight: "800", color: "#000" },
-  totalUnit: { fontSize: 20, color: "#8E8E93", fontWeight: "600", marginLeft: 6 },
-  totalDate: { fontSize: 16, color: "#8E8E93", fontWeight: "600", marginTop: 2 },
+  totalDate: {
+    fontSize: 16,
+    color: "#8E8E93",
+    fontWeight: "600",
+    marginTop: 2,
+  },
 
-  chartWrap: { paddingHorizontal: 14, paddingTop: 10 },
+  chartCard: {
+    marginTop: 10,
+    marginHorizontal: 14,
+    backgroundColor: "white",
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#E5E5EA",
+    padding: 16,
+    overflow: "hidden",
+  },
+  cardTitle: {
+    fontSize: 16,
+    color: "#8E8E93",
+    fontWeight: "600",
+    marginBottom: 6,
+  },
+
+  topLabel: {
+    fontSize: 10,
+    color: "#187498",
+    fontWeight: "700",
+    marginBottom: 2,
+  },
+
+  weekLabelRow: {
+    marginTop: 0,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 2,
+  },
+  weekLabelText: {
+    color: "#C7C7CC",
+    fontSize: 11,
+    fontWeight: "700",
+  },
+
+  monthLabelRow: {
+    marginTop: 0,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 6,
+  },
+  monthLabelText: {
+    color: "#8E8E93",
+    fontSize: 11,
+    fontWeight: "700",
+  },
 
   showAllCard: {
     marginTop: 14,
@@ -506,50 +539,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E5E5EA",
   },
-  showAllText: {
-    fontSize: 20,
-    fontWeight: "400",
-    color: "#000",
-  },
-  showAllChevron: {
-    fontSize: 26,
-    color: "#C7C7CC",
-    fontWeight: "400",
-  },
-
-  sleepQualityCard: {
-    marginTop: 14,
-    marginHorizontal: 14,
-    backgroundColor: "white",
-    borderRadius: 24,
-    paddingTop: 18,
-    paddingHorizontal: 18,
-    paddingBottom: 20,
-    borderWidth: 1,
-    borderColor: "#E5E5EA",
-    minHeight: 110,
-    justifyContent: "space-between",
-  },
-
-  sleepQualityHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-
-  sleepQualityIcon: {
-    fontSize: 22,
-    marginRight: 10,
-  },
-
-  sleepQualityTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#187498",
-  },
-
-  sleepQualityBigValue: {
-    fontSize: 26,
-    fontWeight: "700",
-    color: "#000",
-  },
+  showAllText: { fontSize: 20, fontWeight: "400", color: "#000" },
+  showAllChevron: { fontSize: 26, color: "#C7C7CC", fontWeight: "400" },
 });
