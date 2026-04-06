@@ -36,7 +36,7 @@ import { getUserNutritionGoals } from "@/src/services/nutritionGoalService";
 import { useUser } from "@/contexts/UserContext";
 import { useFocusEffect } from "@react-navigation/native";
 
-import { useActiveEnergyContext } from "@/contexts/ActiveEnergyContext";
+import useActiveEnergyDisplayed from "@/src/hooks/useHealthKit/activeEnergyDisplayed";
 
 
 // Navigation handler — routes to the historical nutrition chart screen
@@ -74,7 +74,7 @@ export function KeyStats({ style, health  }: KeyStatsProps) {
     activeEnergyToday,
     connectAndImport: connectActiveEnergy,
     loadRange: loadActiveEnergyRange,
-  } = useActiveEnergyContext();
+  } = useActiveEnergyDisplayed();
 
   useFocusEffect(
     useCallback(() => {

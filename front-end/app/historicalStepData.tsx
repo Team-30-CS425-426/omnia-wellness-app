@@ -1,4 +1,4 @@
-import useHealthData from "@/src/hooks/useHealthData";
+import useStepsDisplayed from "@/src/hooks/useHealthKit/stepsDisplayed";
 import { router } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
@@ -69,7 +69,7 @@ export default function StepDetailsScreen() {
   const inactiveColor = "rgba(249,217,35,0.35)";
 
   const insets = useSafeAreaInsets();
-  const health = useHealthData();
+  const health = useStepsDisplayed();
 
   const [mode, setMode] = useState<Mode>("D");
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
@@ -363,7 +363,7 @@ export default function StepDetailsScreen() {
             onPress={() =>
               router.push({
                 pathname: "/step-all-data",
-                params: { type: "steps", mode },
+                params: { mode },
               } as any)
             }
           >

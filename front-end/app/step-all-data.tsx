@@ -1,4 +1,4 @@
-import useHealthData from "@/src/hooks/useHealthData";
+import useStepsDisplayed from "@/src/hooks/useHealthKit/stepsDisplayed";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useMemo } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
@@ -47,7 +47,7 @@ export default function StepAllDataScreen() {
   const m: Mode = (mode as Mode) ?? "D";
 
   const insets = useSafeAreaInsets();
-  const health = useHealthData();
+  const health = useStepsDisplayed();
 
   useEffect(() => {
     if (!health.isAuthorized && !health.loading) {

@@ -11,23 +11,21 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { BarChart } from "react-native-gifted-charts";
 import { useFocusEffect } from "@react-navigation/native";
-import { useActiveEnergyContext } from "@/contexts/ActiveEnergyContext";
+import useActiveEnergyDisplayed from "@/src/hooks/useHealthKit/activeEnergyDisplayed";
 
 type Mode = "W" | "M";
 
-
-
 const weekdayShort = (dateStr: string) => {
-    const d = new Date(`${dateStr}T00:00:00`);
-    if (Number.isNaN(d.getTime())) return "";
-    return d.toLocaleDateString(undefined, { weekday: "short" });
-  };
-  
-  const monthDayNumber = (dateStr: string) => {
-    const d = new Date(`${dateStr}T00:00:00`);
-    if (Number.isNaN(d.getTime())) return "";
-    return String(d.getDate());
-  };
+  const d = new Date(`${dateStr}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleDateString(undefined, { weekday: "short" });
+};
+
+const monthDayNumber = (dateStr: string) => {
+  const d = new Date(`${dateStr}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return "";
+  return String(d.getDate());
+};
 
 function SegmentedWM({
   value,
@@ -71,7 +69,8 @@ export default function ActiveEnergyScreen() {
     activeEnergyRange,
     connectAndImport,
     loadRange,
-  } = useActiveEnergyContext();
+  } = useActiveEnergyDisplayed();
+
   const [mode, setMode] = useState<Mode>("W");
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
@@ -79,32 +78,32 @@ export default function ActiveEnergyScreen() {
     useCallback(() => {
       async function load() {
         const neededDays = mode === "W" ? 7 : 30;
-  
+
         if (!isAuthorized) {
           await connectAndImport();
           return;
         }
-  
+
         if (rangeDays !== neededDays || activeEnergyRange.length === 0) {
           await loadRange(neededDays);
         }
-  
+
         setSelectedIndex(null);
       }
-  
+
       load();
     }, [isAuthorized, mode, rangeDays, activeEnergyRange.length])
   );
 
   const averageCalories = useMemo(() => {
     if (activeEnergyRange.length === 0) return 0;
-  
+
     const total = activeEnergyRange.reduce((sum, item) => {
       return sum + (Number(item.calories) || 0);
     }, 0);
-  
+
     return total / activeEnergyRange.length;
-    }, [activeEnergyRange])
+  }, [activeEnergyRange]);
 
   const averageRangeText = useMemo(() => {
     if (activeEnergyRange.length === 0) {
@@ -115,23 +114,25 @@ export default function ActiveEnergyScreen() {
         year: "numeric",
       });
     }
-  
+
     const first = new Date(`${activeEnergyRange[0].date}T00:00:00`);
-    const last = new Date(`${activeEnergyRange[activeEnergyRange.length - 1].date}T00:00:00`);
-  
+    const last = new Date(
+      `${activeEnergyRange[activeEnergyRange.length - 1].date}T00:00:00`
+    );
+
     if (Number.isNaN(first.getTime()) || Number.isNaN(last.getTime())) {
       return "";
     }
-  
+
     const sameYear = first.getFullYear() === last.getFullYear();
     const sameMonth = first.getMonth() === last.getMonth();
-  
+
     if (sameYear && sameMonth) {
       return `${first.toLocaleDateString(undefined, {
         month: "short",
       })} ${first.getDate()}–${last.getDate()}, ${last.getFullYear()}`;
     }
-  
+
     return `${first.toLocaleDateString(undefined, {
       month: "short",
       day: "numeric",
@@ -150,9 +151,9 @@ export default function ActiveEnergyScreen() {
         dateText: averageRangeText,
       };
     }
-  
+
     const item = activeEnergyRange[selectedIndex];
-  
+
     if (!item) {
       return {
         label: "AVERAGE",
@@ -160,7 +161,7 @@ export default function ActiveEnergyScreen() {
         dateText: averageRangeText,
       };
     }
-  
+
     const d = new Date(`${item.date}T00:00:00`);
     const dateText = Number.isNaN(d.getTime())
       ? item.date
@@ -170,7 +171,7 @@ export default function ActiveEnergyScreen() {
           day: "numeric",
           year: "numeric",
         });
-  
+
     return {
       label: "TOTAL",
       value: Number(item.calories) || 0,
@@ -194,13 +195,16 @@ export default function ActiveEnergyScreen() {
     Math.floor((availableWidth - spacing * (numBars + 1)) / numBars)
   );
 
-  const maxCalories = Math.max(0, ...activeEnergyRange.map((d) => Number(d.calories) || 0));
+  const maxCalories = Math.max(
+    0,
+    ...activeEnergyRange.map((d) => Number(d.calories) || 0)
+  );
   const chartMax = Math.max(100, Math.ceil((maxCalories + 50) / 50) * 50);
 
   const monthMarkerIdx = useMemo(() => [0, 7, 14, 21, 28], []);
   const monthMarkerLabels = useMemo(() => {
     return monthMarkerIdx.map((i) =>
-        activeEnergyRange[i]?.date ? monthDayNumber(activeEnergyRange[i].date) : ""
+      activeEnergyRange[i]?.date ? monthDayNumber(activeEnergyRange[i].date) : ""
     );
   }, [activeEnergyRange, monthMarkerIdx]);
 
@@ -211,7 +215,6 @@ export default function ActiveEnergyScreen() {
   const barData = useMemo(() => {
     return activeEnergyRange.map((d, i) => {
       const isSelected = selectedIndex === i;
-
       const label = `\u200B${i}`;
 
       return {
@@ -220,9 +223,9 @@ export default function ActiveEnergyScreen() {
         frontColor: isSelected ? "#FF6A2A" : "rgba(255,106,42,0.35)",
         onPress: () => setSelectedIndex(i),
         topLabelComponent: () =>
-            mode === "W" && isSelected ? (
-              <Text style={styles.topLabel}>{Math.round(Number(d.calories) || 0)}</Text>
-            ) : null,
+          mode === "W" && isSelected ? (
+            <Text style={styles.topLabel}>{Math.round(Number(d.calories) || 0)}</Text>
+          ) : null,
       };
     });
   }, [activeEnergyRange, selectedIndex, mode]);
@@ -254,31 +257,38 @@ export default function ActiveEnergyScreen() {
           </View>
 
           <View style={styles.totalBlock}>
-          <Text style={styles.totalLabel}>{displaySummary.label}</Text>
+            <Text style={styles.totalLabel}>{displaySummary.label}</Text>
 
             <View style={styles.totalRow}>
-            <Text style={styles.totalNumber}>
+              <Text style={styles.totalNumber}>
                 {displaySummary.value % 1 === 0
-                ? Math.round(displaySummary.value)
-                : displaySummary.value.toFixed(1)}
-            </Text>
-            <Text style={styles.totalUnit}> cal</Text>
+                  ? Math.round(displaySummary.value)
+                  : displaySummary.value.toFixed(1)}
+              </Text>
+              <Text style={styles.totalUnit}> cal</Text>
             </View>
 
             <Text style={styles.totalDate}>{displaySummary.dateText}</Text>
           </View>
 
+          {!!loading && <Text style={{ paddingHorizontal: 14 }}>Loading...</Text>}
+          {!!error && (
+            <Text style={{ paddingHorizontal: 14, color: "red" }}>{error}</Text>
+          )}
+
           <View style={styles.chartCard}>
             <Text style={styles.cardTitle}>Calories</Text>
 
-            {activeEnergyRange.length === 0 ? (
+            {activeEnergyRange.length === 0 && !loading ? (
               <Text style={{ color: "#8E8E93", paddingTop: 10 }}>
                 No active energy data.
               </Text>
             ) : (
               <View style={{ alignItems: "center", paddingTop: 10 }}>
                 <BarChart
-                  key={`${mode}-${activeEnergyRange.map((h) => `${h.date}:${h.calories}`).join("|")}`}
+                  key={`${mode}-${activeEnergyRange
+                    .map((h) => `${h.date}:${h.calories}`)
+                    .join("|")}`}
                   data={barData}
                   width={availableWidth}
                   height={240}
@@ -309,23 +319,23 @@ export default function ActiveEnergyScreen() {
                 />
 
                 {mode === "W" && (
-                <View style={[styles.weekLabelRow, { width: availableWidth }]}>
+                  <View style={[styles.weekLabelRow, { width: availableWidth }]}>
                     {weekLabels.map((label, idx) => (
-                    <Text key={`${label}-${idx}`} style={styles.weekLabelText}>
+                      <Text key={`${label}-${idx}`} style={styles.weekLabelText}>
                         {label}
-                    </Text>
+                      </Text>
                     ))}
-                </View>
+                  </View>
                 )}
 
                 {mode === "M" && (
-                <View style={[styles.monthLabelRow, { width: availableWidth }]}>
+                  <View style={[styles.monthLabelRow, { width: availableWidth }]}>
                     {monthMarkerLabels.map((t, idx) => (
-                    <Text key={`${t}-${idx}`} style={styles.monthLabelText}>
+                      <Text key={`${t}-${idx}`} style={styles.monthLabelText}>
                         {t || " "}
-                    </Text>
+                      </Text>
                     ))}
-                </View>
+                  </View>
                 )}
               </View>
             )}
@@ -439,7 +449,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 2,
   },
-  
+
   weekLabelText: {
     color: "#C7C7CC",
     fontSize: 11,

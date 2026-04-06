@@ -1,4 +1,4 @@
-import useHealthData from "@/src/hooks/useHealthData";
+import useSleepDisplayed from "@/src/hooks/useHealthKit/sleepDisplayed";
 import { router } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
@@ -145,7 +145,7 @@ export default function SleepDetailsScreen() {
   const inactiveColor = "rgba(24,116,152,0.35)";
 
   const insets = useSafeAreaInsets();
-  const health = useHealthData();
+  const health = useSleepDisplayed();
   const { sleepDaySpan } = health;
 
   const [mode, setMode] = useState<Mode>("D");
@@ -434,7 +434,7 @@ export default function SleepDetailsScreen() {
             onPress={() =>
               router.push({
                 pathname: "/sleep-all-data",
-                params: { type: "sleep", mode },
+                params: { mode },
               } as any)
             }
           >

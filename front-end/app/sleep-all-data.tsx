@@ -1,4 +1,4 @@
-import useHealthData from "@/src/hooks/useHealthData";
+import useSleepDisplayed from "@/src/hooks/useHealthKit/sleepDisplayed";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useMemo } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
@@ -56,7 +56,7 @@ export default function SleepAllDataScreen() {
   const m: Mode = (mode as Mode) ?? "D";
 
   const insets = useSafeAreaInsets();
-  const health = useHealthData();
+  const health = useSleepDisplayed();
 
   useEffect(() => {
     if (!health.isAuthorized && !health.loading) {
