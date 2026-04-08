@@ -35,7 +35,13 @@ export const Colors = {
 
   mustardYellow: "#F9D923",
 
+  paleYellow: "#F9C958",
+
+  testYellow: "#CA9C1F",
+
   candyRed: "#EB5353",
+
+  vibrantOrange: "#EB7A53",
 
   hotPink: "#FF46A2"
   }

@@ -1,11 +1,12 @@
 import useHealthData from "@/src/hooks/useHealthData";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useMemo } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View, Platform } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 type Mode = "D" | "W" | "M";
 type Row = { left: string; right: string };
+
 
 const pad2 = (n: number) => String(n).padStart(2, "0");
 const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -51,6 +52,14 @@ const minutesToHrMin = (mins: number) => {
 };
 
 export default function HealthAllDataScreen() {
+  if (Platform.OS !== "ios") {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <Text>Health data is only available on iOS.</Text>
+      </View>
+    );
+  }
+
   const { type, mode } = useLocalSearchParams<{ type?: string; mode?: Mode }>();
   const isSteps = (type ?? "steps") === "steps";
   const m: Mode = (mode as Mode) ?? "D";

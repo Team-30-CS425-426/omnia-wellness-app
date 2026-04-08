@@ -1,11 +1,13 @@
 //Developed by Johan Ramirez
-import React, {useState} from 'react'
+import React, {useState, useEffect} from 'react'
 import { Link, router } from 'expo-router';
-import { View, Pressable, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import {StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useUser } from '@/contexts/UserContext';
+import { ActivityIndicator, ScrollView } from 'react-native';
+import { useUser } from '@/contexts/UserContext'
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
 //import { onAuthStateChanged, signOut, User } from 'firebase/auth';
@@ -18,6 +20,8 @@ import Spacer from './components/Spacer'
 import ThemedButton from './components/ThemedButton'
 import ThemedCard from './components/ThemedCard';
 import { Colors } from '../constants/Colors';
+
+const INSIGHTS_STORAGE_KEY = 'cached_insights';
 
 const Insights = () => {
 
@@ -36,6 +40,22 @@ const Insights = () => {
 
     //const [user, setUser] = useState<User | null>(null);
     //const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+      const loadCached = async () => {
+        try {
+          const cached = await AsyncStorage.getItem(INSIGHTS_STORAGE_KEY);
+          if (cached) {
+            setInsights(JSON.parse(cached));
+          }
+        } catch (e) {
+          console.warn('Failed to load cached insights:', e);
+        }
+      };
+      loadCached();
+    }, []);
+
+
     const fetchInsights = async () => {
         setLoading(true);
         setError(null);
@@ -60,10 +80,13 @@ const Insights = () => {
           const apiInsights = data.insights;
 
           if (Array.isArray(apiInsights)) {
-            setInsights(apiInsights);                           // [{ title, body }, ...]
+            setInsights(apiInsights);              
+            await AsyncStorage.setItem(INSIGHTS_STORAGE_KEY, JSON.stringify(apiInsights));             // [{ title, body }, ...]
           } else if (typeof apiInsights === "string") {
             // Fallback: wrap a single string insight into one card
-            setInsights([{ title: "Weekly Insights", body: apiInsights }]);
+            const wrapped = [{title: 'Weekly Insights', body: apiInsights}]
+            setInsights(wrapped);
+            await AsyncStorage.setItem(INSIGHTS_STORAGE_KEY, JSON.stringify(wrapped));
           } else {
             setInsights([]); 
         }

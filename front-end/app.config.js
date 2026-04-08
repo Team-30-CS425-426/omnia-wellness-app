@@ -2,6 +2,42 @@ import 'dotenv/config';
 
 require('dotenv').config({ path: './utils/.env.local' });
 
+
+const plugins = [
+  "expo-router",
+  "expo-notifications",
+  "@react-native-community/datetimepicker",
+  [
+    "expo-splash-screen",
+    {
+      "image": "./assets/images/splash-icon.png",
+      "imageWidth": 200,
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff",
+      "dark": {
+        "backgroundColor": "#000000"
+      }
+    }
+  ],
+];
+
+try {
+  require.resolve("@kingstinct/react-native-healthkit");
+  plugins.push([
+    "@kingstinct/react-native-healthkit",
+    {
+      NSHealthShareUsageDescription:
+        "Omnia reads your Health data (steps/sleep) to show your real-time wellness stats.",
+      NSHealthUpdateUsageDescription:
+        "Omnia can write wellness data to Health when you enable it.",
+      background: false,
+    },
+  ]);
+} catch (_) {
+  // HealthKit package not installed — skip plugin (e.g. developing on Windows)
+}
+
+
 export default{
   "expo": {
     "name": "front-end",
@@ -39,33 +75,7 @@ export default{
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
-    "plugins": [
-      "expo-router",
-      "expo-notifications",
-      "@react-native-community/datetimepicker",
-      [
-        "expo-splash-screen",
-        {
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 200,
-          "resizeMode": "contain",
-          "backgroundColor": "#ffffff",
-          "dark": {
-            "backgroundColor": "#000000"
-          }
-        }
-      ],
-      [
-        "@kingstinct/react-native-healthkit",
-        {
-          NSHealthShareUsageDescription:
-            "Omnia reads your Health data (steps/sleep) to show your real-time wellness stats.",
-          NSHealthUpdateUsageDescription:
-            "Omnia can write wellness data to Health when you enable it.",
-          background: false
-        }
-      ]
-    ],
+    "plugins": plugins,
 
     "experiments": {
       "typedRoutes": true,

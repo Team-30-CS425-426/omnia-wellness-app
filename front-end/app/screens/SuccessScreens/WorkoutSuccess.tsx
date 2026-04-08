@@ -52,7 +52,7 @@ export default function ActivitySuccessModal({
     }
 
     Animated.sequence([
-    Animated.delay(1500), // wait for waves to draw
+    Animated.delay(2600), // wait for waves to draw
       Animated.parallel([
         Animated.timing(cardOpacity, {
           toValue: 1, duration: 320, useNativeDriver: true,

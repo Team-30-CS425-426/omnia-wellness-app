@@ -3,12 +3,20 @@
 import { useMemo, useState } from "react";
 import { Platform } from "react-native";
 
-import {
-  queryCategorySamples,
-  queryQuantitySamples,
-  requestAuthorization,
-} from "@kingstinct/react-native-healthkit";
+let queryCategorySamples: any = async () => [];
+let queryQuantitySamples: any = async () => [];
+let requestAuthorization: any = async () => false;
 
+if (Platform.OS === "ios") {
+  try {
+    const hk = require("@kingstinct/react-native-healthkit");
+    queryCategorySamples = hk.queryCategorySamples;
+    queryQuantitySamples = hk.queryQuantitySamples;
+    requestAuthorization = hk.requestAuthorization;
+  } catch (e) {
+    console.warn("HealthKit not available on this platform");
+  }
+}
 import { exportHealthCsv } from "../services/healthCSVExport";
 
 type DaysRange = 7 | 30;

@@ -84,6 +84,30 @@ export async function insertNutritionLog(
 
 }
 
+/**
+ * getDailyNutritionEntries
+ *
+ * Fetches individual meal/snack entries for a single day (defaults to today).
+ * Returns raw rows (not aggregated) so each card can show its own macro breakdown.
+ * Sorted by time ascending so entries appear in chronological order.
+ */
+export async function getDailyNutritionEntries(
+  userId: string,
+  date?: Date
+): Promise<NutritionLogRow[]> {
+  const dateStr = toPgDate(date ?? new Date());
+
+  const { data, error } = await supabase
+    .from("NutritionLog")
+    .select("*")
+    .eq("userID", userId)
+    .eq("date", dateStr)
+    .order("time", { ascending: true });
+
+  if (error) throw error;
+  return (data ?? []) as NutritionLogRow[];
+}
+
 export async function getNutritionHistory(userId: string, days: number = 7) {
   const startDate = new Date();
   startDate.setDate(startDate.getDate() - days);

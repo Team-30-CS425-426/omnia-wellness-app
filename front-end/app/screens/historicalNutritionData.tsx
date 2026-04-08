@@ -2,92 +2,154 @@
  * historicalNutritionData.tsx
  * 
  * HISTORICAL DATA SCREEN for the Nutrition Goal system.
- * Displays a bar chart showing the user's calorie intake over the past 7 days.
+ * Displays a bar chart (week) or line chart (month) showing the user's calorie intake.
+ * Also shows macros (protein, carbs, fat) as line charts in both modes.
  * 
  * FLOW:
  *   1. User taps the Nutrition card on the home page (keystats.tsx)
  *   2. keystats.tsx routes to '/screens/historicalNutritionData'
- *   3. This screen fetches the last 7 days of nutrition logs via getNutritionHistory()
- *   4. Data is transformed into bar chart format and rendered using react-native-gifted-charts
+ *   3. This screen fetches the last 7 or 30 days of nutrition logs via getNutritionHistory()
+ *   4. Data is transformed into chart format and rendered using react-native-gifted-charts
  * 
  * FEATURES:
+ *   - Day/Week/Month toggle
  *   - Dynamic bar sizing: bars automatically fill the screen width regardless of device size
  *   - Gradient bars: each bar has a gradient from primaryBlue (bottom) to berryPurple (top)
  *   - Interactive selection: tapping a bar highlights it with a different color
- *   - Top labels: calorie value displayed above each bar
+ *   - Top labels: calorie value displayed above each bar (week mode)
+ *   - Chart cards: white cards with borders matching activity data layout
+ *   - TOTAL block: displays selected day's total calories with date
  * 
  * DEPENDENCIES:
  *   - nutritionService.ts: getNutritionHistory() — fetches logged nutrition data
- *   - react-native-gifted-charts: BarChart component for rendering the chart
+ *   - react-native-gifted-charts: BarChart and LineChart components for rendering charts
  */
 
 //Developed by Johan Ramirez
-import React, {useState, useCallback} from 'react'
+import React, {useState, useCallback, useMemo } from 'react'
 import { router } from 'expo-router';
-import { View, Pressable, StyleSheet, ScrollView, Dimensions } from 'react-native';
+import { View, Text, Pressable, StyleSheet, ScrollView, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '../../constants/Colors';
-import { BarChart, LineChart } from 'react-native-gifted-charts';
 import { useUser } from '@/contexts/UserContext';
-import { getNutritionHistory } from '@/src/services/nutritionService';
+import { getNutritionHistory, getDailyNutritionEntries, NutritionLogRow } from '@/src/services/nutritionService';
 import { useFocusEffect } from '@react-navigation/native';
 
-import ThemedView from '../components/ThemedView'
-import ThemedText from '../components/ThemedText'
-import Spacer from '../components/Spacer'
+import NutritionDayView from '../components/nutrition/NutritionDayView';
+import NutritionWeekView from '../components/nutrition/NutritionWeekView';
+import NutritionMonthView from '../components/nutrition/NutritionMonthView';
 
+type Mode = "D" | "W" | "M";
+
+function SegmentedWM({
+  value,
+  onChange,
+}: {
+  value: Mode;
+  onChange: (v: Mode) => void;
+}) {
+  const options: { key: Mode; label: string }[] = [
+    { key: "D", label: "Day" },
+    { key: "W", label: "Week" },
+    { key: "M", label: "Month" }
+    
+  ];
+
+  return (
+    <View style={styles.segmentWrap}>
+      {options.map((opt) => {
+        const selected = opt.key === value;
+        return (
+          <Pressable
+            key={opt.key}
+            onPress={() => onChange(opt.key)}
+            style={[styles.segmentItem, selected && styles.segmentItemSelected]}
+          >
+            <Text style={[styles.segmentText, selected && styles.segmentTextSelected]}>
+              {opt.label}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
 
 const HistoricalNutritionData = () => {
     const insets = useSafeAreaInsets();
     const totalTopPadding = insets.top;
     const { user } = useUser();
 
-    // Stores the array of daily nutrition records fetched from the database
-    // Each entry has { date, calories, protein, carbs, fat }
-    const [nutritionHistory, setNutritionHistory] = useState<any[]>([]);
+    const [mode, setModeRaw] = useState<Mode>("W");
+
+    // ── Pre-fetched caches for each mode ──
+    const [dayCache, setDayCache] = useState<any[]>([]);
+    const [weekCache, setWeekCache] = useState<any[]>([]);
+    const [monthCache, setMonthCache] = useState<any[]>([]);
 
     // Tracks which bar the user has tapped (null = no selection)
-    // Used to change the selected bar's gradient color for visual feedback
     const [selectedBarIndex, setSelectedBarIndex] = useState<number | null>(null);
 
-    // Fetch nutrition history every time the screen comes into focus
-    // Uses 7-day lookback — change the number to show more/fewer days
+    // Reset bar selection when switching modes so it defaults to the most recent entry
+    const setMode = useCallback((next: Mode) => {
+        setModeRaw(next);
+        setSelectedBarIndex(null);
+    }, []);
+
+    // Individual meal entries for the Day tab
+    const [dayEntries, setDayEntries] = useState<NutritionLogRow[]>([]);
+
+    // Fetch all three ranges + day entries in one shot when the screen gains focus
     useFocusEffect(
         useCallback(() => {
-            async function fetchHistory() {
+            async function fetchAll() {
                 if (!user?.id) return;
                 try {
-                    const data = await getNutritionHistory(user.id, 7);
-                    setNutritionHistory(data);
+                    const [dayData, weekData, monthData, entries] = await Promise.all([
+                        getNutritionHistory(user.id, 0),
+                        getNutritionHistory(user.id, 6),
+                        getNutritionHistory(user.id, 30),
+                        getDailyNutritionEntries(user.id),
+                    ]);
+                    setDayCache(dayData);
+                    setWeekCache(weekData);
+                    setMonthCache(monthData);
+                    setDayEntries(entries);
+                    setSelectedBarIndex(null);
                 } catch (error) {
-                    console.error('Error fetching nutrition history:', error);
+                    console.error('Error fetching nutrition data:', error);
                 }
             }
-            fetchHistory();
+            fetchAll();
         }, [user?.id])
     );
 
+    // Derive active dataset from the cached data — instant, synchronous switch
+    const nutritionHistory = useMemo(() => {
+        if (mode === "D") return dayCache;
+        if (mode === "W") return weekCache;
+        return monthCache;
+    }, [mode, dayCache, weekCache, monthCache]);
+
     // DYNAMIC BAR SIZING — calculates bar width and spacing so bars fill the screen
-    // Accounts for y-axis label space and chart padding
     const screenWidth = Dimensions.get('window').width;
     const yAxisLabelWidth = 40;   // approximate space for y-axis number labels
     const chartPadding = 20;      // horizontal padding around the chart
     const numBars = nutritionHistory.length || 1;
-    const spacing = 12;           // gap between bars
     const availableWidth = screenWidth - yAxisLabelWidth - chartPadding;
-    const barWidth = Math.floor((availableWidth - (spacing * (numBars + 1))) / numBars);
+    const spacing = mode === "W" ? 12 : 6;
+    const barWidth = Math.max(6, Math.floor((availableWidth - spacing * (numBars + 1)) / numBars));
 
     const maxCaloriesFromData = nutritionHistory.reduce(
         (max, d) => Math.max(max, d.calories ?? 0),
         0
       );
       
-      // Add ~10% headroom and round to the nearest 100
       const caloriesMaxValue =
         maxCaloriesFromData > 0
           ? Math.ceil((maxCaloriesFromData * 1.1) / 100) * 100
-          : 2500; // sensible default when there's no data
+          : 2500;
       
       // --- Dynamic Y-axis max for Macros ---
       const maxProtein = nutritionHistory.reduce(
@@ -107,17 +169,20 @@ const HistoricalNutritionData = () => {
       const macrosMaxValue =
         maxMacroFromData > 0
             ? Math.ceil((maxMacroFromData * 1.1) / 25) * 25
-            : 300; // default when there's no data
+            : 300;
 
-
-
-
+    // ── Month marker labels (5 evenly spaced) ──
+    const monthMarkerIdx = useMemo(() => [0, 7, 14, 21, 29], []);
+    const monthMarkerLabels = useMemo(() => {
+        return monthMarkerIdx.map((i) =>
+            nutritionHistory[i]?.date ? nutritionHistory[i].date.slice(5) : ""
+        );
+    }, [nutritionHistory, monthMarkerIdx]);
 
     // ── LINE CHART DATA for Macros (Protein, Carbs, Fat) ──
-    // Each macro gets its own dataset with a distinct color
-    const proteinData = nutritionHistory.map((d) => ({
+    const proteinData = nutritionHistory.map((d, i) => ({
         value: d.protein,
-        label: d.date.slice(5),  // "MM-DD"
+        label: mode === "W" ? d.date.slice(5) : "",
     }));
 
     const carbsData = nutritionHistory.map((d) => ({
@@ -128,181 +193,150 @@ const HistoricalNutritionData = () => {
         value: d.fat,
     }));
 
-    // Transform raw nutrition data into the format expected by react-native-gifted-charts
-    // Each bar gets a gradient (showGradient), a value label on top, and an onPress handler
+    // ── LINE CHART DATA for Calories (Month mode) ──
+    const caloriesLineData = useMemo(() => {
+        return nutritionHistory.map((d) => ({
+            value: d.calories ?? 0,
+            label: "",
+        }));
+    }, [nutritionHistory]);
 
-    const barData = nutritionHistory.map((d, i) => ({
-        value: d.calories,
-        label: d.date.slice(5),  // "MM-DD" — strips the year for a compact x-axis label
-        showGradient: true,
-        
-        // Gradient colors change when a bar is selected to provide visual feedback
-        frontColor: selectedBarIndex === i ? Colors.default.berryPurple : Colors.default.primaryBlue,      // bottom of gradient
-        gradientColor: selectedBarIndex === i ? Colors.default.berryPurple : Colors.default.berryPurple,   // top of gradient
+    // Transform raw nutrition data into the format expected by BarChart (Week mode)
+    const barData = useMemo(() => {
+        return nutritionHistory.map((d, i) => {
+            const isSelected = i === selectedBarIndex;
+            return {
+                value: d.calories,
+                label: d.date.slice(5),
+                frontColor: isSelected ? "#5459AC" : "rgba(84,89,172,0.35)",
+                onPress: () => setSelectedBarIndex(selectedBarIndex === i ? null : i),
+                topLabelComponent: () => (
+                    <Text style={styles.topLabel}>{Math.round(d.calories || 0)}</Text>
+                ),
+            };
+        });
+    }, [nutritionHistory, selectedBarIndex]);
 
-        // Toggle selection: tapping the same bar again deselects it
-        
-        onPress: () => setSelectedBarIndex(selectedBarIndex === i ? null : i),
-        // Calorie value label displayed above each bar
-        topLabelComponent: () => (
-            <ThemedText style={{ fontSize: 10, color: Colors.default.berryBlue, marginBottom: 4 }}>
-                {d.calories}
-            </ThemedText>
-        ),
-    }));
+    const selected = useMemo(() => {
+        if (nutritionHistory.length === 0) return { date: '', calories: 0 };
+        // Clamp index to array bounds — prevents crash when switching modes
+        // while a bar from a larger dataset is still selected
+        const idx = selectedBarIndex != null && selectedBarIndex < nutritionHistory.length
+            ? selectedBarIndex
+            : nutritionHistory.length - 1;
+        return nutritionHistory[idx];
+    }, [nutritionHistory, selectedBarIndex]);
+
+
+    // Line chart spacing for month mode
+    const lineSpacingMonth = Math.floor(availableWidth / (numBars || 1));
+
+    const hasData = nutritionHistory.length > 0;
 
     return (
-        <ThemedView style = {[styles.container, {paddingTop : totalTopPadding + 20}]}>
-            <ThemedView style = {[styles.header]}>
-
-                <Pressable onPress={() => router.back()}>
-                    <Ionicons name="arrow-back" size={24} color="black" />
-                </Pressable>
-
-                <ThemedView style = {{flex: 1, alignItems: 'center',}}>
-                    <ThemedText
-                        style = {{textAlign: 'center', marginBottom: 0,}}
-                        title={true} 
-                        gradient={true} 
-                        gradientColors={[Colors.default.primaryBlue, Colors.default.berryPurple]}> 
-                        Nutrition Data 
-                    </ThemedText>
-                 </ThemedView>
-
-                <View style={{ width: 24 }} />
-
-            </ThemedView>
-
-            <ScrollView style = {{width: '100%'}}>
-                <Spacer height={20} />
-
-                <ThemedText style = {{color: Colors.default.violet, fontSize: 18, fontWeight: 'bold', marginBottom:10, textAlign: 'center'}}>
-                    Calories
-                </ThemedText>
-                {nutritionHistory.length > 0 && (
-                    <View style={{ alignItems: 'center' }}>
-                        <BarChart
-                            data={barData}
-                            width={availableWidth}
-                            height={200}
-                            barWidth={barWidth}
-                            barBorderRadius={6}
-                            spacing={spacing}
-                            noOfSections={4}
-                            maxValue={caloriesMaxValue}
-                            yAxisThickness={1}
-                            xAxisThickness={1}
-                            yAxisColor={Colors.default.mediumGray}
-                            xAxisColor={Colors.default.mediumGray}
-                            yAxisTextStyle={{ color: Colors.default.berryBlue, fontSize: 10 }}
-                            xAxisLabelTextStyle={{ color: Colors.default.berryBlue, fontSize: 10 }}
-                            rulesColor={Colors.default.mediumGray}
-                            rulesType="dashed"
-                            hideRules={false}
-                            isAnimated = {true}
-                            animationDuration={1000}
-                        />
+        <View style={styles.safe}>
+            <View style={{ flex: 2, paddingTop: Math.max(8, insets.top) }}>
+                {/* Header */}
+                <View style={styles.header}>
+                    <Pressable onPress={() => router.back()} style={styles.headerLeft}>
+                        <Text style={styles.backChevron}>‹</Text>
+                        <Text style={styles.backText}>Back</Text>
+                    </Pressable>
+                    <View pointerEvents="none" style={{
+                        position: 'absolute',
+                        left: 0,
+                        right: 0,
+                    }}>
+                        <Text style={[styles.headerTitle, { textAlign: 'center' }]}>
+                            Nutrition Data
+                        </Text>
                     </View>
-                )}
+                </View>
 
-                <Spacer height={30} />
+                <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
+                    {/* Day/Week/Month Toggle */}
+                    <View style={{ paddingHorizontal: 14, marginTop: 6 }}>
+                        <SegmentedWM value={mode} onChange={setMode} />
+                    </View>
 
-                {/* ── Macros Line Chart ── */}
-                <ThemedText style={{ color: Colors.default.violet, fontSize: 18, fontWeight: 'bold', marginBottom: 10, textAlign: 'center' }}>
-                    Macros
-                </ThemedText>
+                    {/* TOTAL */}
+                    <View style={styles.totalBlock}>
+                        <Text style={styles.totalLabel}>TOTAL</Text>
+                        <View style={styles.totalRow}>
+                            <Text style={styles.totalNumber}>
+                                {Math.round(selected.calories || 0)}
+                            </Text>
+                            <Text style={styles.totalUnit}> cal</Text>
 
-                {nutritionHistory.length > 0 && (
-                    <View style={{ alignItems: 'center' }}>
-                        <LineChart
-                            data={proteinData}
-                            data2={carbsData}
-                            data3={fatData}
-                            color1={Colors.default.strongGreen}
-                            color2={Colors.default.primaryBlue}
-                            color3={Colors.default.berryPurple}
-                            dataPointsColor1={Colors.default.strongGreen}
-                            dataPointsColor2={Colors.default.primaryBlue}
-                            dataPointsColor3={Colors.default.berryPurple}
-                            width={availableWidth}
-                            height={200}
-                            spacing={Math.floor(availableWidth / (numBars || 1))}
-                            noOfSections={4}
-                            maxValue={macrosMaxValue}
-                            yAxisThickness={1}
-                            xAxisThickness={1}
-                            yAxisColor={Colors.default.mediumGray}
-                            xAxisColor={Colors.default.mediumGray}
-                            yAxisTextStyle={{ color: Colors.default.berryBlue, fontSize: 10 }}
-                            xAxisLabelTextStyle={{ color: Colors.default.berryBlue, fontSize: 10 }}
-                            rulesColor={Colors.default.mediumGray}
-                            rulesType="dashed"
-                            hideRules={false}
-                            curved
-                            isAnimated
-                            animationDuration={1000}
-                            thickness={2}
-                            dataPointsRadius={4}
-                            yAxisLabelSuffix="g"
-                            pointerConfig={{
-                                pointerStripColor: Colors.default.mediumGray,
-                                pointerStripWidth: 2,
-                                pointerColor: Colors.default.berryBlue,
-                                radius: 6,
-                                activatePointersOnLongPress: false,
-                                autoAdjustPointerLabelPosition: true,
-                                pointerLabelWidth: 160,
-                                pointerLabelHeight: 100,
-                                pointerLabelComponent: (items: any[]) => {
-                                    return (
-                                        <View style={styles.tooltipContainer}>
-                                            <ThemedText style={styles.tooltipTitle}>
-                                                {items[0]?.label ?? ''}
-                                            </ThemedText>
-                                            <ThemedText style={[styles.tooltipValue, { color: Colors.default.strongGreen }]}>
-                                                Protein: {Math.round(items[0]?.value ?? 0)}g
-                                            </ThemedText>
-                                            <ThemedText style={[styles.tooltipValue, { color: Colors.default.primaryBlue }]}>
-                                                Carbs: {Math.round(items[1]?.value ?? 0)}g
-                                            </ThemedText>
-                                            <ThemedText style={[styles.tooltipValue, { color: Colors.default.berryPurple }]}>
-                                                Fat: {Math.round(items[2]?.value ?? 0)}g
-                                            </ThemedText>
-                                        </View>
-                                    );
-                                },
-                            }}
-                        />
-
-                        {/* Legend */}
-                        <View style={styles.legend}>
-                            <View style={styles.legendItem}>
-                                <View style={[styles.legendDot, { backgroundColor: Colors.default.strongGreen }]} />
-                                <ThemedText style={styles.legendText}>Protein</ThemedText>
-                            </View>
-                            <View style={styles.legendItem}>
-                                <View style={[styles.legendDot, { backgroundColor: Colors.default.primaryBlue }]} />
-                                <ThemedText style={styles.legendText}>Carbs</ThemedText>
-                            </View>
-                            <View style={styles.legendItem}>
-                                <View style={[styles.legendDot, { backgroundColor: Colors.default.berryPurple }]} />
-                                <ThemedText style={styles.legendText}>Fat</ThemedText>
-                            </View>
+                            {/* View Details — visible in Week & Month modes */}
+                            {mode !== "D" && selected.date ? (
+                                <Pressable
+                                    style={styles.viewDetailsBtn}
+                                    onPress={() =>
+                                        router.push({
+                                            pathname: '/screens/dailyNutritionSummary',
+                                            params: { date: selected.date },
+                                        } as any)
+                                    }
+                                >
+                                    <Text style={styles.viewDetailsTxt}>View Details ›</Text>
+                                </Pressable>
+                            ) : null}
                         </View>
                     </View>
-                )}
+                
 
-                <Spacer height={30} />
+                    {/* Tab-specific content */}
+                    {mode === "D" && (
+                        <NutritionDayView
+                            entries={dayEntries}
+                        />
+                    )}
 
-            </ScrollView>
+                    {mode === "W" && (
+                        <NutritionWeekView
+                            barData={barData}
+                            proteinData={proteinData}
+                            carbsData={carbsData}
+                            fatData={fatData}
+                            availableWidth={availableWidth}
+                            barWidth={barWidth}
+                            spacing={spacing}
+                            caloriesMaxValue={caloriesMaxValue}
+                            macrosMaxValue={macrosMaxValue}
+                            numBars={numBars}
+                            hasData={hasData}
+                        />
+                    )}
 
-        </ThemedView>
+                    {mode === "M" && (
+                        <NutritionMonthView
+                            caloriesLineData={caloriesLineData}
+                            proteinData={proteinData}
+                            carbsData={carbsData}
+                            fatData={fatData}
+                            availableWidth={availableWidth}
+                            lineSpacingMonth={lineSpacingMonth}
+                            caloriesMaxValue={caloriesMaxValue}
+                            macrosMaxValue={macrosMaxValue}
+                            monthMarkerLabels={monthMarkerLabels}
+                            nutritionHistory={nutritionHistory}
+                            hasData={hasData}
+                        />
+                    )}
+                </ScrollView>
+            </View>
+        </View>
     )
 }
 
 export default HistoricalNutritionData
 
 const styles = StyleSheet.create({
+    safe: {
+        flex: 1,
+        backgroundColor: Colors.default.white,
+    },
     container: {
         flex:1,
         alignItems:'center',
@@ -320,42 +354,41 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-start',
         height: 50,
     },
-    legend: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        gap: 20,
-        marginTop: 12,
+    headerLeft: { flexDirection: "row", alignItems: "center", gap: 6, paddingVertical: 8 },
+    backChevron: { fontSize: 28, lineHeight: 28, fontWeight: "400" },
+    backText: { fontSize: 17, fontWeight: "500" },
+    headerTitle: { fontSize: 20, fontWeight: "700", color: "#000" },
+    totalBlock: { paddingHorizontal: 14, paddingTop: 14, paddingBottom: 6 },
+    totalLabel: { fontSize: 13, color: "#8E8E93", fontWeight: "700", letterSpacing: 0.5 },
+    totalRow: { flexDirection: "row", alignItems: "baseline" },
+    totalNumber: { fontSize: 52, fontWeight: "800", color: "#5459AC" },
+    totalUnit: { fontSize: 20, color: "#8E8E93", fontWeight: "600", marginLeft: 6 },
+    viewDetailsBtn: {
+        marginLeft: 'auto',
+        alignSelf: 'center',
+        paddingVertical: 6,
+        paddingHorizontal: 12,
+        borderRadius: 16,
+        backgroundColor: '#F2F2F7',
     },
-    legendItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
+    viewDetailsTxt: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: Colors.default.berryBlue,
+    },
+    totalDate: { fontSize: 16, color: "#8E8E93", fontWeight: "600", marginTop: 2 },
+    topLabel: { fontSize: 10, color: Colors.default.berryPurple, fontWeight: "700", marginBottom: 2 },
+    // Segment toggle styles
+    segmentWrap: {
+        height: 38,
+        borderRadius: 20,
+        backgroundColor: "#E5E5EA",
+        padding: 3,
+        flexDirection: "row",
         gap: 6,
     },
-    legendDot: {
-        width: 10,
-        height: 10,
-        borderRadius: 5,
-    },
-    legendText: {
-        fontSize: 12,
-        color: Colors.default.berryBlue,
-    },
-    tooltipContainer: {
-        backgroundColor: Colors.default.white,
-        borderRadius: 8,
-        borderWidth: 1,
-        borderColor: Colors.default.mediumGray,
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-    },
-    tooltipTitle: {
-        fontSize: 12,
-        fontWeight: 'bold',
-        color: Colors.default.berryBlue,
-        marginBottom: 4,
-    },
-    tooltipValue: {
-        fontSize: 11,
-        fontWeight: '600',
-    },
+    segmentItem: { flex: 1, borderRadius: 16, alignItems: "center", justifyContent: "center" },
+    segmentItemSelected: { backgroundColor: "white" },
+    segmentText: { fontSize: 15, fontWeight: "600", color: "#111" },
+    segmentTextSelected: { color: "#000" },
 })

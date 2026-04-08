@@ -217,6 +217,7 @@ const WorkoutScreen = () => {
             ))}
           </View>
 
+        
           {/* Notes */}
           <Text style={styles.sectionLabel}>Notes (Optional)</Text>
           <TextInput
