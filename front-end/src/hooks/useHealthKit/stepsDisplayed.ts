@@ -1,3 +1,5 @@
+import { supabase } from "@/config/supabaseConfig";
+import { upsertStepCache } from "@/src/services/stepCacheService";
 import { useMemo, useState } from "react";
 import { authorizeHealthKit } from "./healthAuthorization";
 import {
@@ -95,6 +97,26 @@ export default function useStepsDisplayed() {
 
       if (days === 7) setSteps7d(aggregatedSteps);
       setStepsRange(aggregatedSteps);
+
+      try {
+        const {
+          data: { user },
+          error: userError,
+        } = await supabase.auth.getUser();
+
+        if (userError) throw userError;
+
+        if (user) {
+          const cacheRows = aggregatedSteps.map((p) => ({
+            date: String(p.startDate).slice(0, 10),
+            steps: Number(p.value) || 0,
+          }));
+
+          await upsertStepCache(user.id, cacheRows);
+        }
+      } catch (cacheError) {
+        console.error("Failed to cache steps in Supabase:", cacheError);
+      }
 
       setLoading(false);
     } catch (e: any) {

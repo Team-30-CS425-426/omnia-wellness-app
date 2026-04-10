@@ -148,7 +148,6 @@ export default function SleepAllDataScreen() {
                 <Text style={styles.leftText}>{r.left}</Text>
                 <View style={styles.rightWrap}>
                   <Text style={styles.rightText}>{r.right}</Text>
-                  <Text style={styles.chev}>›</Text>
                 </View>
               </View>
             ))}
@@ -202,5 +201,4 @@ const styles = StyleSheet.create({
   leftText: { fontSize: 18, fontWeight: "400", color: "#000" },
   rightWrap: { flexDirection: "row", alignItems: "center", gap: 10 },
   rightText: { fontSize: 15, color: "#8E8E93", fontWeight: "600" },
-  chev: { fontSize: 22, color: "#C7C7CC", fontWeight: "400" },
 });

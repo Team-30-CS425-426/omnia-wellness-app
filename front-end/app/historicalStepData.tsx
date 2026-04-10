@@ -1,17 +1,17 @@
-import React, { useCallback, useMemo, useState } from "react";
+import useStepsDisplayed from "@/src/hooks/useHealthKit/stepsDisplayed";
+import { useFocusEffect } from "@react-navigation/native";
 import { router } from "expo-router";
+import React, { useCallback, useMemo, useState } from "react";
 import {
+  Dimensions,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
-  Dimensions,
 } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { BarChart } from "react-native-gifted-charts";
-import { useFocusEffect } from "@react-navigation/native";
-import useStepsDisplayed from "@/src/hooks/useHealthKit/stepsDisplayed";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 type Mode = "W" | "M";
 
@@ -92,7 +92,7 @@ export default function StepDetailsScreen() {
   const health = useStepsDisplayed();
 
   const [mode, setMode] = useState<Mode>("W");
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [selectedIndex, setSelectedIndex] = useState<number>(6);
 
   useFocusEffect(
     useCallback(() => {
@@ -108,7 +108,7 @@ export default function StepDetailsScreen() {
           await health.loadRange(neededDays);
         }
 
-        setSelectedIndex(null);
+        setSelectedIndex(neededDays - 1);
       }
 
       load();
@@ -173,64 +173,24 @@ export default function StepDetailsScreen() {
     }));
   }, [mode, weekSeries, monthSeries]);
 
-  const averageValue = useMemo(() => {
-    if (displayedRange.length === 0) return 0;
-    const total = displayedRange.reduce((sum, item) => sum + (Number(item.value) || 0), 0);
-    return total / displayedRange.length;
-  }, [displayedRange]);
-
-  const averageRangeText = useMemo(() => {
+  const displaySummary = useMemo(() => {
     if (displayedRange.length === 0) {
       const today = new Date();
-      return today.toLocaleDateString(undefined, {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      });
-    }
-
-    const first = new Date(`${displayedRange[0].date}T00:00:00`);
-    const last = new Date(`${displayedRange[displayedRange.length - 1].date}T00:00:00`);
-
-    if (Number.isNaN(first.getTime()) || Number.isNaN(last.getTime())) return "";
-
-    const sameYear = first.getFullYear() === last.getFullYear();
-    const sameMonth = first.getMonth() === last.getMonth();
-
-    if (sameYear && sameMonth) {
-      return `${first.toLocaleDateString(undefined, {
-        month: "short",
-      })} ${first.getDate()}–${last.getDate()}, ${last.getFullYear()}`;
-    }
-
-    return `${first.toLocaleDateString(undefined, {
-      month: "short",
-      day: "numeric",
-    })}–${last.toLocaleDateString(undefined, {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    })}`;
-  }, [displayedRange]);
-
-  const displaySummary = useMemo(() => {
-    if (selectedIndex === null || displayedRange.length === 0) {
       return {
-        label: "AVERAGE",
-        value: averageValue,
-        dateText: averageRangeText,
+        label: "TOTAL",
+        value: 0,
+        dateText: today.toLocaleDateString(undefined, {
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        }),
       };
     }
-
-    const item = displayedRange[selectedIndex];
-    if (!item) {
-      return {
-        label: "AVERAGE",
-        value: averageValue,
-        dateText: averageRangeText,
-      };
-    }
-
+  
+    const safeIndex = Math.max(0, Math.min(selectedIndex, displayedRange.length - 1));
+    const item = displayedRange[safeIndex];
+  
     const d = new Date(`${item.date}T00:00:00`);
     const dateText = Number.isNaN(d.getTime())
       ? item.date
@@ -240,13 +200,13 @@ export default function StepDetailsScreen() {
           day: "numeric",
           year: "numeric",
         });
-
+  
     return {
       label: "TOTAL",
       value: Number(item.value) || 0,
       dateText,
     };
-  }, [selectedIndex, displayedRange, averageValue, averageRangeText]);
+  }, [selectedIndex, displayedRange]);
 
   const screenWidth = Dimensions.get("window").width;
   const cardMarginH = 14;
