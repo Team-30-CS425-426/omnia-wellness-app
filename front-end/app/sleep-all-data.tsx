@@ -1,10 +1,11 @@
-import useSleepDisplayed from "@/src/hooks/useHealthKit/sleepDisplayed";
+import { supabase } from "@/config/supabaseConfig";
+import { getSleepHoursLastNDays } from "@/src/services/sleepLogService";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useMemo } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
-type Mode = "D" | "W" | "M";
+type Mode = "W" | "M";
 type Row = { left: string; right: string };
 
 const pad2 = (n: number) => String(n).padStart(2, "0");
@@ -53,45 +54,52 @@ const minutesToHrMin = (mins: number) => {
 
 export default function SleepAllDataScreen() {
   const { mode } = useLocalSearchParams<{ mode?: Mode }>();
-  const m: Mode = (mode as Mode) ?? "D";
+  const m: Mode = (mode as Mode) ?? "W";
 
   const insets = useSafeAreaInsets();
-  const health = useSleepDisplayed();
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const [sleepRange, setSleepRange] = React.useState<{ date: string; hours: number }[]>([]);
 
   useEffect(() => {
-    if (!health.isAuthorized && !health.loading) {
-      health.connectAndImport();
+    async function load() {
+      try {
+        setLoading(true);
+        setError(null);
+  
+        const neededDays = m === "W" ? 7 : 30;
+  
+        const {
+          data: { user },
+          error: userError,
+        } = await supabase.auth.getUser();
+  
+        if (userError) throw userError;
+        if (!user) throw new Error("No authenticated user found.");
+  
+        const rows = await getSleepHoursLastNDays(user.id, neededDays);
+        setSleepRange(rows);
+      } catch (e: any) {
+        setError(e?.message || "Failed to load sleep logs.");
+        setSleepRange([]);
+      } finally {
+        setLoading(false);
+      }
     }
-  }, [health.isAuthorized, health.loading]);
-
-  useEffect(() => {
-    if (!health.isAuthorized) return;
-    if (m === "W") health.loadRange(7);
-    if (m === "M") health.loadRange(30);
-  }, [m, health.isAuthorized]);
+  
+    load();
+  }, [m]);
 
   const rows = useMemo<Row[]>(() => {
-    if (m === "D") {
-      const bins = (health.sleepDayBins || []).map((x: any) => clampNonNeg(x));
-      const safe: number[] = bins.length === 24 ? (bins as number[]) : new Array(24).fill(0);
-
-      return safe
-        .map((v: number, h: number) => ({
-          left: minutesToHrMin(v),
-          right: hourLabel(h),
-        }))
-        .reverse();
-    }
-
-    const end = startOfDay(new Date());
+    const end = addDays(startOfDay(new Date()), -1);
     const days = m === "W" ? 7 : 30;
     const start = addDays(end, -(days - 1));
 
     const map = new Map<string, number>();
-    (health.sleepRange || []).forEach((p: any) => {
-      const key = toLocalDayKeyFromAny(p.startDate);
+    (sleepRange || []).forEach((p) => {
+      const key = toLocalDayKeyFromAny(p.date);
       if (!key) return;
-      map.set(key, clampNonNeg(p.value) * 60);
+      map.set(key, clampNonNeg(p.hours) * 60);
     });
 
     const out: Row[] = [];
@@ -111,7 +119,7 @@ export default function SleepAllDataScreen() {
     }
 
     return out.reverse();
-  }, [m, health.sleepDayBins, health.sleepRange]);
+  }, [m, sleepRange]);
 
   const title = "All Recorded Data";
 
@@ -126,9 +134,9 @@ export default function SleepAllDataScreen() {
           <View style={{ width: 44 }} />
         </View>
 
-        {health.loading && <Text style={{ paddingHorizontal: 14 }}>Loading...</Text>}
-        {!!health.error && (
-          <Text style={{ paddingHorizontal: 14, color: "red" }}>{health.error}</Text>
+        {loading && <Text style={{ paddingHorizontal: 14 }}>Loading...</Text>}
+        {!!error && (
+          <Text style={{ paddingHorizontal: 14, color: "red" }}>{error}</Text>
         )}
 
         <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>

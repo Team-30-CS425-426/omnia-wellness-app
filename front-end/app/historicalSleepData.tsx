@@ -11,7 +11,8 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { BarChart } from "react-native-gifted-charts";
 import { useFocusEffect } from "@react-navigation/native";
-import useSleepDisplayed from "@/src/hooks/useHealthKit/sleepDisplayed";
+import { supabase } from "@/config/supabaseConfig";
+import { getSleepHoursLastNDays } from "@/src/services/sleepLogService";
 
 type Mode = "W" | "M";
 
@@ -51,7 +52,18 @@ const minutesToHrMin = (mins: number) => {
   if (rem === 0) return `${hr} hr`;
   return `${hr} hr ${rem} min`;
 };
+const minutesToParts = (mins: number) => {
+  const m = Math.max(0, Math.round(mins));
+  const hr = Math.floor(m / 60);
+  const rem = m % 60;
 
+  return {
+    hoursText: String(hr),
+    hourUnit: "hr",
+    minutesText: String(rem),
+    minuteUnit: "min",
+  };
+};
 const weekdayShort = (dateStr: string) => {
   const d = new Date(`${dateStr}T00:00:00`);
   if (Number.isNaN(d.getTime())) return "";
@@ -98,7 +110,9 @@ function SegmentedWM({
 
 export default function SleepDetailsScreen() {
   const insets = useSafeAreaInsets();
-  const health = useSleepDisplayed();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [sleepRange, setSleepRange] = useState<{ date: string; hours: number }[]>([]);
 
   const [mode, setMode] = useState<Mode>("W");
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
@@ -106,32 +120,43 @@ export default function SleepDetailsScreen() {
   useFocusEffect(
     useCallback(() => {
       async function load() {
-        const neededDays = mode === "W" ? 7 : 30;
-
-        if (!health.isAuthorized) {
-          await health.connectAndImport();
-          return;
+        try {
+          setLoading(true);
+          setError(null);
+  
+          const neededDays = mode === "W" ? 7 : 30;
+  
+          const {
+            data: { user },
+            error: userError,
+          } = await supabase.auth.getUser();
+  
+          if (userError) throw userError;
+          if (!user) throw new Error("No authenticated user found.");
+  
+          const rows = await getSleepHoursLastNDays(user.id, neededDays);
+          setSleepRange(rows);
+          setSelectedIndex(neededDays - 1);
+        } catch (e: any) {
+          setError(e?.message || "Failed to load sleep logs.");
+          setSleepRange([]);
+        } finally {
+          setLoading(false);
         }
-
-        if (health.rangeDays !== neededDays || health.sleepRange.length === 0) {
-          await health.loadRange(neededDays);
-        }
-
-        setSelectedIndex(null);
       }
-
+  
       load();
-    }, [health.isAuthorized, mode, health.rangeDays, health.sleepRange.length])
+    }, [mode])
   );
 
   const sleepWeekSeries = useMemo(() => {
-    const end = startOfDay(new Date());
+    const end = addDays(startOfDay(new Date()), -1);
     const start = addDays(end, -6);
 
     const map = new Map<string, number>();
-    (health.sleepRange || []).forEach((p: any) => {
-      const key = toLocalDayKeyFromAny(p.startDate);
-      if (key) map.set(key, clampNonNeg(p.value) * 60);
+    (sleepRange || []).forEach((p) => {
+      const key = toLocalDayKeyFromAny(p.date);
+      if (key) map.set(key, clampNonNeg(p.hours) * 60);
     });
 
     const values: number[] = [];
@@ -144,16 +169,16 @@ export default function SleepDetailsScreen() {
     }
 
     return { values, dates };
-  }, [health.sleepRange]);
+  }, [sleepRange]);
 
   const sleepMonthSeries = useMemo(() => {
-    const end = startOfDay(new Date());
+    const end = addDays(startOfDay(new Date()), -1);
     const start = addDays(end, -29);
 
     const map = new Map<string, number>();
-    (health.sleepRange || []).forEach((p: any) => {
-      const key = toLocalDayKeyFromAny(p.startDate);
-      if (key) map.set(key, clampNonNeg(p.value) * 60);
+    (sleepRange || []).forEach((p) => {
+      const key = toLocalDayKeyFromAny(p.date);
+      if (key) map.set(key, clampNonNeg(p.hours) * 60);
     });
 
     const values: number[] = [];
@@ -166,7 +191,7 @@ export default function SleepDetailsScreen() {
     }
 
     return { values, dates };
-  }, [health.sleepRange]);
+  }, [sleepRange]);
 
   const displayedRange = useMemo(() => {
     if (mode === "W") {
@@ -257,6 +282,10 @@ export default function SleepDetailsScreen() {
     };
   }, [selectedIndex, displayedRange, averageValue, averageRangeText]);
 
+  const displaySummaryParts = useMemo(() => {
+    return minutesToParts(displaySummary.value);
+  }, [displaySummary.value]);
+
   const screenWidth = Dimensions.get("window").width;
   const cardMarginH = 14;
   const cardPadding = 16;
@@ -334,21 +363,24 @@ export default function SleepDetailsScreen() {
             <Text style={styles.totalLabel}>{displaySummary.label}</Text>
 
             <View style={styles.totalRow}>
-              <Text style={styles.totalNumber}>{minutesToHrMin(displaySummary.value)}</Text>
+              <Text style={styles.totalNumber}>{displaySummaryParts.hoursText}</Text>
+              <Text style={styles.totalUnit}> {displaySummaryParts.hourUnit}</Text>
+              <Text style={styles.totalNumber}> {displaySummaryParts.minutesText}</Text>
+              <Text style={styles.totalUnit}> {displaySummaryParts.minuteUnit}</Text>
             </View>
 
             <Text style={styles.totalDate}>{displaySummary.dateText}</Text>
           </View>
 
-          {!!health.loading && <Text style={{ paddingHorizontal: 14 }}>Loading...</Text>}
-          {!!health.error && (
-            <Text style={{ paddingHorizontal: 14, color: "red" }}>{health.error}</Text>
+          {!!loading && <Text style={{ paddingHorizontal: 14 }}>Loading...</Text>}
+          {!!error && (
+            <Text style={{ paddingHorizontal: 14, color: "red" }}>{error}</Text>
           )}
 
           <View style={styles.chartCard}>
             <Text style={styles.cardTitle}>Time In Bed</Text>
 
-            {displayedRange.length === 0 && !health.loading ? (
+            {displayedRange.length === 0 && !loading ? (
               <Text style={{ color: "#8E8E93", paddingTop: 10 }}>No sleep data.</Text>
             ) : (
               <View style={{ alignItems: "center", paddingTop: 10 }}>
@@ -471,6 +503,12 @@ const styles = StyleSheet.create({
   },
   totalRow: { flexDirection: "row", alignItems: "baseline" },
   totalNumber: { fontSize: 52, fontWeight: "800", color: "#000" },
+  totalUnit: {
+    fontSize: 20,
+    color: "#8E8E93",
+    fontWeight: "600",
+    marginLeft: 2,
+  },
   totalDate: {
     fontSize: 16,
     color: "#8E8E93",
