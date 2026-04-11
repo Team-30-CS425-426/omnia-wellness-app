@@ -1,5 +1,10 @@
 import { supabase } from "@/config/supabaseConfig";
-import { upsertStepCache } from "@/src/services/stepCacheService";
+import {
+  findMissingDates,
+  getLastNDayKeys,
+  getStepCacheLastNDays,
+  upsertStepCache,
+} from "@/src/services/stepCacheService";
 import { useMemo, useState } from "react";
 import { authorizeHealthKit } from "./healthAuthorization";
 import {
@@ -66,7 +71,7 @@ const aggregateStepsByHourForDay = (samples: RawSample[], day: Date): number[] =
   return bins.map((x) => (Number.isFinite(x) && x > 0 ? x : 0));
 };
 
-export default function useStepsDisplayed() {
+export default function useStepsDisplayed(syncFromHealthKit: boolean = false) {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -78,46 +83,82 @@ export default function useStepsDisplayed() {
     new Array(24).fill(0)
   );
 
+
   const importLastDays = async (days: DaysRange) => {
-    const now = new Date();
-    const start = addDaysLocal(now, -(days - 1));
-    const startDate = startOfDayLocal(start);
-    const endDate = now;
-
     try {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+  
+      if (userError) throw userError;
+      if (!user) throw new Error("No authenticated user found.");
+  
+      // 1. Read cache first
+      const cachedRows = await getStepCacheLastNDays(user.id, days);
+  
+      const cachedPoints: DayPoint[] = cachedRows.map((row) => ({
+        startDate: row.date,
+        endDate: row.date,
+        value: row.steps,
+      }));
+  
+      if (days === 7) setSteps7d(cachedPoints);
+      setStepsRange(cachedPoints);
+      setStepsDayBins(new Array(24).fill(0));
+
+  
+      // 2. Figure out which dates are missing
+      const expectedDates = getLastNDayKeys(days);
+      const cachedDatesWithData = cachedRows
+        .filter((r) => Number(r.steps) > 0)
+        .map((r) => r.date);
+  
+      const missingDates = findMissingDates(expectedDates, cachedDatesWithData);
+  
+      // Always refresh today too
+      const todayKey = localDay(new Date());
+      const datesToRefresh = Array.from(new Set([...missingDates, todayKey]));
+  
+      // 3. Fetch HealthKit
       const mappedSteps = await loadStepSamples(days);
-
       setStepsDayBins(aggregateStepsByHourForDay(mappedSteps, new Date()));
-
+  
+      const now = new Date();
+      const start = addDaysLocal(now, -(days - 1));
+      const startDate = startOfDayLocal(start);
+      const endDate = now;
+  
       const aggregatedStepsAll = aggregateStepsByDate(mappedSteps);
       const aggregatedSteps = keepMostRecentDays(
         filterPointsToWindow(aggregatedStepsAll, startDate, endDate),
         days
       );
-
-      if (days === 7) setSteps7d(aggregatedSteps);
-      setStepsRange(aggregatedSteps);
-
-      try {
-        const {
-          data: { user },
-          error: userError,
-        } = await supabase.auth.getUser();
-
-        if (userError) throw userError;
-
-        if (user) {
-          const cacheRows = aggregatedSteps.map((p) => ({
-            date: String(p.startDate).slice(0, 10),
-            steps: Number(p.value) || 0,
-          }));
-
-          await upsertStepCache(user.id, cacheRows);
-        }
-      } catch (cacheError) {
-        console.error("Failed to cache steps in Supabase:", cacheError);
+  
+      // 4. Save only missing dates + today
+      const refreshRows = aggregatedSteps
+        .filter((p) => datesToRefresh.includes(String(p.startDate).slice(0, 10)))
+        .map((p) => ({
+          date: String(p.startDate).slice(0, 10),
+          steps: Number(p.value) || 0,
+        }));
+  
+      if (refreshRows.length > 0) {
+        await upsertStepCache(user.id, refreshRows);
       }
-
+  
+      // 5. Reload from Supabase so UI matches cache
+      const refreshedRows = await getStepCacheLastNDays(user.id, days);
+  
+      const refreshedPoints: DayPoint[] = refreshedRows.map((row) => ({
+        startDate: row.date,
+        endDate: row.date,
+        value: row.steps,
+      }));
+  
+      if (days === 7) setSteps7d(refreshedPoints);
+      setStepsRange(refreshedPoints);
+  
       setLoading(false);
     } catch (e: any) {
       setLoading(false);
@@ -125,10 +166,44 @@ export default function useStepsDisplayed() {
     }
   };
 
+  const loadCacheOnly = async (days: DaysRange) => {
+    try {
+      setRangeDays(days);
+  
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+  
+      if (userError) throw userError;
+      if (!user) throw new Error("No authenticated user found.");
+  
+      const cachedRows = await getStepCacheLastNDays(user.id, days);
+  
+      const cachedPoints: DayPoint[] = cachedRows.map((row) => ({
+        startDate: row.date,
+        endDate: row.date,
+        value: row.steps,
+      }));
+  
+      if (days === 7) setSteps7d(cachedPoints);
+      setStepsRange(cachedPoints);
+  
+      setLoading(false);
+    } catch (e: any) {
+      setLoading(false);
+      setError(e?.message || "Error loading cached step data");
+    }
+  };
+
   const connectAndImport = async () => {
+    if (!syncFromHealthKit) {
+      return;
+    }
+  
     setError(null);
     setLoading(true);
-
+  
     try {
       await authorizeHealthKit();
       setIsAuthorized(true);
@@ -141,15 +216,21 @@ export default function useStepsDisplayed() {
   };
 
   const loadRange = async (days: DaysRange) => {
-    if (!isAuthorized) {
-      setError("Please connect Apple Health first.");
-      return;
-    }
-
     setRangeDays(days);
     setError(null);
     setLoading(true);
-    await importLastDays(days);
+  
+    if (syncFromHealthKit) {
+      if (!isAuthorized) {
+        setError("Please connect Apple Health first.");
+        setLoading(false);
+        return;
+      }
+  
+      await importLastDays(days);
+    } else {
+      await loadCacheOnly(days);
+    }
   };
 
   const todayKey = localDay(new Date());

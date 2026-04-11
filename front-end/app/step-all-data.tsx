@@ -47,19 +47,13 @@ export default function StepAllDataScreen() {
   const m: Mode = (mode as Mode) ?? "D";
 
   const insets = useSafeAreaInsets();
-  const health = useStepsDisplayed();
+  const health = useStepsDisplayed(false);
+
 
   useEffect(() => {
-    if (!health.isAuthorized && !health.loading) {
-      health.connectAndImport();
-    }
-  }, [health.isAuthorized, health.loading]);
-
-  useEffect(() => {
-    if (!health.isAuthorized) return;
     if (m === "W") health.loadRange(7);
     if (m === "M") health.loadRange(30);
-  }, [m, health.isAuthorized]);
+  }, [m]);
 
   const rows = useMemo<Row[]>(() => {
     if (m === "D") {

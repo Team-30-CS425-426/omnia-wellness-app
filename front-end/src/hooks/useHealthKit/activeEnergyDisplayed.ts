@@ -1,3 +1,10 @@
+import { supabase } from "@/config/supabaseConfig";
+import {
+  findMissingDates,
+  getActiveEnergyCacheLastNDays,
+  getLastNDayKeys,
+  upsertActiveEnergyCache,
+} from "@/src/services/activeEnergyCacheService";
 import { useMemo, useState } from "react";
 import { authorizeHealthKit } from "./healthAuthorization";
 import {
@@ -52,7 +59,7 @@ const buildFullActiveEnergyRange = (
   return output;
 };
 
-export default function useActiveEnergyDisplayed() {
+export default function useActiveEnergyDisplayed(syncFromHealthKit: boolean = false) {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -62,10 +69,51 @@ export default function useActiveEnergyDisplayed() {
 
   const importLastDays = async (days: DaysRange) => {
     try {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+  
+      if (userError) throw userError;
+      if (!user) throw new Error("No authenticated user found.");
+  
+      // 1. Read cache first
+      const cachedRows = await getActiveEnergyCacheLastNDays(user.id, days);
+      setActiveEnergyRange(cachedRows);
+  
+      // 2. Figure out which dates are missing
+      const expectedDates = getLastNDayKeys(days);
+      const cachedDatesWithData = cachedRows
+        .filter((r) => Number(r.calories) > 0)
+        .map((r) => r.date);
+  
+      const missingDates = findMissingDates(expectedDates, cachedDatesWithData);
+  
+      // Always refresh today too
+      const todayKey = localDay(new Date());
+      const datesToRefresh = Array.from(new Set([...missingDates, todayKey]));
+  
+      // 3. Fetch HealthKit
       const mappedActiveEnergy = await loadActiveEnergySamples(days);
       const aggregatedActiveEnergy = aggregateActiveEnergyByDate(mappedActiveEnergy);
-      setActiveEnergyRange(buildFullActiveEnergyRange(aggregatedActiveEnergy, days));
-
+      const fullRange = buildFullActiveEnergyRange(aggregatedActiveEnergy, days);
+  
+      // 4. Save only missing dates + today
+      const refreshRows = fullRange
+        .filter((p) => datesToRefresh.includes(p.date))
+        .map((p) => ({
+          date: p.date,
+          calories: Number(p.calories) || 0,
+        }));
+  
+      if (refreshRows.length > 0) {
+        await upsertActiveEnergyCache(user.id, refreshRows);
+      }
+  
+      // 5. Reload from Supabase so UI matches cache
+      const refreshedRows = await getActiveEnergyCacheLastNDays(user.id, days);
+      setActiveEnergyRange(refreshedRows);
+  
       setLoading(false);
     } catch (e: any) {
       setLoading(false);
@@ -74,9 +122,13 @@ export default function useActiveEnergyDisplayed() {
   };
 
   const connectAndImport = async () => {
+    if (!syncFromHealthKit) {
+      return;
+    }
+  
     setError(null);
     setLoading(true);
-
+  
     try {
       await authorizeHealthKit();
       setIsAuthorized(true);
@@ -88,16 +140,44 @@ export default function useActiveEnergyDisplayed() {
     }
   };
 
-  const loadRange = async (days: DaysRange) => {
-    if (!isAuthorized) {
-      setError("Please connect Apple Health first.");
-      return;
+  const loadCacheOnly = async (days: DaysRange) => {
+    try {
+      setRangeDays(days);
+  
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+  
+      if (userError) throw userError;
+      if (!user) throw new Error("No authenticated user found.");
+  
+      const cachedRows = await getActiveEnergyCacheLastNDays(user.id, days);
+      setActiveEnergyRange(cachedRows);
+  
+      setLoading(false);
+    } catch (e: any) {
+      setLoading(false);
+      setError(e?.message || "Error loading cached active energy data");
     }
+  };
 
+  const loadRange = async (days: DaysRange) => {
     setRangeDays(days);
     setError(null);
     setLoading(true);
-    await importLastDays(days);
+  
+    if (syncFromHealthKit) {
+      if (!isAuthorized) {
+        setError("Please connect Apple Health first.");
+        setLoading(false);
+        return;
+      }
+  
+      await importLastDays(days);
+    } else {
+      await loadCacheOnly(days);
+    }
   };
 
   const todayKey = localDay(new Date());

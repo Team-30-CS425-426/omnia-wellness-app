@@ -69,26 +69,21 @@ export default function ActiveEnergyScreen() {
     activeEnergyRange,
     connectAndImport,
     loadRange,
-  } = useActiveEnergyDisplayed();
+  } = useActiveEnergyDisplayed(false);
 
   const [mode, setMode] = useState<Mode>("W");
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [selectedIndex, setSelectedIndex] = useState<number>(6);
 
   useFocusEffect(
     useCallback(() => {
       async function load() {
         const neededDays = mode === "W" ? 7 : 30;
 
-        if (!isAuthorized) {
-          await connectAndImport();
-          return;
-        }
-
         if (rangeDays !== neededDays || activeEnergyRange.length === 0) {
           await loadRange(neededDays);
         }
 
-        setSelectedIndex(null);
+        setSelectedIndex(neededDays - 1);
       }
 
       load();
@@ -144,24 +139,23 @@ export default function ActiveEnergyScreen() {
   }, [activeEnergyRange]);
 
   const displaySummary = useMemo(() => {
-    if (selectedIndex === null || activeEnergyRange.length === 0) {
+    if (activeEnergyRange.length === 0) {
+      const today = new Date();
       return {
-        label: "AVERAGE",
-        value: averageCalories,
-        dateText: averageRangeText,
+        label: "TOTAL",
+        value: 0,
+        dateText: today.toLocaleDateString(undefined, {
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        }),
       };
     }
-
-    const item = activeEnergyRange[selectedIndex];
-
-    if (!item) {
-      return {
-        label: "AVERAGE",
-        value: averageCalories,
-        dateText: averageRangeText,
-      };
-    }
-
+  
+    const safeIndex = Math.max(0, Math.min(selectedIndex, activeEnergyRange.length - 1));
+    const item = activeEnergyRange[safeIndex];
+  
     const d = new Date(`${item.date}T00:00:00`);
     const dateText = Number.isNaN(d.getTime())
       ? item.date
@@ -171,13 +165,13 @@ export default function ActiveEnergyScreen() {
           day: "numeric",
           year: "numeric",
         });
-
+  
     return {
       label: "TOTAL",
       value: Number(item.calories) || 0,
       dateText,
     };
-  }, [selectedIndex, activeEnergyRange, averageCalories, averageRangeText]);
+  }, [selectedIndex, activeEnergyRange]);
 
   const screenWidth = Dimensions.get("window").width;
   const cardMarginH = 14;

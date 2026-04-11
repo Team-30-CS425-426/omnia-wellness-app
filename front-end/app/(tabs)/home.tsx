@@ -1,6 +1,6 @@
 import { WellnessDashboards } from "../components/home/dashboard";
 import Title from "../components/home/title";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { View, ScrollView, Pressable, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -14,17 +14,61 @@ export default function HomeScreen() {
   const [sleepToday, setSleepToday] = useState(0);
   const [sleepLoading, setSleepLoading] = useState(false);
   const [sleepError, setSleepError] = useState<string | null>(null);
-  const stepsHealth = useStepsDisplayed();
-  const activeEnergyHealth = useActiveEnergyDisplayed();
+
+  const didWarmSteps30 = useRef(false);
+  const didWarmActive30 = useRef(false);
+
+  const stepsHealth = useStepsDisplayed(true);
+  const activeEnergyHealth = useActiveEnergyDisplayed(true);
 
   useEffect(() => {
-    if (!stepsHealth.isAuthorized && !stepsHealth.loading) {
-      stepsHealth.connectAndImport();
+    let cancelled = false;
+  
+    async function warmCaches() {
+      try {
+        // First make sure Steps is authorized
+        if (!stepsHealth.isAuthorized && !stepsHealth.loading) {
+          await stepsHealth.connectAndImport();
+          return;
+        }
+  
+        // Then make sure Active Energy is authorized
+        if (!activeEnergyHealth.isAuthorized && !activeEnergyHealth.loading) {
+          await activeEnergyHealth.connectAndImport();
+          return;
+        }
+  
+        // Warm 30-day Steps cache once per app session
+        if (
+          !cancelled &&
+          stepsHealth.isAuthorized &&
+          !stepsHealth.loading &&
+          !didWarmSteps30.current
+        ) {
+          didWarmSteps30.current = true;
+          await stepsHealth.loadRange(30);
+        }
+  
+        // Warm 30-day Active Energy cache once per app session
+        if (
+          !cancelled &&
+          activeEnergyHealth.isAuthorized &&
+          !activeEnergyHealth.loading &&
+          !didWarmActive30.current
+        ) {
+          didWarmActive30.current = true;
+          await activeEnergyHealth.loadRange(30);
+        }
+      } catch (e) {
+        console.error("Failed to warm HealthKit caches on home screen:", e);
+      }
     }
-
-    if (!activeEnergyHealth.isAuthorized && !activeEnergyHealth.loading) {
-      activeEnergyHealth.connectAndImport();
-    }
+  
+    warmCaches();
+  
+    return () => {
+      cancelled = true;
+    };
   }, [
     stepsHealth.isAuthorized,
     stepsHealth.loading,

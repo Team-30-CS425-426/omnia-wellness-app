@@ -1,4 +1,4 @@
-import { supabase } from "../../config/supabaseConfig";
+import { supabase } from "@/config/supabaseConfig";
 
 // helper: always format month/day as 2 digits
 const pad2 = (n: number) => String(n).padStart(2, "0");
@@ -30,37 +30,37 @@ export function findMissingDates(
   return expectedDates.filter((d) => !cached.has(d));
 }
 
-export async function upsertStepCache(
+export async function upsertActiveEnergyCache(
   userId: string,
-  points: { date: string; steps: number }[]
+  points: { date: string; calories: number }[]
 ) {
   if (!userId) throw new Error("Missing user ID.");
 
   const rows = points.map((p) => ({
     userID: userId,
     date: p.date,
-    steps: p.steps,
+    calories: p.calories,
     source: "healthkit",
   }));
 
   const { error } = await supabase
-    .from("StepCache")
+    .from("ActiveEnergyCache")
     .upsert(rows, { onConflict: "userID,date" });
 
   if (error) throw error;
 }
 
-export async function getStepCacheLastNDays(
+export async function getActiveEnergyCacheLastNDays(
   userId: string,
   days: number = 7
-): Promise<{ date: string; steps: number }[]> {
+): Promise<{ date: string; calories: number }[]> {
   const expectedDates = getLastNDayKeys(days);
   const startStr = expectedDates[0];
   const endStr = expectedDates[expectedDates.length - 1];
 
   const { data, error } = await supabase
-    .from("StepCache")
-    .select("date, steps")
+    .from("ActiveEnergyCache")
+    .select("date, calories")
     .eq("userID", userId)
     .gte("date", startStr)
     .lte("date", endStr)
@@ -72,15 +72,15 @@ export async function getStepCacheLastNDays(
 
   (data ?? []).forEach((row: any) => {
     const key = String(row.date);
-    const val = Number(row.steps);
+    const val = Number(row.calories);
     totals.set(key, Number.isFinite(val) ? val : 0);
   });
 
-  const out: { date: string; steps: number }[] = [];
+  const out: { date: string; calories: number }[] = [];
   for (const date of expectedDates) {
     out.push({
       date,
-      steps: totals.get(date) ?? 0,
+      calories: totals.get(date) ?? 0,
     });
   }
 

@@ -89,7 +89,7 @@ function SegmentedWM({
 
 export default function StepDetailsScreen() {
   const insets = useSafeAreaInsets();
-  const health = useStepsDisplayed();
+  const health = useStepsDisplayed(false);
 
   const [mode, setMode] = useState<Mode>("W");
   const [selectedIndex, setSelectedIndex] = useState<number>(6);
@@ -98,11 +98,6 @@ export default function StepDetailsScreen() {
     useCallback(() => {
       async function load() {
         const neededDays = mode === "W" ? 7 : 30;
-
-        if (!health.isAuthorized) {
-          await health.connectAndImport();
-          return;
-        }
 
         if (health.rangeDays !== neededDays || health.stepsRange.length === 0) {
           await health.loadRange(neededDays);
