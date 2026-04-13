@@ -1,19 +1,20 @@
-import React, { useCallback, useMemo, useState } from "react";
+import useActiveEnergyDisplayed from "@/src/hooks/useHealthKit/activeEnergyDisplayed";
+import { useFocusEffect } from "@react-navigation/native";
 import { router } from "expo-router";
+import React, { useCallback, useMemo, useState } from "react";
 import {
+  Dimensions,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
-  Dimensions,
 } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { BarChart } from "react-native-gifted-charts";
-import { useFocusEffect } from "@react-navigation/native";
-import useActiveEnergyDisplayed from "@/src/hooks/useHealthKit/activeEnergyDisplayed";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 type Mode = "W" | "M";
+
 
 const weekdayShort = (dateStr: string) => {
   const d = new Date(`${dateStr}T00:00:00`);
@@ -58,7 +59,200 @@ function SegmentedWM({
     </View>
   );
 }
+function WeekTodayVsAverageCard({
+  message,
+  todayCalories,
+  averageCalories,
+  todayCurve,
+  averageCurve,
+}: {
+  message: string;
+  todayCalories: number;
+  averageCalories: number;
+  todayCurve: { hour: number; calories: number }[];
+  averageCurve: { hour: number; calories: number }[];
+}) {
+  const hasGraphData = todayCurve.length > 0 && averageCurve.length > 0;
 
+  return (
+    <View style={styles.highlightCardLarge}>
+      <Text style={styles.highlightHeaderOrange}>🔥 Active Energy</Text>
+
+      <Text style={styles.highlightHeadline}>{message}</Text>
+
+      <View style={styles.highlightDivider} />
+
+      <View style={styles.weekTopMetricsRow}>
+        <View>
+          <Text style={styles.highlightMetricLabelOrange}>● Today</Text>
+          <View style={styles.metricValueRow}>
+            <Text style={styles.highlightMetricValueOrange}>
+              {todayCalories % 1 === 0 ? Math.round(todayCalories) : todayCalories.toFixed(1)}
+            </Text>
+            <Text style={styles.highlightMetricUnitOrange}> cal</Text>
+          </View>
+        </View>
+
+        <View>
+          <Text style={styles.highlightMetricLabelGray}>● Average</Text>
+          <View style={styles.metricValueRow}>
+            <Text style={styles.highlightMetricValueGray}>
+              {averageCalories % 1 === 0 ? Math.round(averageCalories) : averageCalories.toFixed(1)}
+            </Text>
+            <Text style={styles.highlightMetricUnitGray}> cal</Text>
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.weekLineChartPlaceholder}>
+        <Text style={styles.placeholderText}>
+          {hasGraphData ? "Intraday graph ready" : "No intraday data yet"}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+function WeekAverageCard({
+  averageCalories,
+  activeEnergyRange,
+}: {
+  averageCalories: number;
+  activeEnergyRange: { date: string; calories: number | string }[];
+}) {
+  const maxValue = Math.max(
+    1,
+    ...activeEnergyRange.map((item) => Number(item.calories) || 0)
+  );
+
+  return (
+    <View style={styles.highlightCardLarge}>
+      <Text style={styles.highlightHeaderOrange}>🔥 Active Energy</Text>
+
+      <Text style={styles.highlightHeadline}>
+        You burned an average of{" "}
+        {averageCalories % 1 === 0 ? Math.round(averageCalories) : averageCalories.toFixed(1)}{" "}
+        calories a day over the last 7 days.
+      </Text>
+
+      <View style={styles.highlightDivider} />
+
+      <Text style={styles.averageCaloriesLabel}>Average Calories</Text>
+
+      <View style={styles.metricValueRowBottom}>
+        <Text style={styles.averageCaloriesValue}>
+          {averageCalories % 1 === 0 ? Math.round(averageCalories) : averageCalories.toFixed(1)}
+        </Text>
+        <Text style={styles.averageCaloriesUnit}> cal</Text>
+      </View>
+
+      <View style={styles.weekBarChartArea}>
+        <View
+          style={[
+            styles.averageLine,
+            {
+              bottom: `${(averageCalories / maxValue) * 68 + 18}%`,
+            },
+          ]}
+        />
+
+        <View style={styles.weekMiniBarsRow}>
+          {activeEnergyRange.map((item, idx) => {
+            const heightPercent = Math.max(
+              12,
+              ((Number(item.calories) || 0) / maxValue) * 100
+            );
+
+            return (
+              <View key={`${item.date}-${idx}`} style={styles.weekMiniBarItem}>
+                <View
+                  style={[
+                    styles.weekMiniBar,
+                    { height: `${heightPercent}%` },
+                  ]}
+                />
+                <Text style={styles.weekMiniBarLabel}>
+                  {weekdayShort(item.date).charAt(0)}
+                </Text>
+              </View>
+            );
+          })}
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function MonthComparisonCard({
+  currentMonthLabel,
+  previousMonthLabel,
+  currentMonthAverage,
+  previousMonthAverage,
+}: {
+  currentMonthLabel: string;
+  previousMonthLabel: string;
+  currentMonthAverage: number;
+  previousMonthAverage: number;
+}) {
+  const maxValue = Math.max(currentMonthAverage, previousMonthAverage, 1);
+
+  return (
+    <View style={styles.highlightCardLarge}>
+      <Text style={styles.highlightHeaderOrange}>🔥 Active Energy</Text>
+
+      <Text style={styles.highlightHeadline}>
+        This month, your average calorie burn is{" "}
+        {currentMonthAverage >= previousMonthAverage ? "higher" : "lower"} than it was last month.
+      </Text>
+
+      <View style={styles.highlightDivider} />
+
+      <View style={styles.monthMetricBlock}>
+        <View style={styles.metricValueRow}>
+          <Text style={styles.monthMetricValue}>
+            {currentMonthAverage % 1 === 0
+              ? Math.round(currentMonthAverage)
+              : currentMonthAverage.toFixed(1)}
+          </Text>
+          <Text style={styles.monthMetricUnit}> cal/day</Text>
+        </View>
+
+        <View style={styles.monthBarTrack}>
+          <View
+            style={[
+              styles.monthBarFillOrange,
+              { width: `${(currentMonthAverage / maxValue) * 100}%` },
+            ]}
+          />
+        </View>
+
+        <Text style={styles.monthBarLabel}>{currentMonthLabel}</Text>
+      </View>
+
+      <View style={styles.monthMetricBlock}>
+        <View style={styles.metricValueRow}>
+          <Text style={styles.monthMetricValue}>
+            {previousMonthAverage % 1 === 0
+              ? Math.round(previousMonthAverage)
+              : previousMonthAverage.toFixed(1)}
+          </Text>
+          <Text style={styles.monthMetricUnit}> cal/day</Text>
+        </View>
+
+        <View style={styles.monthBarTrack}>
+          <View
+            style={[
+              styles.monthBarFillGray,
+              { width: `${(previousMonthAverage / maxValue) * 100}%` },
+            ]}
+          />
+        </View>
+
+        <Text style={styles.monthBarLabel}>{previousMonthLabel}</Text>
+      </View>
+    </View>
+  );
+}
 export default function ActiveEnergyScreen() {
   const insets = useSafeAreaInsets();
   const {
@@ -67,8 +261,10 @@ export default function ActiveEnergyScreen() {
     loading,
     error,
     activeEnergyRange,
-    connectAndImport,
     loadRange,
+    weekHighlightSummary,
+    monthAverageSummary,
+    todayVsAverageHourly,
   } = useActiveEnergyDisplayed(false);
 
   const [mode, setMode] = useState<Mode>("W");
@@ -89,54 +285,6 @@ export default function ActiveEnergyScreen() {
       load();
     }, [isAuthorized, mode, rangeDays, activeEnergyRange.length])
   );
-
-  const averageCalories = useMemo(() => {
-    if (activeEnergyRange.length === 0) return 0;
-
-    const total = activeEnergyRange.reduce((sum, item) => {
-      return sum + (Number(item.calories) || 0);
-    }, 0);
-
-    return total / activeEnergyRange.length;
-  }, [activeEnergyRange]);
-
-  const averageRangeText = useMemo(() => {
-    if (activeEnergyRange.length === 0) {
-      const today = new Date();
-      return today.toLocaleDateString(undefined, {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      });
-    }
-
-    const first = new Date(`${activeEnergyRange[0].date}T00:00:00`);
-    const last = new Date(
-      `${activeEnergyRange[activeEnergyRange.length - 1].date}T00:00:00`
-    );
-
-    if (Number.isNaN(first.getTime()) || Number.isNaN(last.getTime())) {
-      return "";
-    }
-
-    const sameYear = first.getFullYear() === last.getFullYear();
-    const sameMonth = first.getMonth() === last.getMonth();
-
-    if (sameYear && sameMonth) {
-      return `${first.toLocaleDateString(undefined, {
-        month: "short",
-      })} ${first.getDate()}–${last.getDate()}, ${last.getFullYear()}`;
-    }
-
-    return `${first.toLocaleDateString(undefined, {
-      month: "short",
-      day: "numeric",
-    })}–${last.toLocaleDateString(undefined, {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    })}`;
-  }, [activeEnergyRange]);
 
   const displaySummary = useMemo(() => {
     if (activeEnergyRange.length === 0) {
@@ -347,6 +495,34 @@ export default function ActiveEnergyScreen() {
             <Text style={styles.showAllText}>Show All Data</Text>
             <Text style={styles.showAllChevron}>›</Text>
           </Pressable>
+
+          <View style={styles.highlightsSection}>
+            <Text style={styles.highlightsTitle}>Highlights</Text>
+
+            {mode === "W" ? (
+              <>
+                <WeekTodayVsAverageCard
+                  message={weekHighlightSummary?.message || "No highlight available yet."}
+                  todayCalories={weekHighlightSummary?.todayCalories || 0}
+                  averageCalories={weekHighlightSummary?.averageCalories || 0}
+                  todayCurve={todayVsAverageHourly?.todayCurve || []}
+                  averageCurve={todayVsAverageHourly?.averageCurve || []}
+                />
+
+                <WeekAverageCard
+                  averageCalories={weekHighlightSummary?.averageCalories || 0}
+                  activeEnergyRange={activeEnergyRange}
+                />
+              </>
+            ) : (
+              <MonthComparisonCard
+                currentMonthLabel={monthAverageSummary?.currentMonthLabel || "Current Month"}
+                previousMonthLabel={monthAverageSummary?.previousMonthLabel || "Previous Month"}
+                currentMonthAverage={monthAverageSummary?.currentMonthAverage || 0}
+                previousMonthAverage={monthAverageSummary?.previousMonthAverage || 0}
+              />
+            )}
+          </View>
         </ScrollView>
       </View>
     </SafeAreaView>
@@ -477,4 +653,226 @@ const styles = StyleSheet.create({
   },
   showAllText: { fontSize: 20, fontWeight: "400", color: "#000" },
   showAllChevron: { fontSize: 26, color: "#C7C7CC", fontWeight: "400" },
+
+  highlightsSection: {
+    marginTop: 20,
+    paddingHorizontal: 14,
+  },
+  
+  highlightsTitle: {
+    fontSize: 24,
+    fontWeight: "800",
+    marginBottom: 12,
+  },
+  highlightCardLarge: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 24,
+    paddingHorizontal: 14,
+    paddingTop: 14,
+    paddingBottom: 14,
+    borderWidth: 1,
+    borderColor: "#E5E5EA",
+    marginBottom: 14,
+  },
+
+  highlightHeaderOrange: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#FF5A1F",
+    marginBottom: 10,
+  },
+
+  highlightHeadline: {
+    fontSize: 18,
+    lineHeight: 26,
+    fontWeight: "700",
+    color: "#000",
+    marginBottom: 6,
+  },
+
+  highlightDivider: {
+    height: 1,
+    backgroundColor: "#E5E5EA",
+    marginVertical: 12,
+  },
+
+  weekTopMetricsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 12,
+  },
+
+  highlightMetricLabelOrange: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#FF5A1F",
+    marginBottom: 2,
+  },
+
+  highlightMetricLabelGray: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#8E8E93",
+    marginBottom: 2,
+  },
+
+  metricValueRow: {
+    flexDirection: "row",
+    alignItems: "baseline",
+  },
+
+  metricValueRowBottom: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    marginBottom: 10,
+  },
+
+  highlightMetricValueOrange: {
+    fontSize: 32,
+    fontWeight: "300",
+    color: "#FF5A1F",
+  },
+
+  highlightMetricUnitOrange: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#FF5A1F",
+    marginLeft: 4,
+  },
+
+  highlightMetricValueGray: {
+    fontSize: 32,
+    fontWeight: "300",
+    color: "#8E8E93",
+  },
+
+  highlightMetricUnitGray: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#8E8E93",
+    marginLeft: 4,
+  },
+
+  weekLineChartPlaceholder: {
+    height: 150,
+    borderRadius: 16,
+    backgroundColor: "#F7F7F8",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  placeholderText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#8E8E93",
+  },
+
+  averageCaloriesLabel: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#8E8E93",
+    marginBottom: 2,
+  },
+
+  averageCaloriesValue: {
+    fontSize: 34,
+    fontWeight: "300",
+    color: "#000",
+  },
+
+  averageCaloriesUnit: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#8E8E93",
+    marginLeft: 4,
+  },
+
+  weekBarChartArea: {
+    height: 150,
+    position: "relative",
+    justifyContent: "flex-end",
+  },
+
+  averageLine: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    height: 6,
+    borderRadius: 999,
+    backgroundColor: "#FF5A1F",
+    zIndex: 2,
+  },
+
+  weekMiniBarsRow: {
+    height: 120,
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+    paddingHorizontal: 4,
+  },
+
+  weekMiniBarItem: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "flex-end",
+  },
+
+  weekMiniBar: {
+    width: 22,
+    borderRadius: 7,
+    backgroundColor: "#D1D1D6",
+    marginBottom: 8,
+  },
+
+  weekMiniBarLabel: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#8E8E93",
+  },
+
+  monthMetricBlock: {
+    marginBottom: 16,
+  },
+
+  monthMetricValue: {
+    fontSize: 34,
+    fontWeight: "300",
+    color: "#000",
+  },
+
+  monthMetricUnit: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#8E8E93",
+    marginLeft: 4,
+  },
+
+  monthBarTrack: {
+    height: 22,
+    backgroundColor: "#F2F2F7",
+    borderRadius: 8,
+    overflow: "hidden",
+    marginTop: 6,
+    marginBottom: 6,
+  },
+
+  monthBarFillOrange: {
+    height: "100%",
+    backgroundColor: "#FF5A1F",
+    borderRadius: 8,
+  },
+
+  monthBarFillGray: {
+    height: "100%",
+    backgroundColor: "#D1D1D6",
+    borderRadius: 8,
+  },
+
+  monthBarLabel: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#000",
+  },
+ 
 });
