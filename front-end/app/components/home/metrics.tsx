@@ -20,6 +20,8 @@ import { EntryContext } from "./dashboard";
 interface MetricsProps {
   style?: StyleProp<ViewStyle>;
   health: any;
+  onStepsPress?: () => void;
+  onActiveEnergyPress?: () => void;
 }
 
 const pad2 = (n: number) => String(n).padStart(2, "0");
@@ -46,7 +48,7 @@ const moodToEmoji = (mood: number) => {
   }
 };
 
-export function Metrics({ style, health }: MetricsProps) {
+export function Metrics({ style, health, onStepsPress }: MetricsProps) {
   const { entryId } = useContext(EntryContext);
   const { user } = useUser();
 
@@ -238,25 +240,29 @@ export function Metrics({ style, health }: MetricsProps) {
 
         <View style={{ flex: 1, alignItems: "center", paddingHorizontal: 0 }}>
           {stepsGoal ? (
-            <DashboardGoalRing
+              <DashboardGoalRing
               label="Steps"
               valueText={getStepsRingText(stepsToday, stepsGoal)}
               progress={clampProgress(stepsToday, stepsGoal)}
               color="#F9D923"
-              onPress={() =>
-                router.push({
-                  pathname: "/historicalStepData",
-                  params: { type: "steps" },
-                } as any)
+              onPress={
+                onStepsPress ??
+                (() =>
+                  router.push({
+                    pathname: "/historicalStepData",
+                    params: { type: "steps" },
+                  } as any))
               }
             />
           ) : (
             <Pressable
-              onPress={() =>
-                router.push({
-                  pathname: "/historicalStepData",
-                  params: { type: "steps" },
-                } as any)
+              onPress={
+                onStepsPress ??
+                (() =>
+                  router.push({
+                    pathname: "/historicalStepData",
+                    params: { type: "steps" },
+                  } as any))
               }
             >
               <Steps value={String(stepsToday)} />

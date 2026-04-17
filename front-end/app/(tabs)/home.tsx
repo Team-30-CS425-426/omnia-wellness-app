@@ -1,14 +1,20 @@
+import { Ionicons } from "@expo/vector-icons";
+import { useEffect, useRef, useState } from "react";
+import { Alert, Pressable, ScrollView, View } from "react-native";
 import { WellnessDashboards } from "../components/home/dashboard";
 import Title from "../components/home/title";
-import { useEffect, useRef, useState } from "react";
-import { View, ScrollView, Pressable, Alert } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 
-import useStepsDisplayed from "@/src/hooks/useHealthKit/stepsDisplayed";
-import useActiveEnergyDisplayed from "@/src/hooks/useHealthKit/activeEnergyDisplayed";
-import { exportDataToCsv } from "@/src/hooks/useHealthKit/exportData";
 import { supabase } from "@/config/supabaseConfig";
+import useActiveEnergyDisplayed from "@/src/hooks/useHealthKit/activeEnergyDisplayed";
+import useStepsDisplayed from "@/src/hooks/useHealthKit/stepsDisplayed";
 import { getYesterdaySleepHours } from "@/src/services/sleepLogService";
+
+import { router } from "expo-router";
+
+import {
+  AuthorizationRequestStatus,
+  useHealthkitAuthorization,
+} from "@kingstinct/react-native-healthkit";
 
 export default function HomeScreen() {
   const [sleepToday, setSleepToday] = useState(0);
@@ -21,38 +27,35 @@ export default function HomeScreen() {
   const stepsHealth = useStepsDisplayed(true);
   const activeEnergyHealth = useActiveEnergyDisplayed(true);
 
+  const [authorizationStatus] = useHealthkitAuthorization({
+    toRead: [
+      "HKQuantityTypeIdentifierStepCount",
+      "HKCategoryTypeIdentifierSleepAnalysis",
+      "HKQuantityTypeIdentifierActiveEnergyBurned",
+    ],
+    toWrite: [],
+  });
+
   useEffect(() => {
     let cancelled = false;
   
     async function warmCaches() {
       try {
-        // First make sure Steps is authorized
-        if (!stepsHealth.isAuthorized && !stepsHealth.loading) {
-          await stepsHealth.connectAndImport();
-          return;
-        }
-  
-        // Then make sure Active Energy is authorized
-        if (!activeEnergyHealth.isAuthorized && !activeEnergyHealth.loading) {
-          await activeEnergyHealth.connectAndImport();
-          return;
-        }
-  
-        // Warm 30-day Steps cache once per app session
+        // Only warm Steps cache if already authorized
+       
         if (
           !cancelled &&
-          stepsHealth.isAuthorized &&
+          authorizationStatus === AuthorizationRequestStatus.unnecessary &&
           !stepsHealth.loading &&
           !didWarmSteps30.current
         ) {
           didWarmSteps30.current = true;
           await stepsHealth.loadRange(30);
         }
-  
-        // Warm 30-day Active Energy cache once per app session
+        // Only warm Active Energy cache if already authorized
         if (
           !cancelled &&
-          activeEnergyHealth.isAuthorized &&
+          authorizationStatus === AuthorizationRequestStatus.unnecessary &&
           !activeEnergyHealth.loading &&
           !didWarmActive30.current
         ) {
@@ -70,9 +73,8 @@ export default function HomeScreen() {
       cancelled = true;
     };
   }, [
-    stepsHealth.isAuthorized,
+    authorizationStatus,
     stepsHealth.loading,
-    activeEnergyHealth.isAuthorized,
     activeEnergyHealth.loading,
   ]);
 
@@ -103,25 +105,48 @@ export default function HomeScreen() {
     loadSleep();
   }, []);
 
+  const requireHealthKitAccess = () => {
+    const hasHealthPermission =
+      authorizationStatus === AuthorizationRequestStatus.unnecessary;
+  
+    if (!hasHealthPermission) {
+      Alert.alert(
+        "Apple HealthKit not enabled",
+        "Enable Apple HealthKit in Settings to view Steps and Active Energy.",
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Go to Settings",
+            onPress: () => router.push("/screens/settings"),
+          },
+        ]
+      );
+      return false;
+    }
+  
+    return true;
+  };
+
+  const handleStepsPress = () => {
+    if (!requireHealthKitAccess()) return;
+    router.push("/historicalStepData");
+  };
+  
+  const handleActiveEnergyPress = () => {
+    if (!requireHealthKitAccess()) return;
+    router.push("/screens/activeEnergy");
+  };
+
   const handleExport = async () => {
     if (!stepsHealth.isAuthorized) {
       Alert.alert("Connect Apple Health first", "Then try exporting again.");
       return;
     }
-
-    //try {
-      //await exportDataToCsv(stepsHealth.stepsRange, sleepHealth.sleepRange);
-      //Alert.alert("Export started", "Generating CSV for last 30 days...");
-    //} catch {
-      //Alert.alert("Export failed", "Please try again.");
-    //}
-
-    const handleExport = async () => {
-      Alert.alert(
-        "Sleep export not updated yet",
-        "Sleep now comes from manual logs, so this export needs to be updated separately."
-      );
-    };
+  
+    Alert.alert(
+      "Sleep export not updated yet",
+      "Sleep now comes from manual logs, so this export needs to be updated separately."
+    );
   };
 
   const health = {
@@ -145,9 +170,7 @@ export default function HomeScreen() {
 
     stepsRange: stepsHealth.stepsRange,
     activeEnergyRange: activeEnergyHealth.activeEnergyRange,
-
     stepsDayBins: stepsHealth.stepsDayBins,
-
     rangeDays: stepsHealth.rangeDays,
   };
 
@@ -189,13 +212,15 @@ export default function HomeScreen() {
       </Pressable>
 
       <WellnessDashboards
-        style={{
-          flex: 9,
-          gap: 20,
-          marginBottom: "30%",
-        }}
-        health={health}
-      />
+      style={{
+        flex: 9,
+        gap: 20,
+        marginBottom: "30%",
+      }}
+      health={health}
+      onStepsPress={handleStepsPress}
+      onActiveEnergyPress={handleActiveEnergyPress}
+    />
     </ScrollView>
   );
 }

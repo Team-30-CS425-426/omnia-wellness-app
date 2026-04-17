@@ -29,7 +29,7 @@ type WeekHighlightSummary = {
   isBelowAverage: boolean;
   message: string;
 };
- 
+
 type HourlyCumulativePoint = {
   hour: number;
   calories: number;
@@ -43,7 +43,9 @@ type TodayVsAverageHourlySummary = {
 
 const UI_DAYS_WINDOW: DaysRange = 7;
 
-const aggregateActiveEnergyByDate = (samples: RawSample[]): ActiveEnergyPoint[] => {
+const aggregateActiveEnergyByDate = (
+  samples: RawSample[]
+): ActiveEnergyPoint[] => {
   const byDate: Record<string, number> = {};
 
   (samples || []).forEach((s) => {
@@ -97,9 +99,12 @@ const buildWeekHighlightSummary = (
   const todayEntry = points.find((p) => p.date === todayKey);
   const todayCalories = Number(todayEntry?.calories) || 0;
 
+  const previousDays = points.filter((p) => p.date !== todayKey);
+
   const averageCalories =
-    points.length > 0
-      ? points.reduce((sum, p) => sum + (Number(p.calories) || 0), 0) / points.length
+    previousDays.length > 0
+      ? previousDays.reduce((sum, p) => sum + (Number(p.calories) || 0), 0) /
+        previousDays.length
       : 0;
 
   const isBelowAverage = todayCalories < averageCalories;
@@ -167,7 +172,9 @@ const getHourOfDate = (dateInput: string | Date) => {
   return d.getHours();
 };
 
-const buildHourlyCumulative = (samples: RawSample[]): HourlyCumulativePoint[] => {
+const buildHourlyCumulative = (
+  samples: RawSample[]
+): HourlyCumulativePoint[] => {
   const hourlyTotals = Array.from({ length: 24 }, () => 0);
 
   (samples || []).forEach((s) => {
@@ -234,14 +241,18 @@ const buildAverageHourlyCumulative = (
   });
 };
 
-export default function useActiveEnergyDisplayed(syncFromHealthKit: boolean = false) {
+export default function useActiveEnergyDisplayed(
+  syncFromHealthKit: boolean = false
+) {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [loading, setLoading] = useState(false);
   const [intradayLoading, setIntradayLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [rangeDays, setRangeDays] = useState<DaysRange>(7);
-  const [activeEnergyRange, setActiveEnergyRange] = useState<ActiveEnergyPoint[]>([]);
+  const [activeEnergyRange, setActiveEnergyRange] = useState<
+    ActiveEnergyPoint[]
+  >([]);
 
   const todayKey = localDay(new Date());
 
@@ -275,7 +286,9 @@ export default function useActiveEnergyDisplayed(syncFromHealthKit: boolean = fa
       const datesToRefresh = Array.from(new Set([...missingDates, todayKey]));
 
       const mappedActiveEnergy = await loadActiveEnergySamples(days);
-      const aggregatedActiveEnergy = aggregateActiveEnergyByDate(mappedActiveEnergy);
+      const aggregatedActiveEnergy = aggregateActiveEnergyByDate(
+        mappedActiveEnergy
+      );
       const fullRange = buildFullActiveEnergyRange(aggregatedActiveEnergy, days);
 
       const refreshRows = fullRange
@@ -377,13 +390,18 @@ export default function useActiveEnergyDisplayed(syncFromHealthKit: boolean = fa
     setLoading(true);
 
     if (syncFromHealthKit) {
-      if (!isAuthorized) {
-        setError("Please connect Apple Health first.");
-        setLoading(false);
-        return;
-      }
+      try {
+        if (!isAuthorized) {
+          await authorizeHealthKit();
+          setIsAuthorized(true);
+        }
 
-      await importLastDays(days);
+        await importLastDays(days);
+      } catch (e: any) {
+        setIsAuthorized(false);
+        setLoading(false);
+        setError(e?.message || "Health permissions not granted");
+      }
     } else {
       await loadCacheOnly(days);
     }

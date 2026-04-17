@@ -1,19 +1,18 @@
-import { supabase } from "@/config/supabaseConfig"
-import { createContext, useEffect, useState } from "react"
-import { StyleProp, View, ViewStyle, Text } from "react-native"
-import { DateDropDown } from "./dropdown"
-import { Metrics } from "./metrics"
-import { KeyStats } from "./keystats"
-import { Habits } from "./habits"
-import { Link, router} from 'expo-router';
-import ThemedButton from "@/app/components/ThemedButton"
 import ThemedText from "@/app/components/ThemedText"
-import {Colors} from '../../../constants/Colors'
+import { Link } from 'expo-router'
+import { createContext, useState } from "react"
+import { StyleProp, Text, View, ViewStyle } from "react-native"
+import { Colors } from '../../../constants/Colors'
+import { Habits } from "./habits"
+import { KeyStats } from "./keystats"
+import { Metrics } from "./metrics"
 
 
 interface WellnessDashboardsProps {
-    style?: StyleProp<ViewStyle>
+    style?: StyleProp<ViewStyle>;
     health: any;
+    onStepsPress?: () => void;
+    onActiveEnergyPress?: () => void;
 }
 
 
@@ -26,7 +25,12 @@ type DailyEntry ={
 export const EntryContext = createContext<any>(-1)
 
 
-export function WellnessDashboards({ style, health  }: WellnessDashboardsProps) {
+export function WellnessDashboards({
+    style,
+    health,
+    onStepsPress,
+    onActiveEnergyPress,
+}: WellnessDashboardsProps) {
 
     const [entryId, setEntryId] = useState(-1)
     const [dropdownItems, setDropdownItems] = useState<DailyEntry[]>([])
@@ -73,14 +77,18 @@ export function WellnessDashboards({ style, health  }: WellnessDashboardsProps) 
                 </View>
             </View>
 
-            <Metrics style={{
-                gap: 20
-            }} health={health}
+            <Metrics
+            style={{
+                gap: 20,
+            }}
+            health={health}
+            onStepsPress={onStepsPress}
             />
             <KeyStats style={{
                 gap: 20
             }}
             health={health}
+            onActiveEnergyPress={onActiveEnergyPress}
             />
             <Habits style={{
                 gap: 20

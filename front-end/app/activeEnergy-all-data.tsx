@@ -31,20 +31,17 @@ export default function ActiveEnergyAllData() {
     activeEnergyRange,
     connectAndImport,
     loadRange,
-  } = useActiveEnergyDisplayed(false);
+  } = useActiveEnergyDisplayed(true);
 
   useFocusEffect(
     useCallback(() => {
       async function load() {
         const neededDays = m === "W" ? 7 : 30;
-
-        if (rangeDays !== neededDays || activeEnergyRange.length === 0) {
-          await loadRange(neededDays);
-        }
+        await loadRange(neededDays);
       }
-
+  
       load();
-    }, [m, rangeDays, activeEnergyRange.length])
+    }, [m])
   );
 
   const rows = useMemo(() => {

@@ -1,4 +1,4 @@
-import { Platform } from "react-native";
+import { Platform, Linking } from "react-native";
 import { requestAuthorization } from "@kingstinct/react-native-healthkit";
 
 export const isHealthKitAvailable = Platform.OS === "ios";
@@ -22,4 +22,8 @@ export async function authorizeHealthKit() {
   }
 
   return true;
+}
+
+export async function openAppSettings() {
+  await Linking.openSettings();
 }

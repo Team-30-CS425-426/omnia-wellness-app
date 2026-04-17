@@ -89,7 +89,7 @@ function SegmentedWM({
 
 export default function StepDetailsScreen() {
   const insets = useSafeAreaInsets();
-  const health = useStepsDisplayed(false);
+  const health = useStepsDisplayed(true);
 
   const [mode, setMode] = useState<Mode>("W");
   const [selectedIndex, setSelectedIndex] = useState<number>(6);
@@ -98,16 +98,13 @@ export default function StepDetailsScreen() {
     useCallback(() => {
       async function load() {
         const neededDays = mode === "W" ? 7 : 30;
-
-        if (health.rangeDays !== neededDays || health.stepsRange.length === 0) {
-          await health.loadRange(neededDays);
-        }
-
+  
+        await health.loadRange(neededDays);
         setSelectedIndex(neededDays - 1);
       }
-
+  
       load();
-    }, [health.isAuthorized, mode, health.rangeDays, health.stepsRange.length])
+    }, [mode])
   );
 
   const weekSeries = useMemo(() => {

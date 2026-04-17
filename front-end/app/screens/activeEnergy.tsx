@@ -10,7 +10,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { BarChart } from "react-native-gifted-charts";
+import { BarChart, LineChart } from "react-native-gifted-charts";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 type Mode = "W" | "M";
@@ -73,6 +73,31 @@ function WeekTodayVsAverageCard({
   averageCurve: { hour: number; calories: number }[];
 }) {
   const hasGraphData = todayCurve.length > 0 && averageCurve.length > 0;
+  const todayLineData = todayCurve.map((point) => ({
+    value: point.calories,
+    label:
+      point.hour === 0
+        ? "12 AM"
+        : point.hour === 7
+        ? "7 AM"
+        : point.hour === 12
+        ? "12 PM"
+        : point.hour === 19
+        ? "7 PM"
+        : point.hour === 23
+        ? "12 AM"
+        : "",
+  }));
+
+  const averageLineData = averageCurve.map((point) => ({
+    value: point.calories,
+  }));
+
+  const maxLineValue = Math.max(
+    10,
+    ...todayCurve.map((p) => p.calories),
+    ...averageCurve.map((p) => p.calories)
+  );
 
   return (
     <View style={styles.highlightCardLarge}>
@@ -105,9 +130,43 @@ function WeekTodayVsAverageCard({
       </View>
 
       <View style={styles.weekLineChartPlaceholder}>
-        <Text style={styles.placeholderText}>
-          {hasGraphData ? "Intraday graph ready" : "No intraday data yet"}
-        </Text>
+        {hasGraphData ? (
+          <LineChart
+            areaChart={false}
+            data={averageLineData}
+            data2={todayLineData}
+            height={180}
+            spacing={12}
+            initialSpacing={10}
+            endSpacing={10}
+            maxValue={maxLineValue}
+            noOfSections={4}
+            curved
+            color1="#C7C7CC"
+            color2="#FF5A1F"
+            thickness1={4}
+            thickness2={4}
+            hideDataPoints={false}
+            dataPointsColor2="#FF5A1F"
+            dataPointsColor1="#C7C7CC"
+            yAxisColor="#E5E5EA"
+            xAxisColor="#E5E5EA"
+            rulesColor="#E5E5EA"
+            yAxisTextStyle={{
+              color: "#8E8E93",
+              fontSize: 11,
+              fontWeight: "600",
+            }}
+            xAxisLabelTextStyle={{
+              color: "#8E8E93",
+              fontSize: 11,
+              fontWeight: "600",
+            }}
+            hideOrigin
+          />
+        ) : (
+          <Text style={styles.placeholderText}>No intraday data yet</Text>
+        )}
       </View>
     </View>
   );
@@ -262,10 +321,11 @@ export default function ActiveEnergyScreen() {
     error,
     activeEnergyRange,
     loadRange,
+    loadIntradayHighlight,
     weekHighlightSummary,
     monthAverageSummary,
     todayVsAverageHourly,
-  } = useActiveEnergyDisplayed(false);
+  } = useActiveEnergyDisplayed(true);
 
   const [mode, setMode] = useState<Mode>("W");
   const [selectedIndex, setSelectedIndex] = useState<number>(6);
@@ -274,16 +334,18 @@ export default function ActiveEnergyScreen() {
     useCallback(() => {
       async function load() {
         const neededDays = mode === "W" ? 7 : 30;
-
-        if (rangeDays !== neededDays || activeEnergyRange.length === 0) {
-          await loadRange(neededDays);
+  
+        await loadRange(neededDays);
+  
+        if (mode === "W") {
+          await loadIntradayHighlight(7);
         }
-
+  
         setSelectedIndex(neededDays - 1);
       }
-
+  
       load();
-    }, [isAuthorized, mode, rangeDays, activeEnergyRange.length])
+    }, [mode])
   );
 
   const displaySummary = useMemo(() => {
@@ -755,9 +817,12 @@ const styles = StyleSheet.create({
   },
 
   weekLineChartPlaceholder: {
-    height: 150,
+    minHeight: 220,
     borderRadius: 16,
     backgroundColor: "#F7F7F8",
+    paddingHorizontal: 8,
+    paddingTop: 16,
+    paddingBottom: 8,
     alignItems: "center",
     justifyContent: "center",
   },
