@@ -26,10 +26,11 @@ import {
   import { Ionicons } from '@expo/vector-icons';
   import { useUser } from '../../contexts/UserContext';
   import ConfirmDeleteModal from '../components/DeleteConfirmationModal';
-  
+  import UpdateEmailModal from '../components/updateEmailModal';
   export default function SettingsScreen() {
     const navigation = useNavigation<any>();
-    const { logout, deleteAccount } = useUser();
+    const { logout, deleteAccount, updateEmail } = useUser();
+    
   
     const [enabled, setEnabled] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -41,6 +42,10 @@ import {
 
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteConfirmText, setDeleteConfirmText] = useState('');
+
+    const [showUpdateEmailModal, setShowUpdateEmailModal] = useState(false);
+    const [newEmailText, setNewEmailText] = useState('');
+    const [confirmNewEmailText, setConfirmNewEmailText] = useState('');
   
     useEffect(() => {
       (async () => {
@@ -156,6 +161,8 @@ import {
         navigation.navigate('(auth)' as never);
       };
       
+    
+
     const handleDeleteAccount = async () => {
         try {
           await deleteAccount();
@@ -169,10 +176,32 @@ import {
             Alert.alert('Error', 'Failed to delete account. Please try again.');
         }
     };
-      
+    const handleUpdateEmail = async () => {
+      try {
+        await updateEmail(newEmailText);
+        setShowUpdateEmailModal(false);
+        setNewEmailText('');
+        setConfirmNewEmailText('');
+        Alert.alert('Email successfully changed');
+      } catch (error) {
+        console.error('Error changing email', error);
+        setShowUpdateEmailModal(false);
+        setNewEmailText('');
+        setConfirmNewEmailText('');
+        Alert.alert('Error, failed to change email, please try again');
+      }
+
+
+    }
     const handleCloseDeleteModal = () => {
         setShowDeleteModal(false);
         setDeleteConfirmText('');
+    };
+
+    const handleCloseUpdateEmailModal = () => {
+      setShowUpdateEmailModal(false);
+      setNewEmailText('');
+      setConfirmNewEmailText('');
     };
   
     if (loading) {
@@ -292,6 +321,10 @@ import {
              <ThemedText style={styles.logoutText}>Logout</ThemedText>
              </Pressable>
 
+             <Pressable style={styles.accountCard} onPress={() => setShowUpdateEmailModal(true)}>
+             <ThemedText style={styles.updateText}>Update Email</ThemedText>
+             </Pressable>
+
              <Pressable style={styles.accountCard} onPress={() => setShowDeleteModal(true)}>
             <ThemedText style={styles.deleteText}>Delete Account</ThemedText>
             </Pressable>
@@ -306,6 +339,16 @@ import {
             onConfirm={handleDeleteAccount}
             confirmText={deleteConfirmText}
             onChangeText={setDeleteConfirmText}
+        />
+
+        <UpdateEmailModal
+            isVisible={showUpdateEmailModal}
+            onClose={handleCloseUpdateEmailModal}
+            onConfirm={handleUpdateEmail}
+            confirmNewEmailText={confirmNewEmailText}
+            newEmailText={newEmailText}
+            onChangeText={setNewEmailText}
+            onConfirmChangeText={setConfirmNewEmailText}
         />
       </SafeAreaView>
     );
@@ -356,6 +399,11 @@ import {
         fontWeight: '500',
         color: '#E53935',
     },
+    updateText: {
+      fontSize: 17,
+      fontWeight: '500',
+      color: '#36AE7C',
+  },
     accountButtonGroup: {
         gap: 10,
     },

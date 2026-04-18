@@ -19,6 +19,7 @@ interface UserContextType {
   initialLoadFinished: boolean | null;
   setOnboardedStatus: (status: boolean) => void;
   deleteAccount: () => void;
+  updateEmail: (email: string) => Promise<void>
 }
 
 // 2. Create the context with an initial undefined value
@@ -226,7 +227,6 @@ export function UserProvider({ children }: UserProviderProps) {
   };
 
 
-
   const resetPassword = async (email: string): Promise<void> => {
       // Generate the correct link for your specific device/environment
       const redirectUrl = Linking.createURL('/reset-password');
@@ -237,7 +237,32 @@ export function UserProvider({ children }: UserProviderProps) {
       if (error) throw error;
   };
 
+  const updateEmail = async(email: string) => {
+    if (!user) throw new Error('No user logged in');
+    try{
+        const { data: {session} } = await supabase.auth.getSession();
+        if (!session) throw new Error('No active session');
+        const response = await fetch(
+          `${SUPABASE_URL}/functions/v1/updateEmail`,
+          {
+              method:'POST',
+              headers: {
+                'Authorization': `Bearer ${session.access_token}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({newEmail: email})
+          }
+      );
 
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to update email');
+      }
+    } catch (error){
+      console.error('Error updating the email', error);
+      throw error;
+    }
+  };
 
   const deleteAccount = async () => {
     if (!user) throw new Error('No user logged in');
@@ -268,7 +293,7 @@ export function UserProvider({ children }: UserProviderProps) {
   }
 
   return (
-    <UserContext.Provider value={{ user, loading, login, logout, register, updateUserPassword, resetPassword, hasOnboarded, initialLoadFinished, setOnboardedStatus, deleteAccount }}>
+    <UserContext.Provider value={{ user, loading, login, logout, register, updateUserPassword, resetPassword, hasOnboarded, initialLoadFinished, setOnboardedStatus, deleteAccount,updateEmail }}>
       {initialLoadFinished ? children: null} 
     </UserContext.Provider>
   );
