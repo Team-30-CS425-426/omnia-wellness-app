@@ -189,25 +189,38 @@ export const GOAL_CONFIGS: Record<GoalType, GoalConfig> = {
     )
 },
 
-    // MOOD GOAL — placeholder, not yet implemented
-    // Will display target mood and daily check-in count once the mood goal screen is built.
+    // MOOD GOAL — implemented
+    // Will display target mood and stress and daily check-in count once the mood goal screen is built.
     'mood': {
-        label: 'Mood Goal',
-        icon: 'happy',
-        color: Colors.default.mustardYellow,
-        textColor: '#EB5353',
-        route: '/screens/moodStressGoal',
-        renderDetails: (goal) => (
+    label: 'Mood Goal',
+    icon: 'happy',
+    color: Colors.default.white,
+    textColor: Colors.default.mustardYellow,
+    route: '/screens/moodStressGoal',
+    renderDetails: (goal) => {
+        const moodLabel =
+            goal.target_mood === 1 ? 'Very Low 😞' :
+            goal.target_mood === 2 ? 'Low 🙁' :
+            goal.target_mood === 3 ? 'Neutral 😐' :
+            goal.target_mood === 4 ? 'Good 😊' :
+            goal.target_mood === 5 ? 'Excellent 😁' :
+            'Not set';
+
+        return (
             <View style={goalDetailStyles.goalDetails}>
-                <ThemedText style={goalDetailStyles.goalText}>
-                    Target: {goal.target_mood || 'Not set'}
+                <ThemedText style={[goalDetailStyles.goalText, { color: Colors.default.mustardYellow }]}>
+                    Mood: {moodLabel}
                 </ThemedText>
-                <ThemedText style={goalDetailStyles.goalText}>
-                    Check-ins: {goal.daily_checkins || 0}
+                <ThemedText style={[goalDetailStyles.goalText, { color: Colors.default.mustardYellow }]}>
+                    Stress: ≤ {goal.target_stress_level || 0}/10
+                </ThemedText>
+                <ThemedText style={[goalDetailStyles.goalText, { color: Colors.default.mustardYellow, width: '100%' }]}>
+                    Check-ins: {goal.daily_checkins || 0}/day
                 </ThemedText>
             </View>
-        )
+        );
     }
+},
 };
 
 /**

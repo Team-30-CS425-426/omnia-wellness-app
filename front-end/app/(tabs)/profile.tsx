@@ -1,3 +1,4 @@
+
 /**
  * profile.tsx
  * 
@@ -27,13 +28,13 @@
  *   - goalConfigs.tsx: GoalType, GOAL_CONFIGS, UserGoal (display configuration)
  *   - nutritionGoalService.ts: getUserNutritionGoals() (data fetching)
  *   - SetGoalModal.tsx: modal UI for goal category selection
- */
+ **/
 
 //Developed by Johan Ramirez
 import React, {useState, useEffect, useCallback} from 'react'
 import { useFocusEffect } from "@react-navigation/native";
 import { router } from 'expo-router';
-import { Alert, StyleSheet, View, Pressable } from 'react-native';
+import { Alert, StyleSheet, View, Pressable, ScrollView, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { deleteNutritionGoal, getUserNutritionGoals } from '../../src/services/nutritionGoalService';
 import { getSleepGoal, deleteSleepGoal } from '../../src/services/sleepGoalService';
@@ -50,6 +51,19 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { GoalType, GOAL_CONFIGS, UserGoal } from '../../constants/goalConfigs';
 import EditModal from '../components/editModal';
 import { deleteActivityGoal, getUserActivityGoals } from '../../src/services/activityGoalService';
+import { deleteMoodGoal, getUserMoodGoals } from '../../src/services/moodGoalService';
+
+// ADDED: imports for category streaks
+import { getCategoryStreak } from "../../src/services/categoryStreakService";
+import CategoryStreakCard from "../components/CategoryStreakCard";
+
+// ADDED: imports for badges
+import { getUserBadges, UserBadgeRow } from "../../src/services/badgeService";
+import BadgeCard from "../components/BadgeCard";
+
+// ADDED: temporary backfill import for workout badges
+import { checkAndAwardWorkoutBadges } from "../../src/services/badgeAwardService";
+
 
 
 const ProfilePage = () =>{
@@ -65,6 +79,15 @@ const ProfilePage = () =>{
     // Each entry is a UserGoal { type: GoalType, data: database row }
     const [userGoals, setUserGoals] = useState<UserGoal[]>([]);
 
+    // ADDED: state for category streaks shown in Profile tab
+    const [moodStreak, setMoodStreak] = useState(0);
+    const [workoutStreak, setWorkoutStreak] = useState(0);
+    const [nutritionStreak, setNutritionStreak] = useState(0);
+
+    // ADDED: state for earned badges shown in Profile tab
+    const [userBadges, setUserBadges] = useState<UserBadgeRow[]>([]);
+
+
     /**
      * fetchAllGoals
      * 
@@ -75,7 +98,7 @@ const ProfilePage = () =>{
      * 
      * Wrapped in useCallback so it can be safely used as a dependency
      * in useEffect and useFocusEffect without causing infinite re-renders.
-     */
+    **/
     const fetchAllGoals = useCallback(async () => {
         if (!user?.id) return;
         
@@ -132,20 +155,101 @@ const ProfilePage = () =>{
         } catch (error) {
             // no activity goal
         }
-    
+
+        // for Mood and Stress Goal
+        try {
+            const moodData = await getUserMoodGoals(user.id);
+            if (moodData) {
+                goals.push({
+                    type: 'mood',
+                    data: moodData
+                });
+            }
+        } catch (error) {
+            // No mood goal exists
+        }
+
         setUserGoals(goals);
     }, [user?.id]);
-    // Fetch goals on initial mount
+
+    // ADDED: fetch category streaks for Profile tab
+    const fetchCategoryStreaks = useCallback(async () => {
+        if (!user?.id) return;
+
+        try {
+            const [mood, workout, nutrition] = await Promise.all([
+                getCategoryStreak(user.id, "mood"),
+                getCategoryStreak(user.id, "workout"),
+                getCategoryStreak(user.id, "nutrition"),
+            ]);
+
+            setMoodStreak(mood?.current_streak ?? 0);
+            setWorkoutStreak(workout?.current_streak ?? 0);
+            setNutritionStreak(nutrition?.current_streak ?? 0);
+          } catch (error) {
+            console.error("Failed to fetch category streaks:", error);
+          }
+        }, [user?.id]);
+
+
+
+    // ADDED: fetch earned badges for Profile tab
+    const fetchUserBadges = useCallback(async () => {
+        if (!user?.id) return;
+
+        try {
+            const badges = await getUserBadges(user.id);
+            setUserBadges(badges);
+        } catch (error) {
+            console.error("Failed to fetch user badges:", error);
+        }
+    }, [user?.id]);
+    
+
+
+    // Fetch goals + streaks on initial mount
     useEffect(() => {
         fetchAllGoals();
-    }, [fetchAllGoals]);
+        fetchCategoryStreaks(); // ADDED
+        fetchUserBadges(); // ADDED
 
-    // Re-fetch goals every time the profile tab comes into focus
+
+        // ADDED: temporary workout badge backfill
+        if (user?.id) {
+            checkAndAwardWorkoutBadges(user.id)
+                .then(() => fetchUserBadges())
+                .catch((error) => {
+                    console.error("Failed to backfill workout badges:", error);
+                });
+        }
+
+
+    }, [fetchAllGoals, fetchCategoryStreaks, fetchUserBadges]); // ADDED
+
+
+
+
+
+    // Re-fetch goals + streaks every time the profile tab comes into focus
     // This ensures new goals show up immediately after being created on the goal screen
     useFocusEffect(
         useCallback(() => {
             fetchAllGoals();
-        }, [fetchAllGoals])
+            fetchCategoryStreaks(); // ADDED
+            fetchUserBadges(); // ADDED
+
+
+            // ADDED: temporary workout badge backfill
+            if (user?.id) {
+                checkAndAwardWorkoutBadges(user.id)
+                    .then(() => fetchUserBadges())
+                    .catch((error) => {
+                        console.error("Failed to backfill workout badges:", error);
+                    });
+            }
+
+
+        }, [fetchAllGoals, fetchCategoryStreaks, fetchUserBadges]) // ADDED
     );
 
 
@@ -161,17 +265,18 @@ const ProfilePage = () =>{
      *    to the goal-setting screen (e.g. '/screens/nutritionGoal').
      * 3. Closes the modal with a small delay (100ms) so the navigation animation
      *    starts smoothly before the modal dismisses — prevents a visual flicker.
-     */
+    **/
     const handleGoalSelect = (goalType: GoalType) => {
         if (
             goalType !== 'nutrition' &&
             goalType !== 'sleep' &&
             goalType !== 'steps' &&
-            goalType !== 'physical-activity'
+            goalType !== 'physical-activity' &&
+            goalType !== 'mood'
         ) {
             Alert.alert(
                 'Coming Soon!',
-                'Only nutrition, sleep, steps, and activity goals are currently supported'
+                'This goal type is not currently supported'
             );
             return;
         }
@@ -195,7 +300,6 @@ const ProfilePage = () =>{
         }, 100);
     }
 
-
     const handleDeleteGoal = async () => {
         if (!user?.id || !selectedGoal) return;
     
@@ -208,6 +312,8 @@ const ProfilePage = () =>{
                 await deleteStepsGoal(user.id);
             } else if (selectedGoal.type === 'physical-activity') {
                 await deleteActivityGoal(user.id);
+            } else if (selectedGoal.type == 'mood') {
+                await deleteMoodGoal(user.id)
             }
     
             setShowEditModal(false);
@@ -232,7 +338,7 @@ const ProfilePage = () =>{
      * 
      * This design means NO code changes are needed here when adding new goal types —
      * just add the config to GOAL_CONFIGS and the card renders automatically.
-     */
+    **/
     const renderGoalCard = (goal: UserGoal) => {
         const config = GOAL_CONFIGS[goal.type];
         
@@ -278,24 +384,105 @@ const ProfilePage = () =>{
             </ThemedView>
             <Spacer height={15} />
 
-            {/* Container for goal cards - allows 2 cards per row */}
-            <View style={styles.goalsContainer}>
-                {/* Display all existing goals dynamically */}
-                {userGoals.map(goal => renderGoalCard(goal))}
+            {/* ADDED: ScrollView so goals + streaks all fit nicely */}
+            <ScrollView
+                contentContainerStyle={styles.scrollContent}
+                showsVerticalScrollIndicator={false}
+            >
+                <Spacer height={15} />
 
-                {/* Add Goal Card */}
-                <ThemedCard 
-                    style={styles.addGoalCard}
-                    onPress={() => setShowGoalModal(true)}
-                >
-                    <Ionicons 
-                        name="add" 
-                        size={48} 
-                        color={Colors.default.berryBlue}
+                {/* Container for goal cards - allows 2 cards per row */}
+                <View style={styles.goalsContainer}>
+                    {/* Display all existing goals dynamically */}
+                    {userGoals.map(goal => renderGoalCard(goal))}
+
+                    {/* Add Goal Card */}
+                    <ThemedCard 
+                        style={styles.addGoalCard}
+                        onPress={() => setShowGoalModal(true)}
+                    >
+                        <Ionicons 
+                            name="add" 
+                            size={48} 
+                            color={Colors.default.berryBlue}
+                        />
+                    </ThemedCard>
+                </View>
+
+                <Spacer height={10} />
+
+
+                {/* ADDED: New Streaks section */}
+                <View style={styles.sectionTitleContainer}>
+                    <Text style={styles.sectionTitle}>
+                        Streaks
+                    </Text>
+                </View>
+
+                {/* ADDED: Streak cards */}
+                <View style={styles.streaksContainer}>
+                    <CategoryStreakCard
+                        title="Mood"
+                        streakCount={moodStreak}
+                        subtitle="Daily mood check-in streak"
                     />
-                </ThemedCard>
-            </View>
 
+                    <CategoryStreakCard
+                        title="Workout"
+                        streakCount={workoutStreak}
+                        subtitle="Workout weekly streak"
+                        unit="week"
+                    />
+
+                    <CategoryStreakCard
+                        title="Nutrition"
+                        streakCount={nutritionStreak}
+                        subtitle="Nutrition goal streak"
+                    />
+                </View>
+
+                <Spacer height={10} />
+
+                {/* ADDED: New Badges section */}
+                <View style={styles.sectionTitleContainer}>
+                    <Text style={styles.sectionTitle}>
+                        Badges
+                    </Text>
+                </View>
+
+                {/* ADDED: Badge cards */}
+                <View style={styles.badgesContainer}>
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.badgesScrollContent}
+                    >
+                        {userBadges.length > 0 ? (
+                            userBadges.map((badge) => (
+                                <BadgeCard
+                                    key={badge.id}
+                                    icon={badge.badge_definitions?.icon}
+                                    title={badge.badge_definitions?.title ?? "Badge"}
+                                    subtitle={
+                                        badge.earned_at
+                                            ? `Earned ${new Date(badge.earned_at).toLocaleDateString()}`
+                                            : undefined
+                                    }
+                                />
+                            ))
+                        ) : (
+                            <BadgeCard
+                                icon="🏅"
+                                title="No badges yet"
+                                subtitle="Complete goals to earn badges"
+                            />
+                        )}
+                    </ScrollView>
+                </View>
+
+                <Spacer height={10} />
+            
+            </ScrollView>
         
             <EditModal
                 isVisible={showEditModal}
@@ -319,7 +506,7 @@ export default ProfilePage
 const styles = StyleSheet.create({
     container: {
         flex:1,
-        alignItems:'center',
+        //alignItems:'center',
         justifyContent:'flex-start'
     }, 
     headerBar: {
@@ -353,6 +540,31 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: 'center',
       },
+
+    // ADDED: lets the whole profile page scroll
+    scrollContent: {
+        width: "100%",
+        alignItems: "center",
+        paddingBottom: 20,
+    },
+
+    // ADDED: reusable section title wrapper
+    sectionTitleContainer: {
+        width: "100%",
+        paddingHorizontal: "5%",
+        marginBottom: 10,  
+    },
+
+    // ADDED: section title style for "Streaks"
+    sectionTitle: {
+        //width: "100%",
+        fontSize: 22,
+        fontWeight: "700",
+        color: Colors.default.darkBlue,
+        //marginBottom: 10,
+        textAlign: "left"
+    },
+
     goalsContainer: {
         width: '90%',
         flexDirection: 'row',
@@ -373,5 +585,22 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: 10,
         marginBottom: 10,
+    },
+
+    // ADDED: container for the new streak cards section
+    streaksContainer: {
+        width: "90%",
+        marginBottom: 16,
+    },
+
+    // ADDED: container for the badges section
+    badgesContainer: {
+        width: "90%",
+        marginBottom: 16,
+    },
+
+    // ADDED: horizontal badge scroll content
+    badgesScrollContent: {
+        paddingRight: 8,
     },
 })

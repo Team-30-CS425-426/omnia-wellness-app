@@ -22,6 +22,12 @@ import { useUser } from "../../contexts/UserContext";
 import { insertStressLog } from "../../src/services/moodStressService";
 import MoodStressSuccess from "./SuccessScreens/MoodStressSuccess";
 
+// ADDED: import the mood streak refresh function
+import { refreshMoodStreak } from "../../src/services/moodStreakService"; // changed to moodStreakService
+
+// ADDED: import badge awarding
+import { checkAndAwardMoodBadges } from "../../src/services/badgeAwardService";
+
 const MOODS = [
   { label: "Very Low", emoji: "😞" },
   { label: "Low", emoji: "🙁" },
@@ -30,16 +36,13 @@ const MOODS = [
   { label: "Excellent", emoji: "😁" },
 ] as const;
 
-// Mood label type derived from the MOODS list
 type MoodLabel = (typeof MOODS)[number]["label"];
 
 const MoodStressScreen = () => {
   const navigation = useNavigation();
 
-  // Get logged-in user 
   const { user } = useUser();
 
-  // Hide default header
   useLayoutEffect(() => {
     navigation.setOptions({ headerShown: false });
   }, [navigation]);
@@ -56,13 +59,11 @@ const MoodStressScreen = () => {
 
   // Save handler (backend connection)
   const handleSave = async () => {
-    // Client side validation
     if (!selectedMood) {
       Alert.alert("Please select your mood before saving.");
       return;
     }
 
-    // Make sure the user is logged in before saving
     if (!user?.id) {
       Alert.alert("Error", "User not authenticated.");
       return;
@@ -73,16 +74,13 @@ const MoodStressScreen = () => {
       return;
     }
 
-    // Call Supabase (via service)
-    // This sends the data to Supabase using a service function, the service handles the actual database insert
     const result = await insertStressLog(user.id, {
       moodLabel: selectedMood,
       stressLevel,
       notes: notes || undefined,
-      meditated: false, 
+      meditated: false,
     });
 
-    // Handle backend response
     if (result.success) {
       // Find the emoji for the selected mood
       const moodEntry = MOODS.find((m) => m.label === selectedMood);
@@ -91,12 +89,22 @@ const MoodStressScreen = () => {
       setSuccessStressLevel(stressLevel);
       setSuccessVisible(true);
 
-      // Reset form after successful save
+      // CHANGED: reset form immediately
       setSelectedMood(null);
       setStressLevel(5);
       setNotes("");
+
+      // CHANGED: run streak + badge logic in background
+      refreshMoodStreak(user.id)
+        .then(() => {
+          // ADDED: award badges AFTER streak updates
+          return checkAndAwardMoodBadges(user.id);
+        })
+        .catch((error) => {
+          console.error("Failed to refresh mood streak / badges:", error);
+        });
+
     } else {
-      // If Supabase returns an error, show it to the user
       Alert.alert("Error", result.error || "Failed to save mood & stress entry");
     }
   };
@@ -204,7 +212,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
 
-  /* HEADER */
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -248,7 +255,6 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
 
-  /* MOOD SECTION */
   moodContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -278,7 +284,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 
-  /* STRESS SECTION */
   stressControls: {
     flexDirection: "row",
     alignItems: "center",
@@ -291,7 +296,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
 
-  /* NOTES */
   notesInput: {
     borderWidth: 1,
     borderColor: "#ccc",
@@ -302,7 +306,6 @@ const styles = StyleSheet.create({
     textAlignVertical: "top",
   },
 
-  /* SAVE BUTTON */
   saveButton: {
     backgroundColor: "#007AFF",
     padding: 15,
