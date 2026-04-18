@@ -50,7 +50,7 @@ export default function HomeScreen() {
         />
       </View>
 
-      <Pressable onPress={handleExport} hitSlop={10} style={{ padding: 8, position: "absolute", top: 20, right: "0%", zIndex: 10 }}>
+      <Pressable onPress={handleExport} hitSlop={10} style={{ padding: 8, position: "absolute", top: 20, right: "-5%", zIndex: 10 }}>
         <Ionicons name="download-outline" size={24} color="black" />
       </Pressable>
 

@@ -61,7 +61,7 @@ export default function MoodStressSuccess({
     <View style={styles.overlay}>
       <AnimatedBackground
         visible={visible}
-        source={require('../../../assets/animations/watermelon.json')}
+        source={require('../../../assets/animations/yoga.json')}
       />
 
       {/* ── Success content ── */}
