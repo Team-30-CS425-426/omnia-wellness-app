@@ -10,6 +10,7 @@ import ThemedText from '../components/ThemedText';
 import ThemedTextInput from '../components/ThemedTextInput';
 import Spacer from '../components/Spacer';
 import ThemedButton from '../components/ThemedButton';
+import { Colors } from '../../constants/Colors'
 
 
 export default function SetupNameScreen() {
@@ -65,6 +66,56 @@ export default function SetupNameScreen() {
     }
   };
 
+
+
+  const handleSkip = async () => {
+    // Validation Change: Only check for essential data (user existence)
+    if (!user) {
+        Alert.alert('Error', 'User data missing. Please log in again.');
+        return;
+    }
+    
+    // We intentionally skip checking if name is empty to allow empty string submission.
+
+    setIsSubmitting(true);
+    const userID = user?.id;
+    console.log("UPDATING USER IN SUPABASE")
+    console.log("USERID: ", userID)
+    console.log("➡️ NAME VALUE SENT TO SUPABASE:", null);
+
+    try {
+      const response = await supabase
+        .from('User') 
+        .update({ 
+            name: null,
+            onboarded: true 
+        }) 
+        .eq('id', user.id); // Update the correct user profile
+
+      const { error } = response;
+      
+      console.log("UPDATE COMPLETE")
+      
+      console.log("Full Supabase API Response:", response)
+
+      if (error) {
+        Alert.alert('Error', 'Failed to save profile. Please try again.');
+        console.error('Supabase update error:', error);
+        return;
+      }
+  
+      setOnboardedStatus(true);
+
+      router.replace('/(tabs)/home')
+
+    } catch (e) {
+      Alert.alert('Error', 'An unexpected error occurred.');
+      console.error('SetupNameScreen Exception:', e);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <ThemedView style={styles.container}>
       <ThemedText title={true} style={styles.header}>Welcome Oboard Omnia!</ThemedText>
@@ -82,24 +133,32 @@ export default function SetupNameScreen() {
       />
       
       <Spacer height={20} />
-      
-      <ThemedButton 
-        onPress={handleSaveName} 
-        // Validation updated: Only disabled if submitting
-        disabled={isSubmitting} 
-      >
-        {isSubmitting ? (
-            <ActivityIndicator color="white" />
-        ) : (
-            <ThemedText style={{ 
-                color: 'white', 
-                textAlign: 'center', 
-                fontWeight: '600' 
-            }}>
-                Get Started
-            </ThemedText>
-        )}
-      </ThemedButton>
+      <ThemedView style = {{flexDirection: 'row', gap: 12}}>
+        <ThemedButton 
+          onPress={handleSaveName} 
+          // Validation updated: Only disabled if submitting
+          disabled={isSubmitting} 
+        >
+          {isSubmitting ? (
+              <ActivityIndicator color="white" />
+          ) : (
+              <ThemedText style={{ 
+                  color: 'white', 
+                  textAlign: 'center', 
+                  fontWeight: '600' 
+              }}>
+                  Get Started
+              </ThemedText>
+          )}
+        </ThemedButton>
+
+        <ThemedButton color = {Colors.default.lightGray} onPress = {handleSkip} style = {{borderWidth: 1, borderColor: Colors.default.mediumGray}}>
+          <ThemedText style = {{color: Colors.default.primaryBlue, textAlign: 'center', fontWeight: '600'}}>
+            Skip
+          </ThemedText>
+        </ThemedButton>
+        
+      </ThemedView>
     </ThemedView>
   );
 }

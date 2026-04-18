@@ -34,7 +34,7 @@ export default function Title({ style }: TitleProps) {
 }, [user?.id]);
     return (
         <ThemedView>
-           <ThemedText title={true} gradient={true} gradientColors={[Colors.default.primaryBlue, Colors.default.berryPurple]}>Hey, {name} </ThemedText>
+           <ThemedText title={true} gradient={true} gradientColors={[Colors.default.primaryBlue, Colors.default.berryPurple]}> {name ? 'Hey, ${name}' : 'Welcome to Omnia'} </ThemedText>
         </ThemedView>
     )
 }
