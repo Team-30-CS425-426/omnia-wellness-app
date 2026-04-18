@@ -1,13 +1,12 @@
 // Code written by Alexis Mae Asuncion
 
-// For Workout/Activity category streak
 import { supabase } from "../../config/supabaseConfig";
 import { getCategoryStreak } from "./categoryStreakService";
 
 type ActivityGoalRow = {
   id: number;
   userid: string;
-  weekly_goal_minutes: number | null;
+  weekly_minutes: number | null;
   days_per_week: number | null;
 };
 
@@ -56,6 +55,16 @@ function getWeekStartWeeksAgo(weeksAgo: number) {
   return formatDateLocal(monday);
 }
 
+// helper to get this week's Monday
+function getCurrentWeekStart() {
+  return getWeekStartWeeksAgo(0);
+}
+
+// helper to get last completed week's Monday
+function getPreviousWeekStart() {
+  return getWeekStartWeeksAgo(1);
+}
+
 // Check if the user met their workout goal for a specific week
 async function didMeetWorkoutGoalForWeek(
   userId: string,
@@ -67,7 +76,6 @@ async function didMeetWorkoutGoalForWeek(
 
   const weekEnd = formatDateLocal(weekEndDate);
 
-  // Get workout goal
   const { data: goal, error: goalError } = await supabase
     .from("activitygoals")
     .select("weekly_minutes, days_per_week")
@@ -84,7 +92,6 @@ async function didMeetWorkoutGoalForWeek(
     return false;
   }
 
-  // Get workout logs for that week
   const { data: logs, error: logsError } = await supabase
     .from("ActivityLog")
     .select("date, duration")
@@ -105,32 +112,88 @@ async function didMeetWorkoutGoalForWeek(
 
   const distinctDays = new Set(workoutLogs.map((log) => log.date)).size;
 
+  console.log("✅ Workout week check:", {
+    userId,
+    weekStart,
+    weekEnd,
+    weeklyGoalMinutes,
+    daysPerWeekGoal,
+    totalMinutes,
+    distinctDays,
+    metGoal:
+      totalMinutes >= weeklyGoalMinutes &&
+      distinctDays >= daysPerWeekGoal,
+  });
+
   return totalMinutes >= weeklyGoalMinutes && distinctDays >= daysPerWeekGoal;
 }
 
-// Current streak = consecutive successful weeks ending this week
+// current streak now anchors to the last completed successful week,
+// unless the current week has already been completed too.
 export async function calculateWorkoutStreak(userId: string): Promise<number> {
+  const currentWeekStart = getCurrentWeekStart();
+  const previousWeekStart = getPreviousWeekStart();
+
+  const currentWeekMet = await didMeetWorkoutGoalForWeek(userId, currentWeekStart);
+
+  // If current week is already complete, count from current week backward
+  if (currentWeekMet) {
+    let streak = 0;
+
+    for (let i = 0; i < 12; i++) {
+      const weekStart = getWeekStartWeeksAgo(i);
+      const metGoal = await didMeetWorkoutGoalForWeek(userId, weekStart);
+
+      console.log("✅ calculateWorkoutStreak loop (current week met):", {
+        weekStart,
+        metGoal,
+      });
+
+      if (!metGoal) break;
+      streak++;
+    }
+
+    console.log("✅ Calculated current workout streak (including current week):", streak);
+    return streak;
+  }
+
+  // If current week is NOT complete yet, anchor from the previous fully completed week
+  const previousWeekMet = await didMeetWorkoutGoalForWeek(userId, previousWeekStart);
+
+  // If last completed week was not successful, streak is 0
+  if (!previousWeekMet) {
+    console.log("✅ Calculated current workout streak: 0 (current week incomplete and previous week failed)");
+    return 0;
+  }
+
+  // Count consecutive successful weeks ending with the previous week
   let streak = 0;
 
-  for (let i = 0; i < 12; i++) { // for (let i = 0; i < 52; i++)
+  for (let i = 1; i < 13; i++) {
     const weekStart = getWeekStartWeeksAgo(i);
     const metGoal = await didMeetWorkoutGoalForWeek(userId, weekStart);
+
+    console.log("✅ calculateWorkoutStreak loop (anchored to previous week):", {
+      weekStart,
+      metGoal,
+    });
 
     if (!metGoal) break;
     streak++;
   }
 
+  console.log("✅ Calculated current workout streak (anchored to previous week):", streak);
   return streak;
 }
 
-// Longest streak in the past year
+// Longest streak in recent weeks
 export async function calculateLongestWorkoutStreak(
   userId: string
 ): Promise<number> {
   let longest = 0;
   let current = 0;
 
-  for (let i = 51; i >= 0; i--) {
+  for (let i = 11; i >= 0; i--) {
     const weekStart = getWeekStartWeeksAgo(i);
     const metGoal = await didMeetWorkoutGoalForWeek(userId, weekStart);
 
@@ -142,6 +205,7 @@ export async function calculateLongestWorkoutStreak(
     }
   }
 
+  console.log("✅ Calculated longest workout streak:", longest);
   return longest;
 }
 
@@ -152,7 +216,26 @@ export async function refreshWorkoutStreak(userId: string) {
 
   const existing = await getCategoryStreak(userId, "workout");
 
-  const currentWeekStart = getWeekStartWeeksAgo(0);
+  // last completed date should reflect the most recent successful anchor week
+  const currentWeekStart = getCurrentWeekStart();
+  const previousWeekStart = getPreviousWeekStart();
+  const currentWeekMet = await didMeetWorkoutGoalForWeek(userId, currentWeekStart);
+
+  // If current week met goal, that's the last completed week. Otherwise use previous week.
+  const effectiveLastCompletedWeek = currentWeekMet
+    ? currentWeekStart
+    : previousWeekStart;
+
+  console.log("✅ Refreshing workout streak:", {
+    userId,
+    currentStreak,
+    longestStreak,
+    currentWeekStart,
+    previousWeekStart,
+    currentWeekMet,
+    effectiveLastCompletedWeek,
+    existing,
+  });
 
   if (existing) {
     const { data, error } = await supabase
@@ -160,7 +243,10 @@ export async function refreshWorkoutStreak(userId: string) {
       .update({
         current_streak: currentStreak,
         longest_streak: Math.max(existing.longest_streak, longestStreak),
-        last_completed_date: currentStreak > 0 ? currentWeekStart : existing.last_completed_date,
+        last_completed_date:
+          currentStreak > 0
+            ? effectiveLastCompletedWeek
+            : existing.last_completed_date,
       })
       .eq("id", existing.id)
       .select("*")
@@ -178,7 +264,7 @@ export async function refreshWorkoutStreak(userId: string) {
       reference_id: null,
       current_streak: currentStreak,
       longest_streak: longestStreak,
-      last_completed_date: currentStreak > 0 ? currentWeekStart : null,
+      last_completed_date: currentStreak > 0 ? effectiveLastCompletedWeek : null,
     })
     .select("*")
     .single();

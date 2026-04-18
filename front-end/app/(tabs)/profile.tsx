@@ -56,8 +56,12 @@ import { deleteMoodGoal, getUserMoodGoals } from '../../src/services/moodGoalSer
 import { getCategoryStreak } from "../../src/services/categoryStreakService";
 import CategoryStreakCard from "../components/CategoryStreakCard";
 
-// Added for Nutrition category streak
-import { calculateNutritionStreak } from "../../src/services/nutritionStreakService";
+// ADDED: imports for badges
+import { getUserBadges, UserBadgeRow } from "../../src/services/badgeService";
+import BadgeCard from "../components/BadgeCard";
+
+// ADDED: temporary backfill import for workout badges
+import { checkAndAwardWorkoutBadges } from "../../src/services/badgeAwardService";
 
 
 const ProfilePage = () =>{
@@ -79,6 +83,10 @@ const ProfilePage = () =>{
     const [moodStreak, setMoodStreak] = useState(0);
     const [workoutStreak, setWorkoutStreak] = useState(0);
     const [nutritionStreak, setNutritionStreak] = useState(0);
+
+    // ADDED: state for earned badges shown in Profile tab
+    const [userBadges, setUserBadges] = useState<UserBadgeRow[]>([]);
+
 
     /**
      * fetchAllGoals
@@ -158,12 +166,45 @@ const ProfilePage = () =>{
             console.error("Failed to fetch category streaks:", error);
           }
         }, [user?.id]);
+
+
+
+    // ADDED: fetch earned badges for Profile tab
+    const fetchUserBadges = useCallback(async () => {
+        if (!user?.id) return;
+
+        try {
+            const badges = await getUserBadges(user.id);
+            setUserBadges(badges);
+        } catch (error) {
+            console.error("Failed to fetch user badges:", error);
+        }
+    }, [user?.id]);
     
+
+
     // Fetch goals + streaks on initial mount
     useEffect(() => {
         fetchAllGoals();
         fetchCategoryStreaks(); // ADDED
-    }, [fetchAllGoals, fetchCategoryStreaks]); // ADDED
+        fetchUserBadges(); // ADDED
+
+
+        // ADDED: temporary workout badge backfill
+        if (user?.id) {
+            checkAndAwardWorkoutBadges(user.id)
+                .then(() => fetchUserBadges())
+                .catch((error) => {
+                    console.error("Failed to backfill workout badges:", error);
+                });
+        }
+
+
+    }, [fetchAllGoals, fetchCategoryStreaks, fetchUserBadges]); // ADDED
+
+
+
+
 
     // Re-fetch goals + streaks every time the profile tab comes into focus
     // This ensures new goals show up immediately after being created on the goal screen
@@ -171,7 +212,20 @@ const ProfilePage = () =>{
         useCallback(() => {
             fetchAllGoals();
             fetchCategoryStreaks(); // ADDED
-        }, [fetchAllGoals, fetchCategoryStreaks]) // ADDED
+            fetchUserBadges(); // ADDED
+
+
+            // ADDED: temporary workout badge backfill
+            if (user?.id) {
+                checkAndAwardWorkoutBadges(user.id)
+                    .then(() => fetchUserBadges())
+                    .catch((error) => {
+                        console.error("Failed to backfill workout badges:", error);
+                    });
+            }
+
+
+        }, [fetchAllGoals, fetchCategoryStreaks, fetchUserBadges]) // ADDED
     );
 
     const handleLogout = async () => {
@@ -364,6 +418,46 @@ const ProfilePage = () =>{
 
                 <Spacer height={10} />
 
+                {/* ADDED: New Badges section */}
+                <View style={styles.sectionTitleContainer}>
+                    <Text style={styles.sectionTitle}>
+                        Badges
+                    </Text>
+                </View>
+
+                {/* ADDED: Badge cards */}
+                <View style={styles.badgesContainer}>
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.badgesScrollContent}
+                    >
+                        {userBadges.length > 0 ? (
+                            userBadges.map((badge) => (
+                                <BadgeCard
+                                    key={badge.id}
+                                    icon={badge.badge_definitions?.icon}
+                                    title={badge.badge_definitions?.title ?? "Badge"}
+                                    subtitle={
+                                        badge.earned_at
+                                            ? `Earned ${new Date(badge.earned_at).toLocaleDateString()}`
+                                            : undefined
+                                    }
+                                />
+                            ))
+                        ) : (
+                            <BadgeCard
+                                icon="🏅"
+                                title="No badges yet"
+                                subtitle="Complete goals to earn badges"
+                            />
+                        )}
+                    </ScrollView>
+                </View>
+
+                <Spacer height={10} />
+
+
 
                 <ThemedButton onPress={handleLogout}>  
                     <ThemedText style={{color: Colors.default.white}} > Logout </ThemedText>
@@ -473,5 +567,16 @@ const styles = StyleSheet.create({
     streaksContainer: {
         width: "90%",
         marginBottom: 16,
-  },
+    },
+
+    // ADDED: container for the badges section
+    badgesContainer: {
+        width: "90%",
+        marginBottom: 16,
+    },
+
+    // ADDED: horizontal badge scroll content
+    badgesScrollContent: {
+        paddingRight: 8,
+    },
 })

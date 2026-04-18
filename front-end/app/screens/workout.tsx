@@ -7,6 +7,9 @@ import { useUser } from "../../contexts/UserContext";
 // Using workout streak service
 import { refreshWorkoutStreak } from "../../src/services/workoutStreakService";
 
+// ADDED: import workout badge awarding
+import { checkAndAwardWorkoutBadges } from "../../src/services/badgeAwardService";
+
 import {
   View,
   StyleSheet,
@@ -97,23 +100,28 @@ const WorkoutScreen = () => {
     });
 
     if (result.success) {
-      // STEP 1: Show success immediately (no delay)
+      // CHANGED: show success immediately
       Alert.alert(
         "Workout Saved!",
         `Type: ${finalWorkoutType}\nDuration: ${parsedDuration} minutes\nIntensity: ${intensityLabel}`
       );
 
-      // STEP 2: Reset form immediately
+      // CHANGED: reset form immediately
       setWorkoutType(null);
       setCustomWorkout("");
       setDuration("");
       setIntensity(null);
       setNotes("");
 
-      // STEP 3: Refresh streak in background (non-blocking)
-      refreshWorkoutStreak(user.id).catch((streakError) => {
-        console.error("Failed to refresh workout streak:", streakError);
-      });
+      // CHANGED: refresh streak in background, then award badges
+      refreshWorkoutStreak(user.id)
+        .then(() => {
+          // ADDED: award workout badges after streak refresh
+          return checkAndAwardWorkoutBadges(user.id);
+        })
+        .catch((error) => {
+          console.error("Failed to refresh workout streak / badges:", error);
+        });
 
     } else {
       Alert.alert("Error", result.error || "Failed to save workout");

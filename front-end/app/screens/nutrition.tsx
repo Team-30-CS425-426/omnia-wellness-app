@@ -1,5 +1,5 @@
 // code written by Alexis Mae Asuncion
- 
+
 import React, { useState, useLayoutEffect } from "react";
 import {
   View,
@@ -21,6 +21,9 @@ import { insertNutritionLog } from "../../src/services/nutritionService";
 
 // nutrition streak refresh
 import { refreshNutritionStreak } from "../../src/services/nutritionStreakService";
+
+// ADDED: import nutrition badge awarding
+import { checkAndAwardNutritionBadges } from "../../src/services/badgeAwardService";
 
 const MEAL_TYPES = ["Breakfast", "Lunch", "Dinner", "Snack"] as const;
 type MealType = (typeof MEAL_TYPES)[number];
@@ -101,20 +104,25 @@ const NutritionScreen = () => {
     });
 
     if (result.success) {
-      // STEP 1: show success immediately
+      // CHANGED: show success immediately
       Alert.alert(
         "Nutrition Entry Saved!",
         `Meal: ${trimmedMealName}\nType: ${mealType}\nCalories: ${parsedCalories}\nProtein: ${parsedProtein}g\nCarbs: ${parsedCarbs}g\nFat: ${parsedFat}g` +
           (trimmedNotes ? `\nNotes: ${trimmedNotes}` : "")
       );
 
-      // STEP 2: reset form immediately
+      // CHANGED: reset form immediately
       resetForm();
 
-      // STEP 3: refresh streak in background (non-blocking)
-      refreshNutritionStreak(user.id).catch((streakError) => {
-        console.error("Failed to refresh nutrition streak:", streakError);
-      });
+      // CHANGED: refresh streak in background, then award badges
+      refreshNutritionStreak(user.id)
+        .then(() => {
+          // ADDED: award nutrition badges after streak refresh
+          return checkAndAwardNutritionBadges(user.id);
+        })
+        .catch((error) => {
+          console.error("Failed to refresh nutrition streak / badges:", error);
+        });
     } else {
       Alert.alert("Error", result.error || "Failed to save nutrition entry");
     }

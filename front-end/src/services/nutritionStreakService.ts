@@ -1,6 +1,5 @@
 // Code written by Alexis Mae Asuncion
 
-// For Nutrition category streak
 import { supabase } from "../../config/supabaseConfig";
 import { getLocalDateString } from "./dateUtils";
 import { getCategoryStreak } from "./categoryStreakService";
@@ -13,18 +12,28 @@ async function didMeetNutritionGoal(userId: string, date: string) {
     .eq("userID", userId)
     .eq("date", date);
 
-  if (logError || !logs || logs.length === 0) return false;
+  // ADDED: debug log
+  console.log("✅ Nutrition logs for date:", date, logs);
+
+  if (logError || !logs || logs.length === 0) {
+    console.log("✅ No nutrition logs found or log error:", logError);
+    return false;
+  }
 
   // Sum totals for the day
   const totals = logs.reduce(
     (acc, log) => ({
-      calories: acc.calories + (log.calories || 0),
-      protein: acc.protein + (log.protein || 0),
-      carbs: acc.carbs + (log.carbs || 0),
-      fat: acc.fat + (log.fat || 0),
+      // CHANGED: cast values to Number explicitly
+      calories: acc.calories + Number(log.calories ?? 0),
+      protein: acc.protein + Number(log.protein ?? 0),
+      carbs: acc.carbs + Number(log.carbs ?? 0),
+      fat: acc.fat + Number(log.fat ?? 0),
     }),
     { calories: 0, protein: 0, carbs: 0, fat: 0 }
   );
+
+  // ADDED: debug log
+  console.log("✅ Nutrition totals:", totals);
 
   // Get user goals
   const { data: goal, error: goalError } = await supabase
@@ -33,44 +42,69 @@ async function didMeetNutritionGoal(userId: string, date: string) {
     .eq("userid", userId)
     .single();
 
-  if (goalError || !goal) return false;
+  // ADDED: debug log
+  console.log("✅ Nutrition goal row:", goal);
 
-  return (
-    totals.calories <= goal.calorie_goal &&
-    totals.protein >= goal.protein_goal &&
-    totals.carbs >= goal.carb_goal &&
-    totals.fat >= goal.fat_goal
-  );
+  if (goalError || !goal) {
+    console.log("✅ Nutrition goal missing or error:", goalError);
+    return false;
+  }
+
+  const metGoal =
+    totals.calories <= Number(goal.calorie_goal ?? 0) &&
+    totals.protein >= Number(goal.protein_goal ?? 0) &&
+    totals.carbs >= Number(goal.carb_goal ?? 0) &&
+    totals.fat >= Number(goal.fat_goal ?? 0);
+
+  // ADDED: debug log
+  console.log("✅ Nutrition metGoal result:", metGoal);
+
+  return metGoal;
 }
 
-// Helper: get YYYY-MM-DD for today - offset
+// CHANGED: helper now uses LOCAL date, not UTC ISO string
 function getPastDate(offset: number) {
   const d = new Date();
+
+  // ADDED: anchor to noon to avoid timezone rollover issues
+  d.setHours(12, 0, 0, 0);
   d.setDate(d.getDate() - offset);
-  return d.toISOString().split("T")[0];
+
+  const year = d.getFullYear();
+  const month = `${d.getMonth() + 1}`.padStart(2, "0");
+  const day = `${d.getDate()}`.padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
 }
 
 // Calculate the current nutrition streak based on consecutive goal-met days
 export async function calculateNutritionStreak(userId: string) {
   let streak = 0;
 
-  for (let i = 0; i < 30; i++) { // for (let i = 0; i < 365; i++)
+  for (let i = 0; i < 30; i++) {
     const date = getPastDate(i);
     const metGoal = await didMeetNutritionGoal(userId, date);
+
+    // ADDED: debug log
+    console.log("✅ Nutrition streak check:", { date, metGoal });
 
     if (!metGoal) break;
     streak++;
   }
 
+  // ADDED: debug log
+  console.log("✅ Calculated nutrition streak:", streak);
+
   return streak;
 }
 
-// Calculate the longest nutrition streak in the past year
+// Calculate the longest nutrition streak in the recent window
 export async function calculateLongestNutritionStreak(userId: string) {
   let longest = 0;
   let current = 0;
 
-  for (let i = 364; i >= 0; i--) {
+  // CHANGED: match your shorter debug window for now
+  for (let i = 29; i >= 0; i--) {
     const date = getPastDate(i);
     const metGoal = await didMeetNutritionGoal(userId, date);
 
@@ -82,6 +116,9 @@ export async function calculateLongestNutritionStreak(userId: string) {
     }
   }
 
+  // ADDED: debug log
+  console.log("✅ Calculated longest nutrition streak:", longest);
+
   return longest;
 }
 
@@ -92,6 +129,14 @@ export async function refreshNutritionStreak(userId: string) {
   const longestStreak = await calculateLongestNutritionStreak(userId);
 
   const existing = await getCategoryStreak(userId, "nutrition");
+
+  // ADDED: debug log
+  console.log("✅ Refreshing nutrition streak:", {
+    userId,
+    currentStreak,
+    longestStreak,
+    existing,
+  });
 
   if (existing) {
     const { data, error } = await supabase
