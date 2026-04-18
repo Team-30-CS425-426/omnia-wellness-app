@@ -17,6 +17,14 @@ import {
 import { supabase } from '../config/supabaseConfig';
 import { useUser } from '../contexts/UserContext';
 
+import { mapMealTypeToEventId } from '@/src/services/nutritionService';
+
+type ScannedMealItem = {
+  localId: string;
+  food: any;
+  quantity: string;
+};
+
 export default function BarcodeScannerScreen() {
   const { user } = useUser();
 
@@ -26,11 +34,34 @@ export default function BarcodeScannerScreen() {
   const [scannerReady, setScannerReady] = useState(false);
 
   const [reviewVisible, setReviewVisible] = useState(false);
-  const [scannedFood, setScannedFood] = useState<any>(null);
-  const [quantity, setQuantity] = useState('1');
+
+  const [scannedItems, setScannedItems] = useState<ScannedMealItem[]>([]);
+  const [selectedItemIndex, setSelectedItemIndex] = useState(0);
+
+  const [mealName, setMealName] = useState('');
+  const [mealType, setMealType] = useState('Snack');
+  const [notes, setNotes] = useState('');
+  const [mealTypeModalVisible, setMealTypeModalVisible] = useState(false);
+
+  const selectedItem = scannedItems[selectedItemIndex] || null;
+  const selectedFood = selectedItem?.food || null;
+
+  const selectedServing =
+    selectedFood?.servings?.serving?.[0] ||
+    selectedFood?.servings?.serving ||
+    null;
+
   const [saving, setSaving] = useState(false);
 
   const scanLockRef = useRef(false);
+
+  function updateSelectedItemQuantity(value: string) {
+    setScannedItems((prev) =>
+      prev.map((item, index) =>
+        index === selectedItemIndex ? { ...item, quantity: value } : item
+      )
+    );
+  }
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -95,8 +126,18 @@ export default function BarcodeScannerScreen() {
       }
 
       if (result?.food) {
-        setScannedFood(result.food);
-        setQuantity('1');
+        const newItem: ScannedMealItem = {
+          localId: `${Date.now()}-${Math.random()}`,
+          food: result.food,
+          quantity: '1',
+        };
+        
+        setScannedItems((prev) => {
+          const updated = [...prev, newItem];
+          setSelectedItemIndex(updated.length - 1);
+          return updated;
+        });
+        
         setReviewVisible(true);
         setLoading(false);
       } else {
@@ -118,57 +159,100 @@ export default function BarcodeScannerScreen() {
 
   async function handleSaveFoodEntry() {
     try {
-      if (!scannedFood) return;
-
+      if (!scannedItems.length) {
+        throw new Error('No scanned foods to save.');
+      }
+  
       if (!user?.id) {
         throw new Error('User not authenticated.');
       }
-
-      setSaving(true);
-
-      const qty = Number(quantity);
-      if (!qty || qty <= 0) {
-        throw new Error('Please enter a valid quantity.');
+  
+      if (!mealName.trim()) {
+        throw new Error('Meal name is required.');
       }
-
-      const firstServing =
-        scannedFood.servings?.serving?.[0] ||
-        scannedFood.servings?.serving ||
-        null;
-
-      const calories = firstServing?.calories ?? null;
-      const protein = firstServing?.protein ?? null;
-      const carbs = firstServing?.carbohydrate ?? null;
-      const fat = firstServing?.fat ?? null;
-      const servingDescription = firstServing?.serving_description ?? '1 serving';
-      const servingId = firstServing?.serving_id ?? null;
-      const foodId = scannedFood?.food_id ?? null;
-
+  
+      setSaving(true);
+  
       const now = new Date();
-
-      const { error } = await supabase.from('NutritionLog').insert({
-        date: now.toISOString().slice(0, 10),
-        time: now.toTimeString().slice(0, 8),
-        calories: Number(calories) || null,
-        protein: Number(protein) || null,
-        fat: Number(fat) || null,
-        carbs: Number(carbs) || null,
-        userID: user.id,
-        mealName: scannedFood.food_name,
-        notes: '',
-        food_id: foodId,
-        serving_id: servingId,
-        brand_name: scannedFood.brand_name,
-        serving_description: servingDescription,
-        quantity: qty,
-        source: 'barcode',
-        nutritionEventType: null,
+      const nutritionEventType = mapMealTypeToEventId(mealType);
+  
+      const itemRows = scannedItems.map((item) => {
+        const qty = Number(item.quantity);
+  
+        if (!qty || qty <= 0) {
+          throw new Error('Please enter a valid quantity for each scanned item.');
+        }
+  
+        const serving =
+          item.food?.servings?.serving?.[0] ||
+          item.food?.servings?.serving ||
+          null;
+  
+        const caloriesPerUnit = Number(serving?.calories) || 0;
+        const proteinPerUnit = Number(serving?.protein) || 0;
+        const carbsPerUnit = Number(serving?.carbohydrate) || 0;
+        const fatPerUnit = Number(serving?.fat) || 0;
+  
+        return {
+          food_name: item.food?.food_name || 'Unknown Food',
+          food_id: item.food?.food_id ? String(item.food.food_id) : null,
+          serving_id: serving?.serving_id ? String(serving.serving_id) : null,
+          brand_name: item.food?.brand_name || null,
+          serving_description: serving?.serving_description || '1 serving',
+          quantity: qty,
+          calories: caloriesPerUnit * qty,
+          protein: proteinPerUnit * qty,
+          carbs: carbsPerUnit * qty,
+          fat: fatPerUnit * qty,
+          source: 'barcode',
+        };
       });
-
-      if (error) throw error;
-
-      Alert.alert('Saved', 'Food entry saved successfully.');
-
+  
+      const totalCalories = itemRows.reduce((sum, item) => sum + item.calories, 0);
+      const totalProtein = itemRows.reduce((sum, item) => sum + item.protein, 0);
+      const totalCarbs = itemRows.reduce((sum, item) => sum + item.carbs, 0);
+      const totalFat = itemRows.reduce((sum, item) => sum + item.fat, 0);
+  
+      const { data: nutritionLogRow, error: parentError } = await supabase
+        .from('NutritionLog')
+        .insert({
+          date: now.toISOString().slice(0, 10),
+          time: now.toTimeString().slice(0, 8),
+          calories: totalCalories,
+          protein: totalProtein,
+          fat: totalFat,
+          carbs: totalCarbs,
+          nutritionEventType,
+          userID: user.id,
+          mealName: mealName.trim(),
+          notes: notes.trim() || '',
+          source: 'barcode',
+          food_id: null,
+          serving_id: null,
+          brand_name: null,
+          serving_description: null,
+          quantity: null,
+        })
+        .select('id')
+        .single();
+  
+      if (parentError) throw parentError;
+      if (!nutritionLogRow?.id) {
+        throw new Error('Could not create nutrition log row.');
+      }
+  
+      const childRows = itemRows.map((item) => ({
+        nutrition_log_id: nutritionLogRow.id,
+        ...item,
+      }));
+  
+      const { error: childError } = await supabase
+        .from('nutritionlogitems')
+        .insert(childRows);
+  
+      if (childError) throw childError;
+  
+      Alert.alert('Saved', 'Meal saved successfully.');
       closeReviewAndReset();
     } catch (error: any) {
       Alert.alert('Save failed', error.message);
@@ -176,11 +260,13 @@ export default function BarcodeScannerScreen() {
       setSaving(false);
     }
   }
-
   function closeReviewAndReset() {
     setReviewVisible(false);
-    setScannedFood(null);
-    setQuantity('1');
+    setScannedItems([]);
+    setSelectedItemIndex(0);
+    setMealName('');
+    setMealType('Snack');
+    setNotes('');
     scanLockRef.current = false;
     setScanned(false);
     setLoading(false);
@@ -199,10 +285,7 @@ export default function BarcodeScannerScreen() {
     );
   }
 
-  const firstServing =
-    scannedFood?.servings?.serving?.[0] ||
-    scannedFood?.servings?.serving ||
-    null;
+  
 
   return (
     <SafeAreaView style={styles.container}>
@@ -259,50 +342,148 @@ export default function BarcodeScannerScreen() {
             >
               <Text style={styles.closeButtonText}>✕</Text>
             </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={() => {
+                setReviewVisible(false);
+                scanLockRef.current = false;
+                setScanned(false);
+                setLoading(false);
+              }}
+            >
+              <Text style={styles.addButtonText}>＋</Text>
+            </TouchableOpacity>
 
-            {scannedFood && (
+            {selectedFood && (
               <ScrollView
                 contentContainerStyle={styles.modalContent}
                 showsVerticalScrollIndicator={false}
               >
-                <Text style={styles.modalTitle}>{scannedFood.food_name}</Text>
+                <Text style={styles.quantityLabel}>Meal Name</Text>
+                <TextInput
+                  style={styles.quantityInput}
+                  value={mealName}
+                  onChangeText={setMealName}
+                  placeholder="Enter meal name..."
+                />
+                <Text style={styles.modalTitle}>{selectedFood.food_name}</Text>
                 <Text style={styles.modalSubtitle}>
-                  {scannedFood.brand_name || ''}
+                  {selectedFood.brand_name || ''}
                 </Text>
 
                 <View style={styles.infoCard}>
                   <Text style={styles.infoLabel}>Serving</Text>
                   <Text style={styles.infoValue}>
-                    {firstServing?.serving_description || '1 serving'}
+                   {selectedServing?.serving_description || '1 serving'}
                   </Text>
 
                   <Text style={styles.infoLabel}>Calories</Text>
                   <Text style={styles.infoValue}>
-                    {firstServing?.calories || 'N/A'}
+                   {selectedServing?.calories || 'N/A'}
                   </Text>
 
                   <Text style={styles.infoLabel}>Protein</Text>
                   <Text style={styles.infoValue}>
-                    {firstServing?.protein || 'N/A'}
+                   {selectedServing?.protein || 'N/A'}
                   </Text>
 
                   <Text style={styles.infoLabel}>Carbs</Text>
                   <Text style={styles.infoValue}>
-                    {firstServing?.carbohydrate || 'N/A'}
+                   {selectedServing?.carbohydrate || 'N/A'}
                   </Text>
 
                   <Text style={styles.infoLabel}>Fat</Text>
                   <Text style={styles.infoValue}>
-                    {firstServing?.fat || 'N/A'}
+                   {selectedServing?.fat || 'N/A'}
                   </Text>
                 </View>
 
                 <Text style={styles.quantityLabel}>Quantity</Text>
                 <TextInput
                   style={styles.quantityInput}
-                  value={quantity}
-                  onChangeText={setQuantity}
+                  value={selectedItem?.quantity || '1'}
+                  onChangeText={updateSelectedItemQuantity}
                   keyboardType="numeric"
+                />
+                
+                <View style={styles.pagerRow}>
+                <TouchableOpacity
+                  style={[
+                    styles.pagerArrowButton,
+                    selectedItemIndex === 0 && styles.pagerArrowButtonDisabled,
+                  ]}
+                  onPress={() => setSelectedItemIndex((prev) => Math.max(prev - 1, 0))}
+                  disabled={selectedItemIndex === 0}
+                >
+                  <Text style={styles.pagerButton}>‹</Text>
+                </TouchableOpacity>
+
+                <Text style={styles.pagerText}>
+                  {scannedItems.length === 0
+                    ? '0 of 0'
+                    : `${selectedItemIndex + 1} of ${scannedItems.length}`}
+                </Text>
+
+                <TouchableOpacity
+                  style={[
+                    styles.pagerArrowButton,
+                    selectedItemIndex === scannedItems.length - 1 &&
+                      styles.pagerArrowButtonDisabled,
+                  ]}
+                  onPress={() =>
+                    setSelectedItemIndex((prev) =>
+                      Math.min(prev + 1, scannedItems.length - 1)
+                    )
+                  }
+                  disabled={selectedItemIndex === scannedItems.length - 1}
+                >
+                  <Text style={styles.pagerButton}>›</Text>
+                </TouchableOpacity>
+              </View>
+                            
+              <Text style={styles.quantityLabel}>Meal Type</Text>
+              <TouchableOpacity
+                style={styles.dropdownField}
+                onPress={() => setMealTypeModalVisible(true)}
+              >
+                <Text style={styles.dropdownFieldText}>{mealType}</Text>
+                <Text style={styles.dropdownChevron}>⌄</Text>
+              </TouchableOpacity>
+
+              {mealTypeModalVisible && (
+                <View style={styles.dropdownMenu}>
+                  {['Breakfast', 'Lunch', 'Dinner', 'Snack'].map((type) => (
+                    <TouchableOpacity
+                      key={type}
+                      style={styles.dropdownOption}
+                      onPress={() => {
+                        setMealType(type);
+                        setMealTypeModalVisible(false);
+                      }}
+                    >
+                      <Text
+                        style={[
+                          styles.dropdownOptionText,
+                          mealType === type && styles.dropdownOptionTextSelected,
+                        ]}
+                      >
+                        {type}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+
+                    
+
+
+                <Text style={styles.quantityLabel}>Notes (optional)</Text>
+                <TextInput
+                  style={[styles.quantityInput, { height: 100, textAlignVertical: 'top' }]}
+                  value={notes}
+                  onChangeText={setNotes}
+                  placeholder="Add notes about your meal..."
+                  multiline
                 />
 
                 <TouchableOpacity
@@ -319,6 +500,8 @@ export default function BarcodeScannerScreen() {
           </View>
         </View>
       </Modal>
+
+      
     </SafeAreaView>
   );
 }
@@ -495,5 +678,116 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: '700',
+  },
+  addButton: {
+    position: 'absolute',
+    top: 14,
+    right: 14,
+    zIndex: 10,
+    backgroundColor: '#f2f2f2',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addButtonText: {
+    fontSize: 22,
+    fontWeight: '600',
+    color: '#444',
+  },
+  pagerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 18,
+    marginBottom: 20,
+  },
+  pagerButton: {
+    fontSize: 28,
+    fontWeight: '600',
+    color: '#222',
+  },
+  pagerText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#222',
+  },
+  pagerArrowButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F2F2F2',
+  },
+  pagerArrowButtonDisabled: {
+    opacity: 0.4,
+  },
+  dropdownField: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 16,
+    marginBottom: 20,
+    backgroundColor: '#fff',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  
+  dropdownFieldText: {
+    fontSize: 18,
+    color: '#222',
+  },
+  
+  dropdownChevron: {
+    fontSize: 22,
+    color: '#666',
+    fontWeight: '600',
+  },
+  
+  dropdownOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.25)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  
+  dropdownModalCard: {
+    width: '100%',
+    maxWidth: 340,
+    backgroundColor: '#fff',
+    borderRadius: 18,
+    paddingVertical: 8,
+    overflow: 'hidden',
+  },
+  
+  dropdownOption: {
+    paddingHorizontal: 18,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  
+  dropdownOptionText: {
+    fontSize: 17,
+    color: '#222',
+  },
+  
+  dropdownOptionTextSelected: {
+    fontWeight: '700',
+    color: '#007AFF',
+  },
+  dropdownMenu: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 12,
+    marginTop: -10,
+    marginBottom: 20,
+    overflow: 'hidden',
   },
 });
