@@ -14,15 +14,15 @@ import {
   Platform,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import HabitSuccess from "./SuccessScreens/HabitSuccess";
 
 import { useUser } from "../../contexts/UserContext";
 import { insertHabit } from "../../src/services/habitService";
 
-const FREQUENCY_OPTIONS = ["Daily", "Weekly", "Monthly"] as const; 
+const FREQUENCY_OPTIONS = ["Daily", "Weekly", "Monthly"] as const;
 
 const HabitTrackerScreen = () => {
   const navigation = useNavigation();
-
   const { user } = useUser();
 
   useLayoutEffect(() => {
@@ -31,9 +31,14 @@ const HabitTrackerScreen = () => {
 
   const [habitName, setHabitName] = useState("");
   const [description, setDescription] = useState("");
-  const [frequency, setFrequency] = useState<(typeof FREQUENCY_OPTIONS)[number] | null>(null); 
+  const [frequency, setFrequency] = useState<(typeof FREQUENCY_OPTIONS)[number] | null>(null);
+
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [loggedHabitName, setLoggedHabitName] = useState('');
+  const [loggedFrequency, setLoggedFrequency] = useState('');
 
   const handleSave = async () => {
+    Keyboard.dismiss();
     if (!habitName.trim() || !frequency) {
       Alert.alert("Please enter a habit name and select a frequency.");
       return;
@@ -51,12 +56,10 @@ const HabitTrackerScreen = () => {
     });
 
     if (result.success) {
-      Alert.alert(
-        "Habit Saved!",
-        `Habit: ${habitName.trim()}\nDescription: ${description.trim() || "None"}\nFrequency: ${frequency}`
-      );
+      setLoggedHabitName(habitName.trim());
+      setLoggedFrequency(frequency);
+      setShowSuccess(true);
 
-      // Reset form
       setHabitName("");
       setDescription("");
       setFrequency(null);
@@ -66,72 +69,89 @@ const HabitTrackerScreen = () => {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-    >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View style={styles.container}>
-          {/* Header */}
-          <View style={styles.header}>
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => navigation.goBack()}
-            >
-              <Text style={styles.backArrow}>{"←"}</Text>
-              <Text style={styles.backText}>Back</Text>
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Habit Tracker</Text>
-            <View style={{ width: 60 }} />
-          </View>
-
-          {/* Page Title */}
-          <Text style={styles.pageTitle}>Log Your Habit</Text>
-
-          {/* Habit Name */}
-          <Text style={styles.sectionLabel}>Habit Name</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter habit name..."
-            placeholderTextColor="#999"
-            value={habitName}
-            onChangeText={setHabitName}
-          />
-
-          {/* Description */}
-          <Text style={styles.sectionLabel}>Description</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter habit description..."
-            placeholderTextColor="#999"
-            value={description}
-            onChangeText={setDescription}
-          />
-
-          {/* Frequency */}
-          <Text style={styles.sectionLabel}>Frequency</Text>
-          <View style={styles.frequencyContainer}>
-            {FREQUENCY_OPTIONS.map((option) => (
+    <View style={{ flex: 1 }}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <View style={styles.container}>
+            {/* Header */}
+            <View style={styles.header}>
               <TouchableOpacity
-                key={option}
-                style={[
-                  styles.frequencyButton,
-                  frequency === option && styles.frequencySelected,
-                ]}
-                onPress={() => setFrequency(option)}
+                style={styles.backButton}
+                onPress={() => navigation.goBack()}
               >
-                <Text>{option}</Text>
+                <Text style={styles.backArrow}>{"←"}</Text>
+                <Text style={styles.backText}>Back</Text>
               </TouchableOpacity>
-            ))}
-          </View>
+              <Text style={styles.headerTitle}>Habit Tracker</Text>
+              <View style={{ width: 60 }} />
+            </View>
 
-          {/* Save Button */}
-          <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-            <Text style={styles.saveButtonText}>Save Habit</Text>
-          </TouchableOpacity>
+            {/* Page Title */}
+            <Text style={styles.pageTitle}>Log Your Habit</Text>
+
+            {/* Habit Name */}
+            <Text style={styles.sectionLabel}>Habit Name</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter habit name..."
+              placeholderTextColor="#999"
+              value={habitName}
+              onChangeText={setHabitName}
+            />
+
+            {/* Description */}
+            <Text style={styles.sectionLabel}>Description</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter habit description..."
+              placeholderTextColor="#999"
+              value={description}
+              onChangeText={setDescription}
+            />
+
+            {/* Frequency */}
+            <Text style={styles.sectionLabel}>Frequency</Text>
+            <View style={styles.frequencyContainer}>
+              {FREQUENCY_OPTIONS.map((option) => (
+                <TouchableOpacity
+                  key={option}
+                  style={[
+                    styles.frequencyButton,
+                    frequency === option && styles.frequencySelected,
+                  ]}
+                  onPress={() => setFrequency(option)}
+                >
+                  <Text>{option}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Save Button */}
+            <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+              <Text style={styles.saveButtonText}>Save Habit</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
+
+      {showSuccess && (
+        <View style={StyleSheet.absoluteFill}>
+          <HabitSuccess
+            visible={showSuccess}
+            habitName={loggedHabitName}
+            frequency={loggedFrequency}
+            onClose={() => setShowSuccess(false)}
+            onViewHistory={() => {
+              setShowSuccess(false);
+              navigation.goBack();
+            }}
+          />
         </View>
-      </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+      )}
+    </View>
   );
 };
 
