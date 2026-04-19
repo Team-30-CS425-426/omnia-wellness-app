@@ -1,4 +1,4 @@
-import useHealthData from "@/src/hooks/useHealthData";
+import useStepsDisplayed from "@/src/hooks/useHealthKit/stepsDisplayed";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useMemo } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View, Platform } from "react-native";
@@ -10,6 +10,7 @@ type Row = { left: string; right: string };
 
 const pad2 = (n: number) => String(n).padStart(2, "0");
 const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
 const addDays = (d: Date, n: number) => {
   const x = new Date(d);
   x.setDate(x.getDate() + n);
@@ -42,74 +43,45 @@ const hourLabel = (h: number) => {
   return `${h - 12} PM`;
 };
 
-const minutesToHrMin = (mins: number) => {
-  const m = Math.max(0, Math.round(mins));
-  const hr = Math.floor(m / 60);
-  const rem = m % 60;
-  if (hr <= 0) return `${rem} min`;
-  if (rem === 0) return `${hr} hr`;
-  return `${hr} hr ${rem} min`;
-};
-
-export default function HealthAllDataScreen() {
-  if (Platform.OS !== "ios") {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <Text>Health data is only available on iOS.</Text>
-      </View>
-    );
-  }
-
-  const { type, mode } = useLocalSearchParams<{ type?: string; mode?: Mode }>();
-  const isSteps = (type ?? "steps") === "steps";
+export default function StepAllDataScreen() {
+  const { mode } = useLocalSearchParams<{ mode?: Mode }>();
   const m: Mode = (mode as Mode) ?? "D";
 
   const insets = useSafeAreaInsets();
-  const health = useHealthData();
+  const health = useStepsDisplayed(true);
 
-  // Ensure connected
+
   useEffect(() => {
-    if (!health.isAuthorized && !health.loading) {
-      health.connectAndImport();
+    async function load() {
+      if (m === "W") await health.loadRange(7);
+      if (m === "M") await health.loadRange(30);
     }
-  }, [health.isAuthorized, health.loading]);
+  
+    load();
+  }, [m]);
 
-  // Ensure we have the right range loaded for W/M
-  useEffect(() => {
-    if (!health.isAuthorized) return;
-    if (m === "W") health.loadRange(7);
-    if (m === "M") health.loadRange(30);
-  }, [m, health.isAuthorized]);
-
-  // Build list rows (Steps OR Sleep)
   const rows = useMemo<Row[]>(() => {
-    // D: 24 hourly bins
     if (m === "D") {
-      const binsRaw = isSteps ? health.stepsDayBins : health.sleepDayBins;
-      const bins = (binsRaw || []).map((x: any) => clampNonNeg(x));
+      const bins = (health.stepsDayBins || []).map((x: any) => clampNonNeg(x));
       const safe: number[] = bins.length === 24 ? (bins as number[]) : new Array(24).fill(0);
 
       return safe
         .map((v: number, h: number) => ({
-          left: isSteps ? `${Math.round(v).toLocaleString()}` : minutesToHrMin(v),
+          left: `${Math.round(v).toLocaleString()}`,
           right: hourLabel(h),
         }))
         .reverse();
     }
 
-    // W/M
     const end = startOfDay(new Date());
     const days = m === "W" ? 7 : 30;
     const start = addDays(end, -(days - 1));
 
-    const range = isSteps ? health.stepsRange : health.sleepRange;
-
     const map = new Map<string, number>();
-    (range || []).forEach((p: any) => {
+    (health.stepsRange || []).forEach((p: any) => {
       const key = toLocalDayKeyFromAny(p.startDate);
       if (!key) return;
-      const value = clampNonNeg(p.value);
-      map.set(key, isSteps ? value : value * 60); // sleep hours -> minutes
+      map.set(key, clampNonNeg(p.value));
     });
 
     const out: Row[] = [];
@@ -119,7 +91,7 @@ export default function HealthAllDataScreen() {
       const v = map.get(key) ?? 0;
 
       out.push({
-        left: isSteps ? `${Math.round(v).toLocaleString()}` : minutesToHrMin(v),
+        left: `${Math.round(v).toLocaleString()}`,
         right: d.toLocaleDateString(undefined, {
           month: "short",
           day: "numeric",
@@ -128,23 +100,14 @@ export default function HealthAllDataScreen() {
       });
     }
 
-    // newest first
     return out.reverse();
-  }, [
-    isSteps,
-    m,
-    health.stepsDayBins,
-    health.sleepDayBins,
-    health.stepsRange,
-    health.sleepRange,
-  ]);
+  }, [m, health.stepsDayBins, health.stepsRange]);
 
   const title = "All Recorded Data";
 
   return (
     <SafeAreaView style={styles.safe}>
       <View style={{ paddingTop: Math.max(8, insets.top * 0.2) }}>
-        {/* Header */}
         <View style={styles.header}>
           <Pressable onPress={() => router.back()} style={styles.headerLeft}>
             <Text style={styles.backChevron}>‹</Text>
@@ -159,7 +122,7 @@ export default function HealthAllDataScreen() {
         )}
 
         <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
-          <Text style={styles.sectionLabel}>{isSteps ? "Steps" : "Sleep"}</Text>
+          <Text style={styles.sectionLabel}>Steps</Text>
 
           <View style={styles.card}>
             {rows.map((r: Row, idx: number) => (
@@ -167,7 +130,6 @@ export default function HealthAllDataScreen() {
                 <Text style={styles.leftText}>{r.left}</Text>
                 <View style={styles.rightWrap}>
                   <Text style={styles.rightText}>{r.right}</Text>
-                  <Text style={styles.chev}>›</Text>
                 </View>
               </View>
             ))}
@@ -220,6 +182,5 @@ const styles = StyleSheet.create({
   },
   leftText: { fontSize: 18, fontWeight: "400", color: "#000" },
   rightWrap: { flexDirection: "row", alignItems: "center", gap: 10 },
-  rightText: { fontSize: 15, color: "#8E8E93", fontWeight: "600" },
-  chev: { fontSize: 22, color: "#C7C7CC", fontWeight: "400" },
+  rightText: { fontSize: 15, color: "#8E8E93", fontWeight: "600" }
 });

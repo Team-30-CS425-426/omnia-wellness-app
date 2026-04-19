@@ -1,5 +1,4 @@
 // code written by Alexis Mae Asuncion
-
 import React, { useState, useLayoutEffect } from "react";
 import {
   View,
@@ -16,6 +15,7 @@ import {
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation } from "@react-navigation/native";
 import { router } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 
 import { useUser } from "../../contexts/UserContext";
 import { insertNutritionLog } from "../../src/services/nutritionService";
@@ -174,8 +174,15 @@ const NutritionScreen = () => {
               <Text style={styles.backArrow}>{"←"}</Text>
               <Text style={styles.backText}>Back</Text>
             </TouchableOpacity>
+
             <Text style={styles.headerTitle}>Nutrition Tracker</Text>
-            <View style={{ width: 60 }} />
+
+            <TouchableOpacity
+              style={styles.barcodeButton}
+              onPress={() => router.push("/barcode-scanner" as any)}
+            >
+              <Ionicons name="barcode-outline" size={26} color="#000" />
+            </TouchableOpacity>
           </View>
 
           {/* Page Title */}
@@ -322,7 +329,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-
+  
+  barcodeButton: {
+    width: 60,
+    alignItems: "flex-end",
+    justifyContent: "center",
+  },
+  
   backArrow: {
     fontSize: 22,
     fontWeight: "600",

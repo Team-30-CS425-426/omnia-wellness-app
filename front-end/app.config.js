@@ -8,16 +8,24 @@ const plugins = [
   "expo-notifications",
   "@react-native-community/datetimepicker",
   [
+    "expo-camera",
+    {
+      cameraPermission:
+        "Allow Omnia to access your camera so you can scan food barcodes.",
+      barcodeScannerEnabled: true,
+    },
+  ],
+  [
     "expo-splash-screen",
     {
-      "image": "./assets/images/splash-icon.png",
-      "imageWidth": 200,
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff",
-      "dark": {
-        "backgroundColor": "#000000"
-      }
-    }
+      image: "./assets/images/splash-icon.png",
+      imageWidth: 200,
+      resizeMode: "contain",
+      backgroundColor: "#ffffff",
+      dark: {
+        backgroundColor: "#000000",
+      },
+    },
   ],
 ];
 
@@ -52,12 +60,10 @@ export default{
       "supportsTablet": true,
       "bundleIdentifier": "com.anonymous.front-end",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false,
-        "NSHealthShareUsageDescription": "Omnia reads your Health data (steps/sleep) to show your real-time wellness stats.",
-        "NSHealthUpdateUsageDescription": "Omnia can write workout data to Health when you log workouts.",
-        "NSHealthUpdateUsageDescription": "Omnia can write workout data to Health when you log workouts.",
-        "ITSAppUsesNonExemptEncryption": false
-      }
+      "ITSAppUsesNonExemptEncryption": false,
+      "NSHealthShareUsageDescription": "Omnia reads your Health data (steps/sleep) to show your real-time wellness stats.",
+      "NSHealthUpdateUsageDescription": "Omnia can write workout data to Health when you log workouts."
+    }
       
     },
     "android": {

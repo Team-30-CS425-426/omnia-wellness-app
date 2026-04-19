@@ -1,10 +1,10 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useMemo } from "react";
 import { router, useLocalSearchParams } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 
-import { useActiveEnergyContext } from "@/contexts/ActiveEnergyContext";
+import useActiveEnergyDisplayed from "@/src/hooks/useHealthKit/activeEnergyDisplayed";
 
 type Mode = "W" | "M";
 
@@ -24,48 +24,34 @@ export default function ActiveEnergyAllData() {
   const m: Mode = mode === "M" ? "M" : "W";
 
   const insets = useSafeAreaInsets();
-    
+
   const {
     isAuthorized,
     rangeDays,
     activeEnergyRange,
     connectAndImport,
     loadRange,
-    } = useActiveEnergyContext();
+  } = useActiveEnergyDisplayed(true);
 
-  // Load data
   useFocusEffect(
     useCallback(() => {
       async function load() {
         const neededDays = m === "W" ? 7 : 30;
-  
-        if (!isAuthorized) {
-          await connectAndImport();
-          return;
-        }
-  
-        if (rangeDays !== neededDays || activeEnergyRange.length === 0) {
-          await loadRange(neededDays);
-        }
+        await loadRange(neededDays);
       }
   
       load();
-    }, [isAuthorized, m, rangeDays, activeEnergyRange.length])
+    }, [m])
   );
 
-  /**
-   * Build FULL list
-   * Always 7 or 30 rows
-   */
   const rows = useMemo(() => {
     const days = m === "W" ? 7 : 30;
     const today = new Date();
 
-    // Map database/service results
     const map = new Map<string, number>();
 
     activeEnergyRange.forEach((d) => {
-        map.set(d.date, Number(d.calories) || 0);
+      map.set(d.date, Number(d.calories) || 0);
     });
 
     const output = [];
@@ -82,32 +68,23 @@ export default function ActiveEnergyAllData() {
     }
 
     return output;
-}, [activeEnergyRange, m]);
+  }, [activeEnergyRange, m]);
 
   return (
     <SafeAreaView style={styles.safe}>
       <View style={{ paddingTop: Math.max(8, insets.top * 0.2) }}>
-        {/* Header */}
         <View style={styles.header}>
-          <Pressable
-            onPress={() => router.back()}
-            style={styles.headerLeft}
-          >
+          <Pressable onPress={() => router.back()} style={styles.headerLeft}>
             <Text style={styles.backChevron}>‹</Text>
           </Pressable>
 
-          <Text style={styles.headerTitle}>
-            All Recorded Data
-          </Text>
+          <Text style={styles.headerTitle}>All Recorded Data</Text>
 
           <View style={{ width: 40 }} />
         </View>
 
         <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
-          {/* Section label */}
-          <Text style={styles.sectionLabel}>
-            Active Energy
-          </Text>
+          <Text style={styles.sectionLabel}>Active Energy</Text>
 
           <View style={styles.card}>
             {rows.map((r, i) => (
@@ -118,9 +95,7 @@ export default function ActiveEnergyAllData() {
                   i === rows.length - 1 && styles.lastRow,
                 ]}
               >
-                <Text style={styles.leftText}>
-                  {Math.round(r.calories)} cal
-                </Text>
+                <Text style={styles.leftText}>{Math.round(r.calories)} cal</Text>
 
                 <View style={styles.rightWrap}>
                   <Text style={styles.rightText}>

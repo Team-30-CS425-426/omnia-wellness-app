@@ -139,3 +139,73 @@ export async function insertSleepLog(
         return { success: false, error: String(err) };
     }
 }
+export async function getSleepHoursLastNDays(
+    userId: string,
+    days: number = 7
+): Promise<{ date: string; hours: number }[]> {
+    const end = new Date();
+    end.setDate(end.getDate() - 1); // yesterday
+
+    const start = new Date(end);
+    start.setDate(end.getDate() - (days - 1));
+
+    const startStr = toPgDate(start);
+    const endStr = toPgDate(end);
+
+    const { data, error } = await supabase
+        .from("SleepLog")
+        .select("date, hoursSlept")
+        .eq("userID", userId)
+        .gte("date", startStr)
+        .lte("date", endStr)
+        .order("date", { ascending: true });
+
+    if (error) throw error;
+
+    const totals = new Map<string, number>();
+
+    (data ?? []).forEach((row: any) => {
+        const key = String(row.date);
+        const hrs = Number(row.hoursSlept);
+        const safe = Number.isFinite(hrs) ? hrs : 0;
+
+        totals.set(key, (totals.get(key) ?? 0) + safe);
+    });
+
+    const out: { date: string; hours: number }[] = [];
+    for (let i = 0; i < days; i++) {
+        const d = new Date(start);
+        d.setDate(start.getDate() + i);
+
+        const key = toPgDate(d);
+        out.push({
+            date: key,
+            hours: totals.get(key) ?? 0,
+        });
+    }
+
+    return out;
+}
+export async function getYesterdaySleepHours(
+    userId: string
+): Promise<number> {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const dateStr = toPgDate(yesterday);
+
+    const { data, error } = await supabase
+        .from("SleepLog")
+        .select("hoursSlept")
+        .eq("userID", userId)
+        .eq("date", dateStr);
+
+    if (error) throw error;
+
+    const total = (data ?? []).reduce((sum: number, row: any) => {
+        const hrs = Number(row.hoursSlept);
+        return sum + (Number.isFinite(hrs) ? hrs : 0);
+    }, 0);
+
+    return total;
+}

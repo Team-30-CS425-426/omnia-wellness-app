@@ -1,4 +1,9 @@
 import { supabase } from "@/config/supabaseConfig";
+import { useUser } from "@/contexts/UserContext";
+import { getSleepGoal } from "@/src/services/sleepGoalService";
+import { getStepsGoal } from "@/src/services/stepsGoalService";
+import { getActivityMinutesLastNDays } from "@/src/services/workoutService";
+import { useFocusEffect } from "@react-navigation/native";
 import { router } from "expo-router";
 import { useCallback, useContext, useEffect, useState } from "react";
 import {
@@ -9,19 +14,16 @@ import {
   View,
   ViewStyle,
 } from "react-native";
-import { useFocusEffect } from "@react-navigation/native";
-import { EntryContext } from "./dashboard";
 import DashboardGoalRing from "../DashboardGoalRing";
-import { useUser } from "@/contexts/UserContext";
-import { getSleepGoal } from "@/src/services/sleepGoalService";
-import { getStepsGoal } from "@/src/services/stepsGoalService";
-import { getActivityMinutesLastNDays } from "@/src/services/workoutService";
 import { getActivityGoal } from "@/src/services/activityGoalService";
 
+import { EntryContext } from "./dashboard";
 
 interface MetricsProps {
   style?: StyleProp<ViewStyle>;
   health: any;
+  onStepsPress?: () => void;
+  onActiveEnergyPress?: () => void;
 }
 
 const pad2 = (n: number) => String(n).padStart(2, "0");
@@ -48,7 +50,7 @@ const moodToEmoji = (mood: number) => {
   }
 };
 
-export function Metrics({ style, health }: MetricsProps) {
+export function Metrics({ style, health, onStepsPress }: MetricsProps) {
   const { entryId } = useContext(EntryContext);
   const { user } = useUser();
 
@@ -251,7 +253,7 @@ export function Metrics({ style, health }: MetricsProps) {
               color="#187498"
               onPress={() =>
                 router.push({
-                  pathname: "/health-details",
+                  pathname: "/historicalSleepData",
                   params: { type: "sleep" },
                 } as any)
               }
@@ -260,7 +262,7 @@ export function Metrics({ style, health }: MetricsProps) {
             <Pressable
               onPress={() =>
                 router.push({
-                  pathname: "/health-details",
+                  pathname: "/historicalSleepData",
                   params: { type: "sleep" },
                 } as any)
               }
@@ -298,25 +300,29 @@ export function Metrics({ style, health }: MetricsProps) {
 
         <View style={{ flex: 1, alignItems: "center", paddingHorizontal: 0 }}>
           {stepsGoal ? (
-            <DashboardGoalRing
+              <DashboardGoalRing
               label="Steps"
               valueText={getStepsRingText(stepsToday, stepsGoal)}
               progress={clampProgress(stepsToday, stepsGoal)}
               color="#F9D923"
-              onPress={() =>
-                router.push({
-                  pathname: "/health-details",
-                  params: { type: "steps" },
-                } as any)
+              onPress={
+                onStepsPress ??
+                (() =>
+                  router.push({
+                    pathname: "/historicalStepData",
+                    params: { type: "steps" },
+                  } as any))
               }
             />
           ) : (
             <Pressable
-              onPress={() =>
-                router.push({
-                  pathname: "/health-details",
-                  params: { type: "steps" },
-                } as any)
+              onPress={
+                onStepsPress ??
+                (() =>
+                  router.push({
+                    pathname: "/historicalStepData",
+                    params: { type: "steps" },
+                  } as any))
               }
             >
               <Steps value={String(stepsToday)} />

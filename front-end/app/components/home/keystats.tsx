@@ -36,7 +36,7 @@ import { getUserNutritionGoals } from "@/src/services/nutritionGoalService";
 import { useUser } from "@/contexts/UserContext";
 import { useFocusEffect } from "@react-navigation/native";
 
-import { useActiveEnergyContext } from "@/contexts/ActiveEnergyContext";
+import useActiveEnergyDisplayed from "@/src/hooks/useHealthKit/activeEnergyDisplayed";
 
 
 // Navigation handler — routes to the historical nutrition chart screen
@@ -54,6 +54,7 @@ const handleActiveEnergyData = () => {
 interface KeyStatsProps {
     style?: StyleProp<ViewStyle>;
     health?: any;
+    onActiveEnergyPress?: () => void;
 }
 
 /**
@@ -66,7 +67,7 @@ interface KeyStatsProps {
  * Receives today's nutrition totals from useNutritionStats() and passes
  * them down to the Nutrition component.
  */
-export function KeyStats({ style, health }: KeyStatsProps) {
+export function KeyStats({ style, health, onActiveEnergyPress }: KeyStatsProps) {
    const { nutrition } = useNutritionStats();
 
    const {
@@ -74,7 +75,7 @@ export function KeyStats({ style, health }: KeyStatsProps) {
     activeEnergyToday,
     connectAndImport: connectActiveEnergy,
     loadRange: loadActiveEnergyRange,
-  } = useActiveEnergyContext();
+  } = useActiveEnergyDisplayed(true);
 
   useFocusEffect(
     useCallback(() => {
@@ -114,6 +115,7 @@ export function KeyStats({ style, health }: KeyStatsProps) {
                 />
                 <ActiveEnergy
                 caloriesBurned={activeEnergyToday}
+                onPress={onActiveEnergyPress}
                 />
             </View>
         </View>
@@ -270,12 +272,13 @@ function Nutrition({ calories = 0, protein = 0, carbs = 0, fat = 0 }: NutritionP
 
 interface ActiveEnergyProps {
     caloriesBurned?: number;
+    onPress?: () => void;
 }
 
-function ActiveEnergy({ caloriesBurned = 0 }: ActiveEnergyProps) {
+function ActiveEnergy({ caloriesBurned = 0, onPress }: ActiveEnergyProps) {
     return (
         <ThemedCard
-            onPress={() => handleActiveEnergyData()}
+            onPress={onPress ?? handleActiveEnergyData}
             style={{
                 height: 145,
                 width: '100%',
