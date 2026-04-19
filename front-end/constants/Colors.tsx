@@ -20,6 +20,8 @@ export const Colors = {
   berryBlue: '#6058aa',
 
   violet: "#512888",
+
+  darkPurple: "#2c02a0",
   
   successGreen: '#34C759',
   
@@ -44,6 +46,8 @@ export const Colors = {
   candyRed: "#EB5353",
 
   vibrantOrange: "#EB7A53",
+
+  yellowOrange: "#F0B617",
 
   hotPink: "#FF46A2"
   }

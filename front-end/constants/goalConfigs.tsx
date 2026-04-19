@@ -64,15 +64,15 @@ export interface GoalConfig {
 export const getIconColor = (goalType: GoalType) => {
         switch (goalType) {
           case 'nutrition':
-            return Colors.default.berryPurple;
+            return Colors.default.strongGreen;
           case 'sleep':
-            return '#187498';
+            return Colors.default.darkPurple;
           case 'steps':
-                return '#F9D923';
+                return Colors.default.yellowOrange;
           case 'physical-activity':
-            return '#36AE7C';
+            return Colors.default.strongGreen;
           case 'mood':
-            return '#EB5353';
+            return Colors.default.candyRed;
           default:
             return Colors.default.berryBlue;
         }

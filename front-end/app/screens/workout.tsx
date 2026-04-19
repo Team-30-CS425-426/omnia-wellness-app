@@ -346,9 +346,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  intensitySelected: { 
-    backgroundColor: "#E0F0FF", 
-    borderColor: "#007AFF" 
+  intensitySelected: {
+    backgroundColor: "#E8F8F0",
+    borderColor: "#36AE7C"
   },
 
   intensityText: { 
@@ -366,7 +366,7 @@ const styles = StyleSheet.create({
   },
 
   saveButton: {
-    backgroundColor: "#007AFF",
+    backgroundColor: "#36AE7C",
     padding: 15,
     borderRadius: 12,
     alignItems: "center",

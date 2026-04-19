@@ -274,8 +274,8 @@ const styles = StyleSheet.create({
   },
 
   qualitySelected: {
-    backgroundColor: "#E0F0FF",
-    borderColor: "#007AFF",
+    backgroundColor: "#E8E0FF",
+    borderColor: "#2c02a0",
   },
 
   notesInput: {
@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
   },
 
   saveButton: {
-    backgroundColor: "#007AFF",
+    backgroundColor: "#2c02a0",
     padding: 15,
     borderRadius: 12,
     alignItems: "center",
