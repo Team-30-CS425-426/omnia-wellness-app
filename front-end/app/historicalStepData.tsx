@@ -55,6 +55,20 @@ const monthDayNumber = (dateStr: string) => {
   return String(d.getDate());
 };
 
+const parseLocalYYYYMMDD = (s: string) => {
+  const [yy, mm, dd] = s.split("-").map(Number);
+  return new Date(yy, mm - 1, dd);
+};
+
+const weekdayHeaders = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+const stepsCardLabel = (value: number) => {
+  const total = Math.max(0, Math.round(Number(value) || 0));
+  if (total === 0) return "—";
+  if (total >= 1000) return `${(total / 1000).toFixed(1)}k`;
+  return `${total}`;
+};
+
 function SegmentedWM({
   value,
   onChange,
@@ -230,6 +244,54 @@ export default function StepDetailsScreen() {
     return displayedRange.map((item) => weekdayShort(item.date));
   }, [displayedRange]);
 
+  const calendarMonthTitle = useMemo(() => {
+    if (mode !== "M" || displayedRange.length === 0) return "Past 30 Days";
+
+    const first = parseLocalYYYYMMDD(displayedRange[0].date);
+    const last = parseLocalYYYYMMDD(displayedRange[displayedRange.length - 1].date);
+
+    const firstLabel = first.toLocaleDateString(undefined, {
+      month: "short",
+      year: "numeric",
+    });
+    const lastLabel = last.toLocaleDateString(undefined, {
+      month: "short",
+      year: "numeric",
+    });
+
+    return firstLabel === lastLabel ? firstLabel : `${firstLabel} - ${lastLabel}`;
+  }, [mode, displayedRange]);
+
+  const monthCalendarCells = useMemo(() => {
+    if (mode !== "M" || displayedRange.length === 0) return [];
+
+    const firstDate = parseLocalYYYYMMDD(displayedRange[0].date);
+    const leadingBlanks = firstDate.getDay();
+
+    const cells: Array<
+      | { type: "blank" }
+      | { type: "day"; item: { date: string; value: number }; originalIndex: number }
+    > = [];
+
+    for (let i = 0; i < leadingBlanks; i++) {
+      cells.push({ type: "blank" });
+    }
+
+    displayedRange.forEach((item, index) => {
+      cells.push({
+        type: "day",
+        item,
+        originalIndex: index,
+      });
+    });
+
+    while (cells.length % 7 !== 0) {
+      cells.push({ type: "blank" });
+    }
+
+    return cells;
+  }, [displayedRange, mode]);
+
   const barData = useMemo(() => {
     return displayedRange.map((d, i) => {
       const isSelected = selectedIndex === i;
@@ -268,7 +330,11 @@ export default function StepDetailsScreen() {
           <View style={{ width: 60 }} />
         </View>
 
-        <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
+        <ScrollView
+          contentContainerStyle={{
+            paddingBottom: Math.max(24, insets.bottom + 28),
+          }}
+        >
           <View style={{ paddingHorizontal: 14, marginTop: 6 }}>
             <SegmentedWM value={mode} onChange={setMode} />
           </View>
@@ -293,7 +359,103 @@ export default function StepDetailsScreen() {
             <Text style={{ paddingHorizontal: 14, color: "red" }}>{health.error}</Text>
           )}
 
+          {mode === "W" && (
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Steps</Text>
+
+              <View style={styles.weekRow}>
+                {displayedRange.map((item, index) => {
+                  const d = parseLocalYYYYMMDD(item.date);
+                  const weekday = d.toLocaleDateString(undefined, { weekday: "short" });
+                  const isSelected = selectedIndex === index;
+
+                  return (
+                    <Pressable
+                      key={item.date}
+                      onPress={() => setSelectedIndex(index)}
+                      style={[styles.dayItem, isSelected && styles.dayItemSelected]}
+                    >
+                      <Text
+                        style={[
+                          styles.weekdayText,
+                          isSelected && styles.weekdayTextSelected,
+                        ]}
+                      >
+                        {weekday}
+                      </Text>
+
+                      <Text
+                        style={[
+                          styles.dayNumber,
+                          isSelected && styles.dayNumberSelected,
+                        ]}
+                      >
+                        {d.getDate()}
+                      </Text>
+
+                      <Text style={styles.dayStepsText}>
+                        {stepsCardLabel(item.value)}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+          )}
+
+          {mode === "M" && (
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Steps</Text>
+              <Text style={styles.monthTitle}>{calendarMonthTitle}</Text>
+
+              <View style={styles.calendarHeaderRow}>
+                {weekdayHeaders.map((day) => (
+                  <Text key={day} style={styles.calendarHeaderText}>
+                    {day}
+                  </Text>
+                ))}
+              </View>
+
+              <View style={styles.calendarGrid}>
+                {monthCalendarCells.map((cell, index) => {
+                  if (cell.type === "blank") {
+                    return <View key={`blank-${index}`} style={styles.calendarCell} />;
+                  }
+
+                  const d = parseLocalYYYYMMDD(cell.item.date);
+                  const isSelected = cell.originalIndex === selectedIndex;
+
+                  return (
+                    <Pressable
+                      key={cell.item.date}
+                      onPress={() => setSelectedIndex(cell.originalIndex)}
+                      style={[
+                        styles.calendarCell,
+                        styles.calendarDayCell,
+                        isSelected && styles.calendarDayCellSelected,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.calendarDateText,
+                          isSelected && styles.calendarDateTextSelected,
+                        ]}
+                      >
+                        {d.getDate()}
+                      </Text>
+
+                      <Text style={styles.calendarStepsText}>
+                        {stepsCardLabel(cell.item.value)}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+          )}
+
           <View style={styles.chartCard}>
+
             <Text style={styles.cardTitle}>Steps</Text>
 
             {displayedRange.length === 0 && !health.loading ? (
@@ -441,6 +603,120 @@ const styles = StyleSheet.create({
     borderColor: "#E5E5EA",
     padding: 16,
     overflow: "hidden",
+  },
+  card: {
+    marginTop: 10,
+    marginHorizontal: 14,
+    backgroundColor: "white",
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#E5E5EA",
+    padding: 16,
+  },
+  
+  weekRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+  },
+  
+  dayItem: {
+    width: 42,
+    borderRadius: 20,
+    alignItems: "center",
+    paddingVertical: 8,
+  },
+  
+  dayItemSelected: {
+    backgroundColor: "#F9D923",
+  },
+  
+  weekdayText: {
+    fontSize: 12,
+    color: "#666",
+    fontWeight: "500",
+  },
+  
+  weekdayTextSelected: {
+    color: "#000",
+    fontWeight: "700",
+  },
+  
+  dayNumber: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: "#000",
+    marginTop: 2,
+  },
+  
+  dayNumberSelected: {
+    color: "#000",
+  },
+  
+  dayStepsText: {
+    fontSize: 11,
+    marginTop: 4,
+    color: "#C79A00",
+    fontWeight: "700",
+  },
+  
+  monthTitle: {
+    fontSize: 15,
+    color: "#8E8E93",
+    fontWeight: "700",
+    marginBottom: 12,
+  },
+  
+  calendarHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
+  
+  calendarHeaderText: {
+    width: "14.28%",
+    textAlign: "center",
+    fontSize: 11,
+    color: "#8E8E93",
+    fontWeight: "700",
+  },
+  
+  calendarGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+  },
+  
+  calendarCell: {
+    width: "14.28%",
+    aspectRatio: 0.9,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 8,
+  },
+  
+  calendarDayCell: {
+    borderRadius: 14,
+  },
+  
+  calendarDayCellSelected: {
+    backgroundColor: "#F9D923",
+  },
+  
+  calendarDateText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#000",
+    marginBottom: 4,
+  },
+  
+  calendarDateTextSelected: {
+    color: "#000",
+  },
+  
+  calendarStepsText: {
+    fontSize: 10,
+    color: "#C79A00",
+    fontWeight: "700",
   },
   cardTitle: {
     fontSize: 16,

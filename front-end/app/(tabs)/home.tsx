@@ -8,6 +8,7 @@ import { supabase } from "@/config/supabaseConfig";
 import useActiveEnergyDisplayed from "@/src/hooks/useHealthKit/activeEnergyDisplayed";
 import useStepsDisplayed from "@/src/hooks/useHealthKit/stepsDisplayed";
 import { getYesterdaySleepHours } from "@/src/services/sleepLogService";
+import { exportWellnessCsv } from '@/src/services/wellnessCSVExport';
 
 import { router } from "expo-router";
 
@@ -138,15 +139,22 @@ export default function HomeScreen() {
   };
 
   const handleExport = async () => {
-    if (!stepsHealth.isAuthorized) {
-      Alert.alert("Connect Apple Health first", "Then try exporting again.");
-      return;
-    }
+    try {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
   
-    Alert.alert(
-      "Sleep export not updated yet",
-      "Sleep now comes from manual logs, so this export needs to be updated separately."
-    );
+      if (userError) throw userError;
+      if (!user) throw new Error('No authenticated user found.');
+  
+      await exportWellnessCsv(user.id);
+    } catch (e: any) {
+      Alert.alert(
+        'Export failed',
+        e?.message || 'Could not export wellness data.'
+      );
+    }
   };
 
   const health = {

@@ -16,6 +16,7 @@ type MoodStressDay = {
   date: string; // YYYY-MM-DD
   mood: number; // 0 if none, otherwise 1-5
   stressLevel: number; // 0 if none, otherwise 1-10
+  notes: string | null;
 };
 
 const pad2 = (n: number) => String(n).padStart(2, "0");
@@ -125,7 +126,7 @@ export default function HistoricalMoodStressData() {
 
         const { data, error } = await supabase
           .from("StressLog")
-          .select("date, mood, stressLevel")
+          .select("date, mood, stressLevel, notes")
           .eq("userID", user.id)
           .gte("date", startKey)
           .order("date", { ascending: true });
@@ -136,13 +137,17 @@ export default function HistoricalMoodStressData() {
           return;
         }
 
-        const dayMap = new Map<string, { mood: number; stressLevel: number }>();
+        const dayMap = new Map<
+          string,
+          { mood: number; stressLevel: number; notes: string | null }
+        >();
 
         (data ?? []).forEach((row: any) => {
           const key = String(row.date).slice(0, 10);
           dayMap.set(key, {
             mood: Number(row.mood) || 0,
             stressLevel: Number(row.stressLevel) || 0,
+            notes: row.notes ?? null,
           });
         });
 
@@ -156,6 +161,7 @@ export default function HistoricalMoodStressData() {
             date: key,
             mood: dayData?.mood ?? 0,
             stressLevel: dayData?.stressLevel ?? 0,
+            notes: dayData?.notes ?? null,
           });
         }
 
@@ -178,6 +184,7 @@ export default function HistoricalMoodStressData() {
         date: localDayKey(new Date()),
         mood: 0,
         stressLevel: 0,
+        notes: null,
       };
     }
     return history[safeSelectedIndex];
@@ -195,6 +202,10 @@ export default function HistoricalMoodStressData() {
 
   const selectedEmoji = useMemo(() => moodToEmoji(selected.mood), [selected.mood]);
   const selectedMoodLabel = useMemo(() => moodToLabel(selected.mood), [selected.mood]);
+  const selectedMoodStressNote = useMemo(() => {
+    const note = selected?.notes ?? "";
+    return note.trim();
+  }, [selected]);
 
   const weekHistory = useMemo(() => history.slice(-7), [history]);
 
@@ -319,7 +330,11 @@ export default function HistoricalMoodStressData() {
           <View style={{ width: 60 }} />
         </View>
 
-        <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
+        <ScrollView
+            contentContainerStyle={{
+              paddingBottom: Math.max(24, insets.bottom + 28),
+            }}
+          >
           <View style={{ paddingHorizontal: 14, marginTop: 6 }}>
             <SegmentedWM value={mode} onChange={setMode} />
           </View>
@@ -536,6 +551,13 @@ export default function HistoricalMoodStressData() {
             <Text style={styles.showAllText}>Show All Data</Text>
             <Text style={styles.showAllChevron}>›</Text>
           </Pressable>
+
+          {selectedMoodStressNote ? (
+            <View style={styles.moodStressNotesCard}>
+              <Text style={styles.moodStressNotesTitle}>Notes</Text>
+              <Text style={styles.moodStressNotesText}>{selectedMoodStressNote}</Text>
+            </View>
+            ) : null}
         </ScrollView>
       </View>
     </SafeAreaView>
@@ -790,5 +812,31 @@ const styles = StyleSheet.create({
     fontSize: 26,
     color: "#C7C7CC",
     fontWeight: "400",
+  },
+
+  moodStressNotesCard: {
+    marginTop: 14,
+    marginHorizontal: 14,
+    marginBottom: 8,
+    backgroundColor: "white",
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#E5E5EA",
+    paddingHorizontal: 18,
+    paddingVertical: 18,
+  },
+  
+  moodStressNotesTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#EB5353",
+    marginBottom: 10,
+  },
+  
+  moodStressNotesText: {
+    fontSize: 20,
+    fontWeight: "500",
+    color: "#000",
+    lineHeight: 24,
   },
 });

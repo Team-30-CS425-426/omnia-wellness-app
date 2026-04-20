@@ -12,9 +12,10 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import { BarChart } from "react-native-gifted-charts";
 import { useFocusEffect } from "@react-navigation/native";
 import { supabase } from "@/config/supabaseConfig";
-import { getSleepHoursLastNDays } from "@/src/services/sleepLogService";
 
 type Mode = "W" | "M";
+
+const weekdayHeaders = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 const pad2 = (n: number) => String(n).padStart(2, "0");
 
@@ -52,6 +53,7 @@ const minutesToHrMin = (mins: number) => {
   if (rem === 0) return `${hr} hr`;
   return `${hr} hr ${rem} min`;
 };
+
 const minutesToParts = (mins: number) => {
   const m = Math.max(0, Math.round(mins));
   const hr = Math.floor(m / 60);
@@ -64,16 +66,39 @@ const minutesToParts = (mins: number) => {
     minuteUnit: "min",
   };
 };
+
 const weekdayShort = (dateStr: string) => {
   const d = new Date(`${dateStr}T00:00:00`);
   if (Number.isNaN(d.getTime())) return "";
   return d.toLocaleDateString(undefined, { weekday: "short" });
 };
 
+const parseLocalYYYYMMDD = (s: string) => {
+  const [yy, mm, dd] = s.split("-").map(Number);
+  return new Date(yy, mm - 1, dd);
+};
+
 const monthDayNumber = (dateStr: string) => {
   const d = new Date(`${dateStr}T00:00:00`);
   if (Number.isNaN(d.getTime())) return "";
   return String(d.getDate());
+};
+
+const sleepQualityToLabel = (value: number | null) => {
+  switch (value) {
+    case 5:
+      return "Excellent";
+    case 4:
+      return "Good";
+    case 3:
+      return "Fair";
+    case 2:
+      return "Poor";
+    case 1:
+      return "Very Poor";
+    default:
+      return "No Sleep Quality Logged";
+  }
 };
 
 function SegmentedWM({
@@ -112,7 +137,9 @@ export default function SleepDetailsScreen() {
   const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [sleepRange, setSleepRange] = useState<{ date: string; hours: number }[]>([]);
+  const [sleepRange, setSleepRange] = useState<
+    { date: string; hours: number; sleepQuality: number | null; notes: string | null }[]
+  >([]);
 
   const [mode, setMode] = useState<Mode>("W");
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
@@ -134,7 +161,56 @@ export default function SleepDetailsScreen() {
           if (userError) throw userError;
           if (!user) throw new Error("No authenticated user found.");
   
-          const rows = await getSleepHoursLastNDays(user.id, neededDays);
+          const end = addDays(startOfDay(new Date()), -1);
+          const start = addDays(end, -(neededDays - 1));
+          const startKey = localDayKey(start);
+          const endKey = localDayKey(end);
+  
+          const { data, error } = await supabase
+            .from("SleepLog")
+            .select("date, hoursSlept, sleepQuality, notes")
+            .eq("userID", user.id)
+            .gte("date", startKey)
+            .lte("date", endKey)
+            .order("date", { ascending: true });
+  
+          if (error) throw error;
+  
+          const byDate = new Map<
+            string,
+            { hours: number; sleepQuality: number | null; notes: string | null }
+          >();
+  
+          (data || []).forEach((row: any) => {
+            const key = String(row.date).slice(0, 10);
+            byDate.set(key, {
+              hours: Number(row.hoursSlept) || 0,
+              sleepQuality:
+                row.sleepQuality == null ? null : Number(row.sleepQuality),
+              notes: row.notes ?? null,
+            });
+          });
+  
+          const rows: {
+            date: string;
+            hours: number;
+            sleepQuality: number | null;
+            notes: string | null;
+          }[] = [];
+  
+          for (let i = 0; i < neededDays; i++) {
+            const d = addDays(start, i);
+            const key = localDayKey(d);
+            const found = byDate.get(key);
+  
+            rows.push({
+              date: key,
+              hours: found?.hours ?? 0,
+              sleepQuality: found?.sleepQuality ?? null,
+              notes: found?.notes ?? null,
+            });
+          }
+  
           setSleepRange(rows);
           setSelectedIndex(neededDays - 1);
         } catch (e: any) {
@@ -197,13 +273,13 @@ export default function SleepDetailsScreen() {
     if (mode === "W") {
       return sleepWeekSeries.dates.map((d, i) => ({
         date: localDayKey(d),
-        value: sleepWeekSeries.values[i] ?? 0, // minutes
+        value: sleepWeekSeries.values[i] ?? 0,
       }));
     }
 
     return sleepMonthSeries.dates.map((d, i) => ({
       date: localDayKey(d),
-      value: sleepMonthSeries.values[i] ?? 0, // minutes
+      value: sleepMonthSeries.values[i] ?? 0,
     }));
   }, [mode, sleepWeekSeries, sleepMonthSeries]);
 
@@ -286,6 +362,21 @@ export default function SleepDetailsScreen() {
     return minutesToParts(displaySummary.value);
   }, [displaySummary.value]);
 
+  const selectedSleepEntry = useMemo(() => {
+    if (selectedIndex === null || sleepRange.length === 0) return null;
+    const safeIndex = Math.max(0, Math.min(selectedIndex, sleepRange.length - 1));
+    return sleepRange[safeIndex] ?? null;
+  }, [selectedIndex, sleepRange]);
+  
+  const selectedSleepQualityLabel = useMemo(() => {
+    return sleepQualityToLabel(selectedSleepEntry?.sleepQuality ?? null);
+  }, [selectedSleepEntry]);
+  
+  const selectedSleepNote = useMemo(() => {
+    const note = selectedSleepEntry?.notes ?? "";
+    return note.trim();
+  }, [selectedSleepEntry]);
+
   const screenWidth = Dimensions.get("window").width;
   const cardMarginH = 14;
   const cardPadding = 16;
@@ -315,6 +406,61 @@ export default function SleepDetailsScreen() {
   const weekLabels = useMemo(() => {
     return displayedRange.map((item) => weekdayShort(item.date));
   }, [displayedRange]);
+
+  const calendarMonthTitle = useMemo(() => {
+    if (mode !== "M" || displayedRange.length === 0) return "Past 30 Days";
+
+    const first = parseLocalYYYYMMDD(displayedRange[0].date);
+    const last = parseLocalYYYYMMDD(displayedRange[displayedRange.length - 1].date);
+
+    const firstLabel = first.toLocaleDateString(undefined, {
+      month: "short",
+      year: "numeric",
+    });
+    const lastLabel = last.toLocaleDateString(undefined, {
+      month: "short",
+      year: "numeric",
+    });
+
+    return firstLabel === lastLabel ? firstLabel : `${firstLabel} - ${lastLabel}`;
+  }, [mode, displayedRange]);
+
+  const monthCalendarCells = useMemo(() => {
+    if (mode !== "M" || displayedRange.length === 0) return [];
+
+    const firstDate = parseLocalYYYYMMDD(displayedRange[0].date);
+    const leadingBlanks = firstDate.getDay();
+
+    const cells: Array<
+      | { type: "blank" }
+      | { type: "day"; item: { date: string; value: number }; originalIndex: number }
+    > = [];
+
+    for (let i = 0; i < leadingBlanks; i++) {
+      cells.push({ type: "blank" });
+    }
+
+    displayedRange.forEach((item, index) => {
+      cells.push({
+        type: "day",
+        item,
+        originalIndex: index,
+      });
+    });
+
+    while (cells.length % 7 !== 0) {
+      cells.push({ type: "blank" });
+    }
+
+    return cells;
+  }, [displayedRange, mode]);
+
+  const sleepCardLabel = (minutes: number) => {
+    const total = Math.max(0, Math.round(minutes || 0));
+    if (total === 0) return "—";
+    const hours = total / 60;
+    return `${hours.toFixed(1)}h`;
+  };
 
   const barData = useMemo(() => {
     return displayedRange.map((d, i) => {
@@ -354,7 +500,11 @@ export default function SleepDetailsScreen() {
           <View style={{ width: 60 }} />
         </View>
 
-        <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
+        <ScrollView
+            contentContainerStyle={{
+              paddingBottom: Math.max(24, insets.bottom + 28),
+            }}
+          >
           <View style={{ paddingHorizontal: 14, marginTop: 6 }}>
             <SegmentedWM value={mode} onChange={setMode} />
           </View>
@@ -375,6 +525,101 @@ export default function SleepDetailsScreen() {
           {!!loading && <Text style={{ paddingHorizontal: 14 }}>Loading...</Text>}
           {!!error && (
             <Text style={{ paddingHorizontal: 14, color: "red" }}>{error}</Text>
+          )}
+
+          {mode === "W" && (
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Sleep</Text>
+
+              <View style={styles.weekRow}>
+                {displayedRange.map((item, index) => {
+                  const d = parseLocalYYYYMMDD(item.date);
+                  const weekday = d.toLocaleDateString(undefined, { weekday: "short" });
+                  const isSelected = selectedIndex === index;
+
+                  return (
+                    <Pressable
+                      key={item.date}
+                      onPress={() => setSelectedIndex(index)}
+                      style={[styles.dayItem, isSelected && styles.dayItemSelected]}
+                    >
+                      <Text
+                        style={[
+                          styles.weekdayText,
+                          isSelected && styles.weekdayTextSelected,
+                        ]}
+                      >
+                        {weekday}
+                      </Text>
+
+                      <Text
+                        style={[
+                          styles.dayNumber,
+                          isSelected && styles.dayNumberSelected,
+                        ]}
+                      >
+                        {d.getDate()}
+                      </Text>
+
+                      <Text style={styles.daySleepText}>
+                        {sleepCardLabel(item.value)}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+          )}
+
+          {mode === "M" && (
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Sleep</Text>
+              <Text style={styles.monthTitle}>{calendarMonthTitle}</Text>
+
+              <View style={styles.calendarHeaderRow}>
+                {weekdayHeaders.map((day) => (
+                  <Text key={day} style={styles.calendarHeaderText}>
+                    {day}
+                  </Text>
+                ))}
+              </View>
+
+              <View style={styles.calendarGrid}>
+                {monthCalendarCells.map((cell, index) => {
+                  if (cell.type === "blank") {
+                    return <View key={`blank-${index}`} style={styles.calendarCell} />;
+                  }
+
+                  const d = parseLocalYYYYMMDD(cell.item.date);
+                  const isSelected = cell.originalIndex === selectedIndex;
+
+                  return (
+                    <Pressable
+                      key={cell.item.date}
+                      onPress={() => setSelectedIndex(cell.originalIndex)}
+                      style={[
+                        styles.calendarCell,
+                        styles.calendarDayCell,
+                        isSelected && styles.calendarDayCellSelected,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.calendarDateText,
+                          isSelected && styles.calendarDateTextSelected,
+                        ]}
+                      >
+                        {d.getDate()}
+                      </Text>
+
+                      <Text style={styles.calendarSleepText}>
+                        {sleepCardLabel(cell.item.value)}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
           )}
 
           <View style={styles.chartCard}>
@@ -450,6 +695,18 @@ export default function SleepDetailsScreen() {
             <Text style={styles.showAllText}>Show All Data</Text>
             <Text style={styles.showAllChevron}>›</Text>
           </Pressable>
+
+          <View style={styles.sleepQualityCard}>
+            <Text style={styles.sleepQualityTitle}>🛏️ Sleep Quality</Text>
+            <Text style={styles.sleepQualityValue}>{selectedSleepQualityLabel}</Text>
+          </View>
+
+          {selectedSleepNote ? (
+            <View style={styles.sleepNotesCard}>
+              <Text style={styles.sleepNotesTitle}>Notes</Text>
+              <Text style={styles.sleepNotesText}>{selectedSleepNote}</Text>
+            </View>
+          ) : null}
         </ScrollView>
       </View>
     </SafeAreaView>
@@ -516,6 +773,16 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 
+  card: {
+    marginTop: 10,
+    marginHorizontal: 14,
+    backgroundColor: "white",
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#E5E5EA",
+    padding: 16,
+  },
+
   chartCard: {
     marginTop: 10,
     marginHorizontal: 14,
@@ -526,11 +793,101 @@ const styles = StyleSheet.create({
     padding: 16,
     overflow: "hidden",
   },
+
   cardTitle: {
     fontSize: 16,
     color: "#8E8E93",
     fontWeight: "600",
     marginBottom: 6,
+  },
+
+  weekRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+  },
+  dayItem: {
+    width: 42,
+    borderRadius: 20,
+    alignItems: "center",
+    paddingVertical: 8,
+  },
+  dayItemSelected: {
+    backgroundColor: "#F9D923",
+  },
+  weekdayText: {
+    fontSize: 12,
+    color: "#666",
+    fontWeight: "500",
+  },
+  weekdayTextSelected: {
+    color: "#000",
+    fontWeight: "700",
+  },
+  dayNumber: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: "#000",
+    marginTop: 2,
+  },
+  dayNumberSelected: {
+    color: "#000",
+  },
+  daySleepText: {
+    fontSize: 11,
+    marginTop: 4,
+    color: "#187498",
+    fontWeight: "700",
+  },
+
+  monthTitle: {
+    fontSize: 15,
+    color: "#8E8E93",
+    fontWeight: "700",
+    marginBottom: 12,
+  },
+  calendarHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
+  calendarHeaderText: {
+    width: "14.28%",
+    textAlign: "center",
+    fontSize: 11,
+    color: "#8E8E93",
+    fontWeight: "700",
+  },
+  calendarGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+  },
+  calendarCell: {
+    width: "14.28%",
+    aspectRatio: 0.9,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 8,
+  },
+  calendarDayCell: {
+    borderRadius: 14,
+  },
+  calendarDayCellSelected: {
+    backgroundColor: "#F9D923",
+  },
+  calendarDateText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#000",
+    marginBottom: 4,
+  },
+  calendarDateTextSelected: {
+    color: "#000",
+  },
+  calendarSleepText: {
+    fontSize: 10,
+    color: "#187498",
+    fontWeight: "700",
   },
 
   topLabel: {
@@ -579,4 +936,55 @@ const styles = StyleSheet.create({
   },
   showAllText: { fontSize: 20, fontWeight: "400", color: "#000" },
   showAllChevron: { fontSize: 26, color: "#C7C7CC", fontWeight: "400" },
+  sleepQualityCard: {
+    marginTop: 14,
+    marginHorizontal: 14,
+    backgroundColor: "white",
+    borderRadius: 28,
+    borderWidth: 1,
+    borderColor: "#E5E5EA",
+    paddingHorizontal: 22,
+    paddingVertical: 24,
+  },
+  
+  sleepQualityTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#187498",
+    marginBottom: 14,
+  },
+  
+  sleepQualityValue: {
+    fontSize: 20,
+    fontWeight: "500",
+    color: "#000",
+    lineHeight: 34,
+  },
+  
+  sleepNotesCard: {
+    marginTop: 14,
+    marginHorizontal: 14,
+    marginBottom: 8,
+    backgroundColor: "white",
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#E5E5EA",
+    paddingHorizontal: 18,
+    paddingVertical: 18,
+  },
+  
+  sleepNotesTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#187498",
+    marginBottom: 10,
+  },
+
+  sleepNotesText: {
+    fontSize: 20,
+    fontWeight: "500",
+    color: "#000",
+    lineHeight: 24,
+
+  },
 });

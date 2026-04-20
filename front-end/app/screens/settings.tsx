@@ -26,6 +26,8 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useCameraPermissions } from 'expo-camera';
+
 import { useUser } from '../../contexts/UserContext';
 import ConfirmDeleteModal from '../components/DeleteConfirmationModal';
 import ThemedText from '../components/ThemedText';
@@ -59,6 +61,9 @@ export default function SettingsScreen() {
 
   const [healthKitEnabled, setHealthKitEnabled] = useState(false);
   const [healthKitLoading, setHealthKitLoading] = useState(false);
+
+  const [cameraPermission, requestCameraPermission] = useCameraPermissions();
+  const [cameraEnabled, setCameraEnabled] = useState(false);
 
   const [authorizationStatus] = useHealthkitAuthorization({
     toRead: [
@@ -97,15 +102,21 @@ export default function SettingsScreen() {
     console.log('authorizationStatus:', authorizationStatus);
 
     const granted =
-  authorizationStatus === AuthorizationRequestStatus.unnecessary;
+      authorizationStatus === AuthorizationRequestStatus.unnecessary;
 
     setHealthKitEnabled(granted);
   }, [authorizationStatus]);
 
+  const refreshCameraStatus = useCallback(() => {
+    const granted = !!cameraPermission?.granted;
+    setCameraEnabled(granted);
+  }, [cameraPermission]);
+
   useFocusEffect(
     useCallback(() => {
       refreshHealthKitStatus();
-    }, [refreshHealthKitStatus])
+      refreshCameraStatus();
+    }, [refreshHealthKitStatus, refreshCameraStatus])
   );
 
   const formatSelectedTime = (date: Date): string => {
@@ -216,6 +227,75 @@ export default function SettingsScreen() {
       'Apple Health Access',
       'To remove Apple Health access, update it in Health settings.\n\nSettings > Apps > Health > Data Access & Devices',
       [{ text: 'OK' }]
+    );
+  };
+
+  const handleCameraToggle = async (value: boolean) => {
+    if (value) {
+      Alert.alert(
+        'Camera Access',
+        'Omnia uses your camera to scan food barcodes.',
+        [
+          {
+            text: 'Deny',
+            style: 'cancel',
+            onPress: () => {
+              Alert.alert(
+                'Camera access not enabled',
+                'Barcode scanning will stay unavailable until camera access is allowed.',
+                [{ text: 'OK' }]
+              );
+            },
+          },
+          {
+            text: 'Allow',
+            onPress: async () => {
+              if (cameraPermission && cameraPermission.canAskAgain === false) {
+                Alert.alert(
+                  'Enable Camera in Settings',
+                  'Camera access was previously denied. Please enable it in your device Settings to use barcode scanning.',
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    {
+                      text: 'Open Settings',
+                      onPress: () => openAppSettings(),
+                    },
+                  ]
+                );
+                return;
+              }
+
+              const result = await requestCameraPermission();
+
+              if (result.granted) {
+                setCameraEnabled(true);
+              } else {
+                setCameraEnabled(false);
+                Alert.alert(
+                  'Camera access not enabled',
+                  'Barcode scanning will stay unavailable until camera access is allowed.',
+                  [{ text: 'OK' }]
+                );
+              }
+            },
+          },
+        ]
+      );
+      return;
+    }
+
+    Alert.alert(
+      'Turn Off Camera Access',
+      'Turning off camera access will block barcode scanning. To disable it, continue in your device Settings.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Go to Settings',
+          onPress: () => {
+            openAppSettings();
+          },
+        },
+      ]
     );
   };
 
@@ -357,7 +437,9 @@ export default function SettingsScreen() {
             )}
 
             <View style={[styles.sectionHeaderBlock, { marginTop: 18 }]}>
-              <ThemedText style={styles.sectionHeader}>Data &amp; Privacy</ThemedText>
+              <ThemedText style={styles.sectionHeader}>
+                Data &amp; Privacy
+              </ThemedText>
               <View style={styles.sectionLine} />
             </View>
 
@@ -374,6 +456,17 @@ export default function SettingsScreen() {
                 onValueChange={handleHealthKitToggle}
                 disabled={healthKitLoading}
               />
+            </View>
+
+            <View style={styles.switchCard}>
+              <View style={{ flex: 1, paddingRight: 12 }}>
+                <ThemedText style={styles.switchTitle}>Camera Access</ThemedText>
+                <ThemedText style={styles.settingDescription}>
+                  Allow access to the camera for barcode scanning.
+                </ThemedText>
+              </View>
+
+              <Switch value={cameraEnabled} onValueChange={handleCameraToggle} />
             </View>
 
             <View style={[styles.sectionHeaderBlock, { marginTop: 18 }]}>
