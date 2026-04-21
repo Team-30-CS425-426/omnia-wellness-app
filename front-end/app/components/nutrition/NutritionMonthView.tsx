@@ -6,8 +6,8 @@
  * with pointer tooltips and month date markers.
  */
 
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useRef } from 'react';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { LineChart } from 'react-native-gifted-charts';
 import { Colors } from '../../../constants/Colors';
 
@@ -21,8 +21,8 @@ type Props = {
     caloriesMaxValue: number;
     macrosMaxValue: number;
     monthMarkerLabels: string[];
-    nutritionHistory: any[];
     hasData: boolean;
+    onMonthSelect: (idx: number) => void;
 };
 
 const NutritionMonthView = ({
@@ -35,9 +35,10 @@ const NutritionMonthView = ({
     caloriesMaxValue,
     macrosMaxValue,
     monthMarkerLabels,
-    nutritionHistory,
     hasData,
+    onMonthSelect,
 }: Props) => {
+    const lastIdxRef = useRef<number>(caloriesLineData.length - 1);
     if (!hasData) {
         return (
             <>
@@ -54,7 +55,7 @@ const NutritionMonthView = ({
     }
 
     return (
-        <>
+        <Pressable onPress={() => onMonthSelect(caloriesLineData.length - 1)}>
             {/* Calories LineChart */}
             <View style={styles.chartCard}>
                 <Text style={styles.cardTitle}>Calories</Text>
@@ -82,6 +83,7 @@ const NutritionMonthView = ({
                         animationDuration={500}
                         thickness={2}
                         dataPointsRadius={0}
+                        persistPointer
                         pointerConfig={{
                             pointerStripColor: '#E5E5EA',
                             pointerStripWidth: 2,
@@ -92,8 +94,9 @@ const NutritionMonthView = ({
                             pointerLabelWidth: 120,
                             pointerLabelHeight: 60,
                             pointerLabelComponent: (items: any[]) => {
-                                const idx = items[0]?.index ?? 0;
-                                const dateLabel = nutritionHistory[idx]?.date?.slice(5) ?? '';
+                                const dataIndex = items[0]?.dataIndex ?? caloriesLineData.length - 1;
+                                lastIdxRef.current = dataIndex;
+                                const dateLabel = items[0]?.date?.slice(5) ?? '';
                                 return (
                                     <View style={styles.tooltipContainer}>
                                         <Text style={styles.tooltipTitle}>{dateLabel}</Text>
@@ -103,6 +106,7 @@ const NutritionMonthView = ({
                                     </View>
                                 );
                             },
+                            onResponderEnd: () => onMonthSelect(lastIdxRef.current),
                         }}
                     />
 
@@ -151,6 +155,7 @@ const NutritionMonthView = ({
                         thickness={2}
                         dataPointsRadius={0}
                         yAxisLabelSuffix="g"
+                        persistPointer
                         pointerConfig={{
                             pointerStripColor: '#E5E5EA',
                             pointerStripWidth: 2,
@@ -161,8 +166,9 @@ const NutritionMonthView = ({
                             pointerLabelWidth: 160,
                             pointerLabelHeight: 100,
                             pointerLabelComponent: (items: any[]) => {
-                                const idx = items[0]?.index ?? 0;
-                                const dateLabel = nutritionHistory[idx]?.date?.slice(5) ?? '';
+                                const dataIndex = items[0]?.dataIndex ?? caloriesLineData.length - 1;
+                                lastIdxRef.current = dataIndex;
+                                const dateLabel = items[0]?.date?.slice(5) ?? '';
                                 return (
                                     <View style={styles.tooltipContainer}>
                                         <Text style={styles.tooltipTitle}>{dateLabel}</Text>
@@ -178,6 +184,7 @@ const NutritionMonthView = ({
                                     </View>
                                 );
                             },
+                            onResponderEnd: () => onMonthSelect(lastIdxRef.current),
                         }}
                     />
 
@@ -207,7 +214,7 @@ const NutritionMonthView = ({
                     </View>
                 </View>
             </View>
-        </>
+        </Pressable>
     );
 };
 
