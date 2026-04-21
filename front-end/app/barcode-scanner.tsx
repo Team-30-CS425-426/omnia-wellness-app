@@ -18,6 +18,7 @@ import { supabase } from '../config/supabaseConfig';
 import { useUser } from '../contexts/UserContext';
 
 import { mapMealTypeToEventId } from '@/src/services/nutritionService';
+import * as Linking from 'expo-linking';
 
 type ScannedMealItem = {
   localId: string;
@@ -45,7 +46,6 @@ export default function BarcodeScannerScreen() {
 
   const selectedItem = scannedItems[selectedItemIndex] || null;
   const selectedFood = selectedItem?.food || null;
-
   const selectedServing =
     selectedFood?.servings?.serving?.[0] ||
     selectedFood?.servings?.serving ||
@@ -260,6 +260,7 @@ export default function BarcodeScannerScreen() {
       setSaving(false);
     }
   }
+
   function closeReviewAndReset() {
     setReviewVisible(false);
     setScannedItems([]);
@@ -278,14 +279,44 @@ export default function BarcodeScannerScreen() {
     return (
       <SafeAreaView style={styles.center}>
         <Text style={styles.message}>
-          We need camera access to scan food barcodes.
+          Camera access is required to scan food barcodes.
         </Text>
-        <Button title="Grant permission" onPress={requestPermission} />
+  
+        <TouchableOpacity
+          style={styles.permissionPrimaryButton}
+          onPress={async () => {
+            const result = await requestPermission();
+  
+            if (!result.granted && result.canAskAgain === false) {
+              Alert.alert(
+                'Camera access not enabled',
+                'Camera access was previously denied. Please enable it in your device Settings to use barcode scanning.',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  { text: 'Open Settings', onPress: () => Linking.openSettings() },
+                ]
+              );
+            } else if (!result.granted) {
+              Alert.alert(
+                'Camera access not enabled',
+                'Barcode scanning cannot be used unless camera access is allowed.',
+                [{ text: 'OK' }]
+              );
+            }
+          }}
+        >
+          <Text style={styles.permissionPrimaryButtonText}>Continue</Text>
+        </TouchableOpacity>
+  
+        <TouchableOpacity
+          style={[styles.permissionSecondaryButton, { marginTop: 12 }]}
+          onPress={() => router.back()}
+        >
+          <Text style={styles.permissionSecondaryButtonText}>Back</Text>
+        </TouchableOpacity>
       </SafeAreaView>
     );
   }
-
-  
 
   return (
     <SafeAreaView style={styles.container}>
@@ -789,5 +820,58 @@ const styles = StyleSheet.create({
     marginTop: -10,
     marginBottom: 20,
     overflow: 'hidden',
+  },
+  permissionCard: {
+    width: '100%',
+    maxWidth: 340,
+    backgroundColor: '#fff',
+    borderRadius: 18,
+    padding: 22,
+  },
+  
+  permissionTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 10,
+    color: '#222',
+  },
+  
+  permissionMessage: {
+    fontSize: 16,
+    lineHeight: 22,
+    color: '#555',
+    marginBottom: 20,
+  },
+  
+  permissionButtonRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 12,
+  },
+  
+  permissionSecondaryButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: '#F2F2F2',
+  },
+  
+  permissionSecondaryButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#444',
+  },
+  
+  permissionPrimaryButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: '#007AFF',
+  },
+  
+  permissionPrimaryButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
   },
 });

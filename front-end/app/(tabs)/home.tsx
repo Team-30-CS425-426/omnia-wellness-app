@@ -8,6 +8,8 @@ import { supabase } from "@/config/supabaseConfig";
 import useActiveEnergyDisplayed from "@/src/hooks/useHealthKit/activeEnergyDisplayed";
 import useStepsDisplayed from "@/src/hooks/useHealthKit/stepsDisplayed";
 import { getYesterdaySleepHours } from "@/src/services/sleepLogService";
+import { exportWellnessCsv } from '@/src/services/wellnessCSVExport';
+import { authorizeHealthKit } from "@/src/hooks/useHealthKit/healthAuthorization";
 
 import { router } from "expo-router";
 
@@ -105,48 +107,51 @@ export default function HomeScreen() {
     loadSleep();
   }, []);
 
-  const requireHealthKitAccess = () => {
+  const requireHealthKitAccess = async () => {
     const hasHealthPermission =
       authorizationStatus === AuthorizationRequestStatus.unnecessary;
   
-    if (!hasHealthPermission) {
-      Alert.alert(
-        "Apple HealthKit not enabled",
-        "Enable Apple HealthKit in Settings to view Steps and Active Energy.",
-        [
-          { text: "Cancel", style: "cancel" },
-          {
-            text: "Go to Settings",
-            onPress: () => router.push("/screens/settings" as const),
-          },
-        ]
-      );
-      return false;
+    if (hasHealthPermission) {
+      return true;
     }
   
-    return true;
+    try {
+      await authorizeHealthKit();
+      return true;
+    } catch (e) {
+      return false;
+    }
   };
 
-  const handleStepsPress = () => {
-    if (!requireHealthKitAccess()) return;
-    router.push("/historicalStepData" as any );
+  const handleStepsPress = async () => {
+    const allowed = await requireHealthKitAccess();
+    if (!allowed) return;
+    router.push("/historicalStepData");
   };
   
-  const handleActiveEnergyPress = () => {
-    if (!requireHealthKitAccess()) return;
-    router.push("/screens/activeEnergy" as const);
+  const handleActiveEnergyPress = async () => {
+    const allowed = await requireHealthKitAccess();
+    if (!allowed) return;
+    router.push("/screens/activeEnergy");
   };
 
   const handleExport = async () => {
-    if (!stepsHealth.isAuthorized) {
-      Alert.alert("Connect Apple Health first", "Then try exporting again.");
-      return;
-    }
+    try {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
   
-    Alert.alert(
-      "Sleep export not updated yet",
-      "Sleep now comes from manual logs, so this export needs to be updated separately."
-    );
+      if (userError) throw userError;
+      if (!user) throw new Error('No authenticated user found.');
+  
+      await exportWellnessCsv(user.id);
+    } catch (e: any) {
+      Alert.alert(
+        'Export failed',
+        e?.message || 'Could not export wellness data.'
+      );
+    }
   };
 
   const health = {
