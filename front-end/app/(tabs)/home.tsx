@@ -9,6 +9,7 @@ import useActiveEnergyDisplayed from "@/src/hooks/useHealthKit/activeEnergyDispl
 import useStepsDisplayed from "@/src/hooks/useHealthKit/stepsDisplayed";
 import { getYesterdaySleepHours } from "@/src/services/sleepLogService";
 import { exportWellnessCsv } from '@/src/services/wellnessCSVExport';
+import { authorizeHealthKit } from "@/src/hooks/useHealthKit/healthAuthorization";
 
 import { router } from "expo-router";
 
@@ -106,35 +107,31 @@ export default function HomeScreen() {
     loadSleep();
   }, []);
 
-  const requireHealthKitAccess = () => {
+  const requireHealthKitAccess = async () => {
     const hasHealthPermission =
       authorizationStatus === AuthorizationRequestStatus.unnecessary;
   
-    if (!hasHealthPermission) {
-      Alert.alert(
-        "Apple HealthKit not enabled",
-        "Enable Apple HealthKit in Settings to view Steps and Active Energy.",
-        [
-          { text: "Cancel", style: "cancel" },
-          {
-            text: "Go to Settings",
-            onPress: () => router.push("/screens/settings"),
-          },
-        ]
-      );
-      return false;
+    if (hasHealthPermission) {
+      return true;
     }
   
-    return true;
+    try {
+      await authorizeHealthKit();
+      return true;
+    } catch (e) {
+      return false;
+    }
   };
 
-  const handleStepsPress = () => {
-    if (!requireHealthKitAccess()) return;
+  const handleStepsPress = async () => {
+    const allowed = await requireHealthKitAccess();
+    if (!allowed) return;
     router.push("/historicalStepData");
   };
   
-  const handleActiveEnergyPress = () => {
-    if (!requireHealthKitAccess()) return;
+  const handleActiveEnergyPress = async () => {
+    const allowed = await requireHealthKitAccess();
+    if (!allowed) return;
     router.push("/screens/activeEnergy");
   };
 

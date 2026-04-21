@@ -15,7 +15,6 @@ import { BarChart } from "react-native-gifted-charts";
 import { useFocusEffect } from "@react-navigation/native";
 
 import { useUser } from "@/contexts/UserContext";
-import { getActivityMinutesLastNDays } from "@/src/services/workoutService";
 
 import { supabase } from "@/config/supabaseConfig";
 

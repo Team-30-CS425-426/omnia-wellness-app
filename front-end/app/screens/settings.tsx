@@ -32,17 +32,7 @@ import { useUser } from '../../contexts/UserContext';
 import ConfirmDeleteModal from '../components/DeleteConfirmationModal';
 import ThemedText from '../components/ThemedText';
 import ThemedView from '../components/ThemedView';
-
-import {
-  authorizeHealthKit,
-  isHealthKitAvailable,
-  openAppSettings,
-} from '@/src/hooks/useHealthKit/healthAuthorization';
-
-import {
-  AuthorizationRequestStatus,
-  useHealthkitAuthorization,
-} from '@kingstinct/react-native-healthkit';
+import { openAppSettings } from '@/src/hooks/useHealthKit/healthAuthorization';
 
 export default function SettingsScreen() {
   const navigation = useNavigation<any>();
@@ -59,20 +49,9 @@ export default function SettingsScreen() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
-  const [healthKitEnabled, setHealthKitEnabled] = useState(false);
-  const [healthKitLoading, setHealthKitLoading] = useState(false);
-
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
   const [cameraEnabled, setCameraEnabled] = useState(false);
 
-  const [authorizationStatus] = useHealthkitAuthorization({
-    toRead: [
-      'HKQuantityTypeIdentifierStepCount',
-      'HKCategoryTypeIdentifierSleepAnalysis',
-      'HKQuantityTypeIdentifierActiveEnergyBurned',
-    ],
-    toWrite: [],
-  });
 
   useEffect(() => {
     (async () => {
@@ -98,14 +77,6 @@ export default function SettingsScreen() {
     })();
   }, []);
 
-  const refreshHealthKitStatus = useCallback(() => {
-    console.log('authorizationStatus:', authorizationStatus);
-
-    const granted =
-      authorizationStatus === AuthorizationRequestStatus.unnecessary;
-
-    setHealthKitEnabled(granted);
-  }, [authorizationStatus]);
 
   const refreshCameraStatus = useCallback(() => {
     const granted = !!cameraPermission?.granted;
@@ -114,9 +85,8 @@ export default function SettingsScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      refreshHealthKitStatus();
       refreshCameraStatus();
-    }, [refreshHealthKitStatus, refreshCameraStatus])
+    }, [refreshCameraStatus])
   );
 
   const formatSelectedTime = (date: Date): string => {
@@ -193,42 +163,6 @@ export default function SettingsScreen() {
     );
   };
 
-  const handleHealthKitToggle = async (value: boolean) => {
-    if (!isHealthKitAvailable) {
-      Alert.alert('Unavailable', 'Apple HealthKit is only available on iPhone.');
-      return;
-    }
-
-    if (value) {
-      try {
-        setHealthKitLoading(true);
-
-        await authorizeHealthKit();
-        refreshHealthKitStatus();
-
-        Alert.alert(
-          'Apple HealthKit Connected',
-          'Apple Health permissions were enabled successfully.'
-        );
-      } catch (e: any) {
-        setHealthKitEnabled(false);
-        Alert.alert(
-          'Permission not granted',
-          e?.message || 'Apple HealthKit permission was not granted.'
-        );
-      } finally {
-        setHealthKitLoading(false);
-      }
-
-      return;
-    }
-
-    Alert.alert(
-      'Apple Health Access',
-      'To remove Apple Health access, update it in Health settings.\n\nSettings > Apps > Health > Data Access & Devices',
-      [{ text: 'OK' }]
-    );
-  };
 
   const handleCameraToggle = async (value: boolean) => {
     if (value) {
@@ -441,21 +375,6 @@ export default function SettingsScreen() {
                 Data &amp; Privacy
               </ThemedText>
               <View style={styles.sectionLine} />
-            </View>
-
-            <View style={styles.switchCard}>
-              <View style={{ flex: 1, paddingRight: 12 }}>
-                <ThemedText style={styles.switchTitle}>Apple HealthKit</ThemedText>
-                <ThemedText style={styles.settingDescription}>
-                  Allow access to steps and active energy data from Apple Health.
-                </ThemedText>
-              </View>
-
-              <Switch
-                value={healthKitEnabled}
-                onValueChange={handleHealthKitToggle}
-                disabled={healthKitLoading}
-              />
             </View>
 
             <View style={styles.switchCard}>
