@@ -5,25 +5,23 @@ import { Text } from 'react-native-elements';
 import Modal from 'react-native-modal';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router'; 
+import { Colors } from '../../constants/Colors';
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 
-const COLORS = {
-  primary: '#003cffff',
-  tabIconSelected: '#ffffffff',
-};
 
 interface Option {
   label: string;
   icon: IoniconName;
+  color: string;
 }
 
 const OPTIONS: Option[] = [
-  { label: 'Workout', icon: 'barbell' },
-  { label: 'Mood & Stress', icon: 'happy-outline' },
-  { label: 'Sleep', icon: 'bed-outline' },
-  { label: 'Nutrition', icon: 'restaurant-outline' },
-  { label: 'Habits', icon: 'checkmark-circle-outline'}
+  { label: 'Workout', icon: 'barbell', color: Colors.default.strongGreen },
+  { label: 'Mood & Stress', icon: 'happy-outline', color: Colors.default.candyRed },
+  { label: 'Sleep', icon: 'bed-outline', color: Colors.default.darkPurple},
+  { label: 'Nutrition', icon: 'restaurant-outline', color: Colors.default.successGreen },
+  { label: 'Habits', icon: 'checkmark-circle-outline', color: Colors.default.primaryBlue },
 ];
 
 const AddMenuButton = () => { 
@@ -80,7 +78,7 @@ const AddMenuButton = () => {
                   }, 200); 
                 }}
               >
-                <Ionicons name={item.icon} size={32} color="#007AFF" />
+                <Ionicons name={item.icon} size={32} color={item.color} />
                 <Text style={styles.gridLabel}>{item.label}</Text>
               </TouchableOpacity>
             ))}

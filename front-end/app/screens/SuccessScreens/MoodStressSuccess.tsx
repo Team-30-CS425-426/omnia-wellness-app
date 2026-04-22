@@ -6,7 +6,7 @@ import {
 } from 'react-native';
 import AnimatedBackground from '../../components/AnimateBackground';
 
-const RED = '#E53935';
+const RED = '#EB5353';
 
 interface Props {
   visible: boolean;

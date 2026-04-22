@@ -269,8 +269,8 @@ const styles = StyleSheet.create({
   },
 
   moodSelected: {
-    backgroundColor: "#E0F0FF",
-    borderColor: "#007AFF",
+    backgroundColor: "#FEE8E8",
+    borderColor: "#EB5353",
     borderWidth: 1,
   },
 
@@ -307,7 +307,7 @@ const styles = StyleSheet.create({
   },
 
   saveButton: {
-    backgroundColor: "#007AFF",
+    backgroundColor: "#EB5353",
     padding: 15,
     borderRadius: 12,
     alignItems: "center",

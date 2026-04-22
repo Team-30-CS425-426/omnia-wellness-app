@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ActivityIndicator, ScrollView } from 'react-native';
 import { useUser } from '@/contexts/UserContext'
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import LottieView from 'lottie-react-native';
 
 
 //import { onAuthStateChanged, signOut, User } from 'firebase/auth';
@@ -21,7 +22,7 @@ import ThemedButton from './components/ThemedButton'
 import ThemedCard from './components/ThemedCard';
 import { Colors } from '../constants/Colors';
 
-const INSIGHTS_STORAGE_KEY = 'cached_insights';
+
 
 const Insights = () => {
 
@@ -36,10 +37,10 @@ const Insights = () => {
     const totalTopPadding = insets.top;
     const { user } = useUser();
     const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
+
+    const INSIGHTS_STORAGE_KEY = `cached_insights_${user?.id}`; 
     
 
-    //const [user, setUser] = useState<User | null>(null);
-    //const [loading, setLoading] = useState(true);
 
     useEffect(() => {
       const loadCached = async () => {
@@ -124,13 +125,41 @@ const Insights = () => {
                 <View style={{ width: 60 }} />
               </View>
             <ThemedButton color={Colors.default.successGreen} onPress={fetchInsights} disabled={loading}>
+              <ThemedText style ={[styles.box, {color : Colors.default.white}]}> Generate Insights </ThemedText>
               {loading ? "Generating..." : "Generate Insights"}
             </ThemedButton>
     
             <Spacer height={20} />
-            {loading && <ActivityIndicator size="large" />}
+            {loading && (
+              <>
+              <LottieView
+                source = {require("../assets/animations/plant.json")}
+                autoPlay
+                loop
+                style={{ width: 400, height: 400, alignSelf: 'center', marginTop: 20 }}/>
+              
+              <ThemedText style={{textAlign: 'center', color: Colors.default.darkGray, marginTop: 20, fontWeight: "600", fontSize: 24}}>
+                    Insights Loading...
+              </ThemedText>
+
+              </>
+            )}
+
             {error && <ThemedText style={{ color: 'red' }}>{error}</ThemedText>}
-    
+            {!loading && insights.length === 0 && (
+                <>
+                <ThemedText style={{textAlign: 'center', color: Colors.default.darkGray, marginTop: 20, fontWeight: "600", fontSize: 24}}>
+                    You have no insights yet! Click "Generate Insights" to get personalized feedback.
+                </ThemedText>
+                <LottieView
+                  source={require('../assets/animations/cat.json')}
+                  autoPlay
+                  loop
+                  style={{ width: 400, height: 400, alignSelf: 'center', marginTop: 20 }}
+                  />
+                </>
+              
+            )}
             {insights.length > 0 &&
           insights.map((item, idx) => {
             const isExpanded = expandedIndex === idx;
@@ -219,5 +248,11 @@ const styles = StyleSheet.create({
       lineHeight: 40,
       textAlign: 'center',
   },
+    box:{
+      fontSize: 15,
+      fontWeight: '600',
+      textAlign: 'center'
+
+    }
     
 })

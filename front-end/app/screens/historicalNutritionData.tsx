@@ -90,11 +90,14 @@ const HistoricalNutritionData = () => {
 
     // Tracks which bar the user has tapped (null = no selection)
     const [selectedBarIndex, setSelectedBarIndex] = useState<number | null>(null);
+    // Tracks which point the user last touched in Month mode (null = most recent)
+    const [selectedMonthIndex, setSelectedMonthIndex] = useState<number | null>(null);
 
-    // Reset bar selection when switching modes so it defaults to the most recent entry
+    // Reset selections when switching modes so it defaults to the most recent entry
     const setMode = useCallback((next: Mode) => {
         setModeRaw(next);
         setSelectedBarIndex(null);
+        setSelectedMonthIndex(null);
     }, []);
 
     // Individual meal entries for the Day tab
@@ -117,6 +120,7 @@ const HistoricalNutritionData = () => {
                     setMonthCache(monthData);
                     setDayEntries(entries);
                     setSelectedBarIndex(null);
+                    setSelectedMonthIndex(null);
                 } catch (error) {
                     console.error('Error fetching nutrition data:', error);
                 }
@@ -183,6 +187,8 @@ const HistoricalNutritionData = () => {
     const proteinData = nutritionHistory.map((d, i) => ({
         value: d.protein,
         label: mode === "W" ? d.date.slice(5) : "",
+        date: d.date,
+        dataIndex: i,
     }));
 
     const carbsData = nutritionHistory.map((d) => ({
@@ -195,9 +201,11 @@ const HistoricalNutritionData = () => {
 
     // ── LINE CHART DATA for Calories (Month mode) ──
     const caloriesLineData = useMemo(() => {
-        return nutritionHistory.map((d) => ({
+        return nutritionHistory.map((d, i) => ({
             value: d.calories ?? 0,
             label: "",
+            date: d.date,
+            dataIndex: i,
         }));
     }, [nutritionHistory]);
 
@@ -219,13 +227,17 @@ const HistoricalNutritionData = () => {
 
     const selected = useMemo(() => {
         if (nutritionHistory.length === 0) return { date: '', calories: 0 };
-        // Clamp index to array bounds — prevents crash when switching modes
-        // while a bar from a larger dataset is still selected
+        if (mode === "M") {
+            const idx = selectedMonthIndex !== null && selectedMonthIndex < nutritionHistory.length
+                ? selectedMonthIndex
+                : nutritionHistory.length - 1;
+            return nutritionHistory[idx];
+        }
         const idx = selectedBarIndex != null && selectedBarIndex < nutritionHistory.length
             ? selectedBarIndex
             : nutritionHistory.length - 1;
         return nutritionHistory[idx];
-    }, [nutritionHistory, selectedBarIndex]);
+    }, [nutritionHistory, selectedBarIndex, selectedMonthIndex, mode]);
 
 
     // Line chart spacing for month mode
@@ -320,8 +332,8 @@ const HistoricalNutritionData = () => {
                             caloriesMaxValue={caloriesMaxValue}
                             macrosMaxValue={macrosMaxValue}
                             monthMarkerLabels={monthMarkerLabels}
-                            nutritionHistory={nutritionHistory}
                             hasData={hasData}
+                            onMonthSelect={setSelectedMonthIndex}
                         />
                     )}
                 </ScrollView>

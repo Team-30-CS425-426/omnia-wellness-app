@@ -12,7 +12,7 @@ const { width: W, height: H } = Dimensions.get('window');
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const STROKE_LENGTH = 1200; // approximate path length — tweak if needed
 
-const BLUE = '#007AFF';
+const BLUE = '#36AE7C';
 
 const workoutOptions: Record<string, string> = {
   '1': 'Running', '2': 'Strength Training', '3': 'Core / Ab Training',
