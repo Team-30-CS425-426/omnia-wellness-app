@@ -8,6 +8,10 @@ import {
   calculateWorkoutStreak,
   calculateLongestWorkoutStreak, // ADDED
 } from "./workoutStreakService";
+
+// ADDED: import sleep streak calculator
+import { calculateSleepStreak } from "./sleepStreakService";
+
 import { supabase } from "../../config/supabaseConfig";
 
 // Nutrition goal met today?
@@ -96,7 +100,6 @@ export async function checkAndAwardWorkoutBadges(userId: string) {
     console.log("✅ workout_goal_first award result:", result);
   }
 
-  
   // Keep this as current OR longest depending on your meaning.
   // Here, 2-week workout streak means user has achieved a 2-week streak at some point.
   if (longestStreak >= 2) {
@@ -108,5 +111,50 @@ export async function checkAndAwardWorkoutBadges(userId: string) {
     );
     console.log("✅ workout_streak_2 award result:", result);
   }
-  
+}
+
+/* =========================================================
+   ADDED: Sleep badge logic (matches mood/nutrition pattern)
+   ========================================================= */
+
+export async function checkAndAwardSleepBadges(userId: string) {
+  const today = getLocalDateString();
+
+  // ADDED: calculate current sleep streak
+  const currentStreak = await calculateSleepStreak(userId);
+
+  console.log("✅ Sleep streak for badge check:", currentStreak);
+
+  //  ADDED: first time meeting sleep goal (1-day streak)
+  if (currentStreak >= 1) {
+    const result = await awardBadge(
+      userId,
+      "sleep_goal_first",
+      today,
+      1
+    );
+    console.log("✅ sleep_goal_first award result:", result);
+  }
+
+  // ADDED: 3-day sleep streak badge
+  if (currentStreak >= 3) {
+    const result = await awardBadge(
+      userId,
+      "sleep_streak_3",
+      today,
+      currentStreak
+    );
+    console.log("✅ sleep_streak_3 award result:", result);
+  }
+
+  // OPTIONAL FUTURE BADGE (kept consistent with mood style)
+  if (currentStreak >= 7) {
+    const result = await awardBadge(
+      userId,
+      "sleep_streak_7",
+      today,
+      currentStreak
+    );
+    console.log("✅ sleep_streak_7 award result:", result);
+  }
 }

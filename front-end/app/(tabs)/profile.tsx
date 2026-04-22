@@ -84,6 +84,9 @@ const ProfilePage = () =>{
     const [workoutStreak, setWorkoutStreak] = useState(0);
     const [nutritionStreak, setNutritionStreak] = useState(0);
 
+    // ADDED: state for sleep streak shown in Profile tab
+    const [sleepStreak, setSleepStreak] = useState(0);
+
     // ADDED: state for earned badges shown in Profile tab
     const [userBadges, setUserBadges] = useState<UserBadgeRow[]>([]);
 
@@ -153,15 +156,20 @@ const ProfilePage = () =>{
         if (!user?.id) return;
 
         try {
-            const [mood, workout, nutrition] = await Promise.all([
+            const [mood, workout, nutrition, sleep] = await Promise.all([
                 getCategoryStreak(user.id, "mood"),
                 getCategoryStreak(user.id, "workout"),
                 getCategoryStreak(user.id, "nutrition"),
+                getCategoryStreak(user.id, "sleep") // CHANGED: now also fetches sleep streak
             ]);
 
             setMoodStreak(mood?.current_streak ?? 0);
             setWorkoutStreak(workout?.current_streak ?? 0);
             setNutritionStreak(nutrition?.current_streak ?? 0);
+
+            // ADDED: store sleep streak for Profile tab
+            setSleepStreak(sleep?.current_streak ?? 0);
+
           } catch (error) {
             console.error("Failed to fetch category streaks:", error);
           }
@@ -200,10 +208,7 @@ const ProfilePage = () =>{
         }
 
 
-    }, [fetchAllGoals, fetchCategoryStreaks, fetchUserBadges]); // ADDED
-
-
-
+    }, [fetchAllGoals, fetchCategoryStreaks, fetchUserBadges,user?.id]); // CHANGED: added user?.id
 
 
     // Re-fetch goals + streaks every time the profile tab comes into focus
@@ -225,7 +230,7 @@ const ProfilePage = () =>{
             }
 
 
-        }, [fetchAllGoals, fetchCategoryStreaks, fetchUserBadges]) // ADDED
+        }, [fetchAllGoals, fetchCategoryStreaks, fetchUserBadges, user?.id]) // CHANGED: added user?.id
     );
 
     const handleLogout = async () => {
@@ -414,6 +419,14 @@ const ProfilePage = () =>{
                         streakCount={nutritionStreak}
                         subtitle="Nutrition goal streak"
                     />
+
+                    {/* ADDED: Sleep streak card */}
+                    <CategoryStreakCard
+                        title="Sleep"
+                        streakCount={sleepStreak}
+                        subtitle="Sleep goal streak"
+                    />
+
                 </View>
 
                 <Spacer height={10} />

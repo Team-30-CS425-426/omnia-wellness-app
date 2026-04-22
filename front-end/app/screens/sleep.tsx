@@ -23,6 +23,12 @@ import {
   SleepQualityLabel,
 } from "../../src/services/sleepLogService";
 
+// ADDED: import sleep streak refresh
+import { refreshSleepStreak } from "../../src/services/sleepStreakService";
+
+// ADDED: import sleep badge awarding
+import { checkAndAwardSleepBadges } from "../../src/services/badgeAwardService";
+
 const SLEEP_QUALITIES = ["Excellent", "Good", "Fair", "Poor", "Very Poor"] as const;
 type SleepQuality = (typeof SLEEP_QUALITIES)[number];
 
@@ -34,13 +40,21 @@ const SleepTrackerScreen = () => {
     navigation.setOptions({ headerShown: false });
   }, [navigation]);
 
-  const [sleepStart, setSleepStart] = useState(new Date()); // bedtime
+  const [sleepStart, setSleepStart] = useState(new Date());
   const [wakeTime, setWakeTime] = useState(new Date());
   const [sleepQuality, setSleepQuality] = useState<SleepQuality | null>(null);
   const [notes, setNotes] = useState("");
 
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showWakePicker, setShowWakePicker] = useState(false);
+
+  // ADDED: helper to reset form
+  const resetForm = () => {
+    setSleepStart(new Date());
+    setWakeTime(new Date());
+    setSleepQuality(null);
+    setNotes("");
+  };
 
   // Handles saving sleep data to Supabase
   const handleSave = async () => {
@@ -54,23 +68,24 @@ const SleepTrackerScreen = () => {
       return;
     }
 
-    // Save to Supabase
+    // ADDED: trim notes before save
+    const trimmedNotes = notes.trim();
+
     const result = await insertSleepLog(user.id, {
       bedTime: sleepStart,
       wakeTime: wakeTime,
       sleepQualityLabel: sleepQuality as SleepQualityLabel,
-      notes: notes || undefined,
+      notes: trimmedNotes || undefined,
       // date is optional - backend defaults to today
     });
 
-    // Handle backend response 
     if (result.success) {
-      // Convert decimal hours into readable text, ex: 7h 30min
       const hoursText =
         result.data?.hoursSlept != null
           ? formatHoursToHMin(Number(result.data.hoursSlept))
           : "N/A";
 
+      // CHANGED: show success immediately
       Alert.alert(
         "Sleep Entry Saved!",
         `Bed: ${sleepStart.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}\n` +
@@ -79,12 +94,18 @@ const SleepTrackerScreen = () => {
           `Quality: ${sleepQuality}`
       );
 
-      setSleepStart(new Date());
-      setWakeTime(new Date());
-      setSleepQuality(null);
-      setNotes("");
+      // CHANGED: reset form immediately
+      resetForm();
+
+      // ADDED: refresh sleep streak, then award sleep badges in background
+      refreshSleepStreak(user.id)
+        .then(() => {
+          return checkAndAwardSleepBadges(user.id);
+        })
+        .catch((error) => {
+          console.error("Failed to refresh sleep streak / badges:", error);
+        });
     } else {
-      // Backend returned an error
       Alert.alert("Error", result.error || "Failed to save sleep entry");
     }
   };
