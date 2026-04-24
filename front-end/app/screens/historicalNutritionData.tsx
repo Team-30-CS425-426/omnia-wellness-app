@@ -142,7 +142,7 @@ const HistoricalNutritionData = () => {
     const cardInnerWidth = screenWidth - cardMarginH * 2 - cardPadding * 2;
     const availableWidth = cardInnerWidth - yAxisLabelWidth;
     const numBars = nutritionHistory.length || 1;
-    const spacing = mode === "W" ? 12 : 6;
+    const spacing = mode === "W" ? 14 : 6;
     const barWidth = Math.max(6, Math.floor((availableWidth - spacing * (numBars + 1)) / numBars));
 
     const maxCaloriesFromData = nutritionHistory.reduce(
@@ -177,9 +177,9 @@ const HistoricalNutritionData = () => {
 
     // ── Month marker labels (5 evenly spaced) ──
     const monthMarkerIdx = useMemo(() => [0, 7, 14, 21, 29], []);
-    const monthMarkerLabels = useMemo(() => {
-        return monthMarkerIdx.map((i) =>
-            nutritionHistory[i]?.date ? nutritionHistory[i].date.slice(5) : ""
+    const monthXAxisLabels = useMemo(() => {
+        return nutritionHistory.map((d, i) =>
+            monthMarkerIdx.includes(i) ? (d.date?.slice(5) ?? "") : ""
         );
     }, [nutritionHistory, monthMarkerIdx]);
 
@@ -207,7 +207,7 @@ const HistoricalNutritionData = () => {
             date: d.date,
             dataIndex: i,
         }));
-    }, [nutritionHistory]);
+    }, [nutritionHistory, monthMarkerIdx]);
 
     // Transform raw nutrition data into the format expected by BarChart (Week mode)
     const barData = useMemo(() => {
@@ -252,7 +252,7 @@ const HistoricalNutritionData = () => {
     }, [selected.date]);
 
     // Line chart spacing for month mode
-    const lineSpacingMonth = Math.floor(availableWidth / (numBars || 1));
+    const lineSpacingMonth = availableWidth / Math.max(numBars - 1, 1);
 
     const hasData = nutritionHistory.length > 0;
 
@@ -342,7 +342,6 @@ const HistoricalNutritionData = () => {
                             lineSpacingMonth={lineSpacingMonth}
                             caloriesMaxValue={caloriesMaxValue}
                             macrosMaxValue={macrosMaxValue}
-                            monthMarkerLabels={monthMarkerLabels}
                             hasData={hasData}
                             onMonthSelect={setSelectedMonthIndex}
                         />
