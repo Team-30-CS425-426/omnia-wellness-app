@@ -283,6 +283,8 @@ import {
                     value={draftTime}
                     mode="time"
                     display="spinner"
+                    textColor="#000000" //added 
+                    themeVariant="light" //added
                     onChange={(_, date) => {
                         if (date) setDraftTime(date);
                     }}
@@ -458,6 +460,8 @@ import {
     },
     picker: {
       alignSelf: 'center',
+      width: 320, //added
+      height: 180, //added
     },
     summaryCard: {
         backgroundColor: '#fff',
