@@ -9,6 +9,7 @@ export type CategoryType =
   | "workout"
   | "nutrition"
   | "sleep"
+  | "steps"
   | "habit";
 
 export type CategoryStreakRow = {

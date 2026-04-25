@@ -12,6 +12,9 @@ import {
 // ADDED: import sleep streak calculator
 import { calculateSleepStreak } from "./sleepStreakService";
 
+// ADDED: import steps streak calculator
+import { calculateStepsStreak } from "./stepsStreakService";
+
 import { supabase } from "../../config/supabaseConfig";
 
 // Nutrition goal met today?
@@ -158,3 +161,52 @@ export async function checkAndAwardSleepBadges(userId: string) {
     console.log("✅ sleep_streak_7 award result:", result);
   }
 }
+
+/* =========================================================
+   ✅ ADDED: Steps badge logic
+   ========================================================= */
+
+export async function checkAndAwardStepsBadges(userId: string) {
+  const today = getLocalDateString();
+
+  // ADDED: calculate current steps streak
+  const currentStreak = await calculateStepsStreak(userId);
+
+  console.log("✅ Steps streak for badge check:", currentStreak);
+
+  // ADDED: first time meeting steps goal
+  if (currentStreak >= 1) {
+    const result = await awardBadge(
+      userId,
+      "steps_goal_first",
+      today,
+      1
+    );
+    console.log("✅ steps_goal_first award result:", result);
+  }
+
+  // ADDED: 3-day steps streak badge
+  if (currentStreak >= 3) {
+    const result = await awardBadge(
+      userId,
+      "steps_streak_3",
+      today,
+      currentStreak
+    );
+    console.log("✅ steps_streak_3 award result:", result);
+  }
+
+  // ADDED: 7-day steps streak badge
+  if (currentStreak >= 7) {
+    const result = await awardBadge(
+      userId,
+      "steps_streak_7",
+      today,
+      currentStreak
+    );
+    console.log("✅ steps_streak_7 award result:", result);
+  }
+}
+
+
+
