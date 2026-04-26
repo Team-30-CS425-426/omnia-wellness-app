@@ -10,6 +10,8 @@ import { BarChart } from "react-native-gifted-charts";
 import { supabase } from "@/config/supabaseConfig";
 import { useUser } from "@/contexts/UserContext";
 
+import { getUserMoodGoals } from "@/src/services/moodGoalService";
+
 type Mode = "W" | "M";
 
 type MoodStressDay = {
@@ -103,6 +105,48 @@ function SegmentedWM({
   );
 }
 
+type MoodGoalStatus = "met" | "partial" | "notMet" | "none";
+
+function MoodGoalRing({
+  emoji,
+  status,
+  size = 34,
+  ringWidth = 4,
+  emojiScale = 0.45,
+}: {
+  emoji: string;
+  status: MoodGoalStatus;
+  size?: number;
+  ringWidth?: number;
+  emojiScale?: number;
+}) {
+  const ringColor =
+    status === "met"
+      ? "#34C759"
+      : status === "partial"
+      ? "#FFA726"
+      : status === "notMet"
+      ? "#FF3B30"
+      : "#C7C7CC";
+
+  return (
+    <View
+      style={[
+        styles.moodGoalRing,
+        {
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          borderColor: ringColor,
+          borderWidth: ringWidth,
+        },
+      ]}
+    >
+      <Text style={{ fontSize: size * emojiScale }}>{emoji || "—"}</Text>
+    </View>
+  );
+}
+
 export default function HistoricalMoodStressData() {
   const insets = useSafeAreaInsets();
   const { user } = useUser();
@@ -110,6 +154,39 @@ export default function HistoricalMoodStressData() {
   const [mode, setMode] = useState<Mode>("W");
   const [history, setHistory] = useState<MoodStressDay[]>([]);
   const [selectedIndex, setSelectedIndex] = useState<number>(6);
+  const [moodStressGoalData, setMoodStressGoalData] = useState<{
+    target_mood: number;
+    target_stress_level: number;
+    daily_checkins: number;
+  } | null>(null);
+  
+  const [checkingGoal, setCheckingGoal] = useState(true);
+
+  useFocusEffect(
+    useCallback(() => {
+      async function checkGoal() {
+        if (!user?.id) {
+          setMoodStressGoalData(null);
+          setCheckingGoal(false);
+          return;
+        }
+  
+        try {
+          setCheckingGoal(true);
+  
+          const goal = await getUserMoodGoals(user.id);
+          setMoodStressGoalData(goal);
+        } catch (error) {
+          console.log("Failed to check mood/stress goal:", error);
+          setMoodStressGoalData(null);
+        } finally {
+          setCheckingGoal(false);
+        }
+      }
+  
+      checkGoal();
+    }, [user?.id])
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -189,6 +266,71 @@ export default function HistoricalMoodStressData() {
     }
     return history[safeSelectedIndex];
   }, [history, safeSelectedIndex]);
+
+  const moodGoal = moodStressGoalData?.target_mood ?? 5;
+  const stressGoal = moodStressGoalData?.target_stress_level ?? 5;
+  const dailyCheckinsGoal = moodStressGoalData?.daily_checkins ?? 1;
+
+  const getMoodRangeStatus = (
+    loggedMood: number,
+    goalMood: number
+  ): MoodGoalStatus => {
+    if (!loggedMood) return "none";
+  
+    if (loggedMood === goalMood) return "met";
+  
+    if (goalMood <= 2) {
+      return [1, 3].includes(loggedMood) ? "partial" : "notMet";
+    }
+  
+    if (goalMood === 3) {
+      return [2, 4].includes(loggedMood) ? "partial" : "notMet";
+    }
+  
+    return [3, 4, 5].includes(loggedMood) ? "partial" : "notMet";
+  };
+  
+  const getStressRangeStatus = (
+    loggedStress: number,
+    goalStress: number
+  ): MoodGoalStatus => {
+    if (!loggedStress) return "none";
+  
+    if (loggedStress === goalStress) return "met";
+  
+    if (goalStress <= 4) {
+      return loggedStress >= 1 && loggedStress <= 5 ? "partial" : "notMet";
+    }
+  
+    if (goalStress === 5) {
+      return loggedStress === 4 || loggedStress === 6 ? "partial" : "notMet";
+    }
+  
+    return loggedStress >= 5 && loggedStress <= 10 ? "partial" : "notMet";
+  };
+  
+  const getMoodStressGoalStatus = (
+    mood: number,
+    stressLevel: number
+  ): MoodGoalStatus => {
+    if (!mood && !stressLevel) return "none";
+  
+    const moodStatus = getMoodRangeStatus(mood, moodGoal);
+    const stressStatus = getStressRangeStatus(stressLevel, stressGoal);
+  
+    const score =
+      (moodStatus === "met" ? 1 : moodStatus === "partial" ? 0.5 : 0) +
+      (stressStatus === "met" ? 1 : stressStatus === "partial" ? 0.5 : 0);
+  
+    if (score === 2) return "met";
+    if (score > 0) return "partial";
+    return "notMet";
+  };
+
+  const selectedGoalStatus = getMoodStressGoalStatus(
+    selected.mood,
+    selected.stressLevel
+  );
 
   const selectedDateText = useMemo(() => {
     const d = parseLocalYYYYMMDD(selected.date);
@@ -392,7 +534,11 @@ export default function HistoricalMoodStressData() {
                           {d.getDate()}
                         </Text>
 
-                        <Text style={styles.dayEmoji}>{moodToEmoji(item.mood) || "—"}</Text>
+                        <MoodGoalRing
+                          emoji={moodToEmoji(item.mood)}
+                          status={getMoodStressGoalStatus(item.mood, item.stressLevel)}
+                          size={34}
+                        />
                       </Pressable>
                     );
                   })}
@@ -484,9 +630,11 @@ export default function HistoricalMoodStressData() {
                           {d.getDate()}
                         </Text>
 
-                        <Text style={styles.calendarEmoji}>
-                          {moodToEmoji(cell.item.mood) || "—"}
-                        </Text>
+                        <MoodGoalRing
+                          emoji={moodToEmoji(cell.item.mood)}
+                          status={getMoodStressGoalStatus(cell.item.mood, cell.item.stressLevel)}
+                          size={30}
+                        />
                       </Pressable>
                     );
                   })}
@@ -551,6 +699,57 @@ export default function HistoricalMoodStressData() {
             <Text style={styles.showAllText}>Show All Data</Text>
             <Text style={styles.showAllChevron}>›</Text>
           </Pressable>
+
+          <View style={styles.goalResultCard}>
+            <View style={styles.goalResultContent}>
+            <MoodGoalRing
+              emoji={selectedEmoji}
+              status={selectedGoalStatus}
+              size={88}
+              ringWidth={6}
+              emojiScale={0.65}
+            />
+
+              <View style={styles.goalResultTextBlock}>
+                <Text style={styles.goalResultTitle}>Daily Goal</Text>
+                <Text style={styles.goalResultSubtitle}>
+                  Mood: {selectedMoodLabel} {selectedEmoji || ""}
+                  {"\n"}
+                  Stress: {selected.stressLevel > 0 ? `${selected.stressLevel}/10` : "No log"}
+                </Text>
+
+                <Text style={styles.goalResultSmallText}>
+                  Goal:
+                  {"\n"}Mood: {moodToLabel(moodGoal)} {moodToEmoji(moodGoal)}
+                  {"\n"}Stress: {stressGoal}/10
+                </Text>
+
+                <Text style={styles.goalResultSmallText}>
+                  Status:{" "}
+                  {selectedGoalStatus === "met"
+                    ? "Met"
+                    : selectedGoalStatus === "partial"
+                    ? "Partially met"
+                    : selectedGoalStatus === "notMet"
+                    ? "Not met"
+                    : "No log"}
+                </Text>
+                              </View>
+            </View>
+
+            <Pressable
+              style={styles.editGoalButton}
+              onPress={() =>
+                router.push({
+                  pathname: "/screens/moodStressGoal",
+                  params: { mode: "edit" },
+                } as any)
+              }
+            >
+              <Text style={styles.editGoalText}>Edit Goal</Text>
+              <Text style={styles.editGoalChevron}>›</Text>
+            </Pressable>
+          </View>
 
           {selectedMoodStressNote ? (
             <View style={styles.moodStressNotesCard}>
@@ -838,5 +1037,75 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     color: "#000",
     lineHeight: 24,
+  },
+  moodGoalRing: {
+    borderWidth: 4,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "white",
+    marginTop: 4,
+  },
+  
+  goalResultCard: {
+    marginTop: 14,
+    marginHorizontal: 14,
+    backgroundColor: "white",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#E5E5EA",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  
+  goalResultContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+  
+  goalResultTextBlock: {
+    marginLeft: 12,
+    flexShrink: 1,
+  },
+  
+  goalResultTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#555",
+  },
+  
+  goalResultSubtitle: {
+    fontSize: 13,
+    color: "#555",
+    fontWeight: "600",
+    marginTop: 8,
+  },
+  
+  goalResultSmallText: {
+    fontSize: 11,
+    color: "#8E8E93",
+    marginTop: 5,
+  },
+  
+  editGoalButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginLeft: 10,
+  },
+  
+  editGoalText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#555",
+  },
+  
+  editGoalChevron: {
+    fontSize: 30,
+    fontWeight: "700",
+    color: "#000",
+    marginLeft: 8,
   },
 });
