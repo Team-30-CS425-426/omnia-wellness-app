@@ -57,12 +57,17 @@ import { deleteMoodGoal, getUserMoodGoals } from '../../src/services/moodGoalSer
 import { getCategoryStreak } from "../../src/services/categoryStreakService";
 import CategoryStreakCard from "../components/CategoryStreakCard";
 
-// ADDED: imports for badges
-import { getUserBadges, UserBadgeRow } from "../../src/services/badgeService";
+
+// CHANGED: now fetches all badges with earned/locked status
+import { getAllBadgesWithStatus, FullBadge } from "../../src/services/badgeService";
 import BadgeCard from "../components/BadgeCard";
 
 // ADDED: temporary backfill import for workout badges
 import { checkAndAwardWorkoutBadges } from "../../src/services/badgeAwardService";
+
+// TEMPORARY: steps streak/badge backfill for testing
+import { refreshStepsStreak } from "../../src/services/stepsStreakService";
+import { checkAndAwardStepsBadges } from "../../src/services/badgeAwardService";
 
 
 
@@ -84,8 +89,15 @@ const ProfilePage = () =>{
     const [workoutStreak, setWorkoutStreak] = useState(0);
     const [nutritionStreak, setNutritionStreak] = useState(0);
 
-    // ADDED: state for earned badges shown in Profile tab
-    const [userBadges, setUserBadges] = useState<UserBadgeRow[]>([]);
+    // ADDED: state for sleep streak shown in Profile tab
+    const [sleepStreak, setSleepStreak] = useState(0);
+
+    // ADDED: state for steps streak shown in Profile tab
+    const [stepsStreak, setStepsStreak] = useState(0);
+
+    // CHANGED: this now stores all badges, including locked badges
+    const [userBadges, setUserBadges] = useState<FullBadge[]>([]);
+    
 
 
     /**
@@ -177,33 +189,56 @@ const ProfilePage = () =>{
         if (!user?.id) return;
 
         try {
-            const [mood, workout, nutrition] = await Promise.all([
+            const [mood, workout, nutrition, sleep, steps] = await Promise.all([
                 getCategoryStreak(user.id, "mood"),
                 getCategoryStreak(user.id, "workout"),
                 getCategoryStreak(user.id, "nutrition"),
+                getCategoryStreak(user.id, "sleep"), // CHANGED: now also fetches sleep streak
+                getCategoryStreak(user.id, "steps"), // CHANGED: now also fetches steps streak
             ]);
 
             setMoodStreak(mood?.current_streak ?? 0);
             setWorkoutStreak(workout?.current_streak ?? 0);
             setNutritionStreak(nutrition?.current_streak ?? 0);
+
+            // ADDED: store sleep streak for Profile tab
+            setSleepStreak(sleep?.current_streak ?? 0);
+
+            // ADDED: store steps streak for Profile tab
+            setStepsStreak(steps?.current_streak ?? 0);
+
           } catch (error) {
             console.error("Failed to fetch category streaks:", error);
           }
         }, [user?.id]);
 
-
-
-    // ADDED: fetch earned badges for Profile tab
+    // CHANGED: fetch all badges, including locked/unearned badges
     const fetchUserBadges = useCallback(async () => {
         if (!user?.id) return;
 
         try {
-            const badges = await getUserBadges(user.id);
+            const badges = await getAllBadgesWithStatus(user.id);
+            //const badges = await getUserBadges(user.id);
             setUserBadges(badges);
         } catch (error) {
             console.error("Failed to fetch user badges:", error);
         }
     }, [user?.id]);
+
+    // TEMPORARY: force-refresh steps streak and badges when Profile loads/focuses
+    // This helps while testing because changing steps_goal in Supabase does not automatically trigger recalculation.
+    const refreshStepsForTesting = useCallback(async () => {
+        if (!user?.id) return;
+
+        try {
+            await refreshStepsStreak(user.id);
+            await checkAndAwardStepsBadges(user.id);
+            await fetchCategoryStreaks();
+            await fetchUserBadges();
+        } catch (error) {
+            console.error("Failed to refresh steps streak / badges:", error);
+        }
+    }, [user?.id, fetchCategoryStreaks, fetchUserBadges]);
     
 
 
@@ -223,11 +258,11 @@ const ProfilePage = () =>{
                 });
         }
 
+        // TEMPORARY: refresh steps streak/badges on initial Profile load
+        refreshStepsForTesting();
 
-    }, [fetchAllGoals, fetchCategoryStreaks, fetchUserBadges]); // ADDED
 
-
-
+    }, [fetchAllGoals, fetchCategoryStreaks, fetchUserBadges,user?.id]); // CHANGED: added user?.id
 
 
     // Re-fetch goals + streaks every time the profile tab comes into focus
@@ -248,8 +283,11 @@ const ProfilePage = () =>{
                     });
             }
 
+            // TEMPORARY: refresh steps streak/badges when Profile tab opens
+            refreshStepsForTesting();
 
-        }, [fetchAllGoals, fetchCategoryStreaks, fetchUserBadges]) // ADDED
+
+        }, [fetchAllGoals, fetchCategoryStreaks, fetchUserBadges, user?.id]) // CHANGED: added user?.id
     );
 
 
@@ -437,8 +475,23 @@ const ProfilePage = () =>{
                     <CategoryStreakCard
                         title="Nutrition"
                         streakCount={nutritionStreak}
-                        subtitle="Nutrition goal streak"
+                        subtitle="Daily nutrition goal streak"
                     />
+
+                    {/* ADDED: Sleep streak card */}
+                    <CategoryStreakCard
+                        title="Sleep"
+                        streakCount={sleepStreak}
+                        subtitle="Daily sleep goal streak"
+                    />
+
+                    {/* ADDED: Steps streak card */}
+                    <CategoryStreakCard
+                        title="Steps"
+                        streakCount={stepsStreak}
+                        subtitle="Daily steps goal streak"
+                    />
+
                 </View>
 
                 <Spacer height={10} />
@@ -457,19 +510,22 @@ const ProfilePage = () =>{
                         showsHorizontalScrollIndicator={false}
                         contentContainerStyle={styles.badgesScrollContent}
                     >
+
                         {userBadges.length > 0 ? (
                             userBadges.map((badge) => (
                                 <BadgeCard
-                                    key={badge.id}
-                                    icon={badge.badge_definitions?.icon}
-                                    title={badge.badge_definitions?.title ?? "Badge"}
+                                    key={badge.definition.id}
+                                    icon={badge.definition.icon}
+                                    title={badge.definition.title}
                                     subtitle={
-                                        badge.earned_at
-                                            ? `Earned ${new Date(badge.earned_at).toLocaleDateString()}`
-                                            : undefined
+                                        badge.earned
+                                            ? `Earned ${new Date(badge.earned_at!).toLocaleDateString()}`
+                                            : "Locked"
                                     }
+                                    locked={!badge.earned}
                                 />
                             ))
+
                         ) : (
                             <BadgeCard
                                 icon="🏅"

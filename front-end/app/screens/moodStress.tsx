@@ -275,12 +275,12 @@ const styles = StyleSheet.create({
   },
 
   emoji: {
-    fontSize: 32,
+    fontSize: 40,
   },
 
   moodLabel: {
     marginTop: 5,
-    fontSize: 14,
+    fontSize: 10, //14
     textAlign: "center",
   },
 

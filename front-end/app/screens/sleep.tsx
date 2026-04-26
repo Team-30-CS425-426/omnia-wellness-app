@@ -20,9 +20,14 @@ import SleepSuccess from "./SuccessScreens/SleepSuccess";
 import { useUser } from "../../contexts/UserContext";
 import {
   insertSleepLog,
-  formatHoursToHMin,
   SleepQualityLabel,
 } from "../../src/services/sleepLogService";
+
+// ADDED: import sleep streak refresh
+import { refreshSleepStreak } from "../../src/services/sleepStreakService";
+
+// ADDED: import sleep badge awarding
+import { checkAndAwardSleepBadges } from "../../src/services/badgeAwardService";
 
 const SLEEP_QUALITIES = ["Excellent", "Good", "Fair", "Poor", "Very Poor"] as const;
 type SleepQuality = (typeof SLEEP_QUALITIES)[number];
@@ -51,6 +56,13 @@ const SleepTrackerScreen = () => {
   const [loggedHours, setLoggedHours] = useState(0);
   const [loggedBedtime, setLoggedBedtime] = useState('');
   const [loggedQuality, setLoggedQuality] = useState(0);
+  // ADDED: helper to reset form
+  const resetForm = () => {
+    setSleepStart(new Date());
+    setWakeTime(new Date());
+    setSleepQuality(null);
+    setNotes("");
+  };
 
   // Handles saving sleep data to Supabase
   const handleSave = async () => {
@@ -64,23 +76,35 @@ const SleepTrackerScreen = () => {
       return;
     }
 
+    // ADDED: trim notes before save
+    const trimmedNotes = notes.trim();
+
     const result = await insertSleepLog(user.id, {
       bedTime: sleepStart,
       wakeTime: wakeTime,
       sleepQualityLabel: sleepQuality as SleepQualityLabel,
-      notes: notes || undefined,
+      notes: trimmedNotes || undefined,
+      // date is optional - backend defaults to today
     });
 
     if (result.success) {
       setLoggedHours(Number(result.data?.hoursSlept ?? 0));
-      setLoggedBedtime(sleepStart.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+      setLoggedBedtime(
+        sleepStart.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      );
       setLoggedQuality(qualityToNumber[sleepQuality] ?? 5);
       setShowSuccess(true);
-
-      setSleepStart(new Date());
-      setWakeTime(new Date());
-      setSleepQuality(null);
-      setNotes("");
+    
+      resetForm();
+    
+      refreshSleepStreak(user.id)
+        .then(() => checkAndAwardSleepBadges(user.id))
+        .catch((error) => {
+          console.error("Failed to refresh sleep streak / badges:", error);
+        });
     } else {
       Alert.alert("Error", result.error || "Failed to save sleep entry");
     }
@@ -94,26 +118,34 @@ const SleepTrackerScreen = () => {
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View style={styles.container}>
-            {/* Custom Header */}
             <View style={styles.header}>
-              <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => navigation.goBack()}
+              >
                 <Text style={styles.backArrow}>{"←"}</Text>
                 <Text style={styles.backText}>Back</Text>
               </TouchableOpacity>
+  
               <Text style={styles.headerTitle}>Sleep Tracker</Text>
               <View style={{ width: 60 }} />
             </View>
-
-            {/* Page Title */}
+  
             <Text style={styles.pageTitle}>Log Your Sleep</Text>
-
-            {/* Sleep Start */}
+  
             <Text style={styles.sectionLabel}>Sleep Start</Text>
-            <TouchableOpacity style={styles.timeInput} onPress={() => setShowStartPicker(true)}>
+            <TouchableOpacity
+              style={styles.timeInput}
+              onPress={() => setShowStartPicker(true)}
+            >
               <Text>
-                {sleepStart.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                {sleepStart.toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
               </Text>
             </TouchableOpacity>
+  
             {showStartPicker && (
               <DateTimePicker
                 value={sleepStart}
@@ -124,14 +156,20 @@ const SleepTrackerScreen = () => {
                 }}
               />
             )}
-
-            {/* Wake Time */}
+  
             <Text style={styles.sectionLabel}>Wake Time</Text>
-            <TouchableOpacity style={styles.timeInput} onPress={() => setShowWakePicker(true)}>
+            <TouchableOpacity
+              style={styles.timeInput}
+              onPress={() => setShowWakePicker(true)}
+            >
               <Text>
-                {wakeTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                {wakeTime.toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
               </Text>
             </TouchableOpacity>
+  
             {showWakePicker && (
               <DateTimePicker
                 value={wakeTime}
@@ -142,8 +180,7 @@ const SleepTrackerScreen = () => {
                 }}
               />
             )}
-
-            {/* Sleep Quality */}
+  
             <Text style={styles.sectionLabel}>Sleep Quality</Text>
             <View style={styles.qualityContainer}>
               {SLEEP_QUALITIES.map((quality) => (
@@ -159,8 +196,7 @@ const SleepTrackerScreen = () => {
                 </TouchableOpacity>
               ))}
             </View>
-
-            {/* Notes */}
+  
             <Text style={styles.sectionLabel}>Notes (Optional)</Text>
             <TextInput
               style={styles.notesInput}
@@ -170,15 +206,14 @@ const SleepTrackerScreen = () => {
               onChangeText={setNotes}
               multiline
             />
-
-            {/* Save Button */}
+  
             <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
               <Text style={styles.saveButtonText}>Save Sleep</Text>
             </TouchableOpacity>
           </View>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
-
+  
       {showSuccess && (
         <View style={StyleSheet.absoluteFill}>
           <SleepSuccess
@@ -196,7 +231,8 @@ const SleepTrackerScreen = () => {
       )}
     </View>
   );
-};
+  };
+  
 
 const styles = StyleSheet.create({
   container: {

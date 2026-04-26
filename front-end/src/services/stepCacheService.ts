@@ -1,5 +1,11 @@
 import { supabase } from "../../config/supabaseConfig";
 
+// ADDED: import steps streak refresh
+import { refreshStepsStreak } from "./stepsStreakService";
+
+// ADDED: import steps badge awarding
+import { checkAndAwardStepsBadges } from "./badgeAwardService";
+
 // helper: always format month/day as 2 digits
 const pad2 = (n: number) => String(n).padStart(2, "0");
 
@@ -48,6 +54,15 @@ export async function upsertStepCache(
     .upsert(rows, { onConflict: "userID,date" });
 
   if (error) throw error;
+
+  // ADDED: refresh steps streak and award steps badges after StepCache updates
+  refreshStepsStreak(userId)
+    .then(() => {
+      return checkAndAwardStepsBadges(userId);
+    })
+    .catch((err) => {
+      console.error("Failed to refresh steps streak / badges:", err);
+    });
 }
 
 export async function getStepCacheLastNDays(
