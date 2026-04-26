@@ -56,8 +56,9 @@ import { deleteMoodGoal, getUserMoodGoals } from '../../src/services/moodGoalSer
 import { getCategoryStreak } from "../../src/services/categoryStreakService";
 import CategoryStreakCard from "../components/CategoryStreakCard";
 
-// ADDED: imports for badges
-import { getUserBadges, UserBadgeRow } from "../../src/services/badgeService";
+
+// CHANGED: now fetches all badges with earned/locked status
+import { getAllBadgesWithStatus, FullBadge } from "../../src/services/badgeService";
 import BadgeCard from "../components/BadgeCard";
 
 // ADDED: temporary backfill import for workout badges
@@ -94,8 +95,9 @@ const ProfilePage = () =>{
     // ADDED: state for steps streak shown in Profile tab
     const [stepsStreak, setStepsStreak] = useState(0);
 
-    // ADDED: state for earned badges shown in Profile tab
-    const [userBadges, setUserBadges] = useState<UserBadgeRow[]>([]);
+    // CHANGED: this now stores all badges, including locked badges
+    const [userBadges, setUserBadges] = useState<FullBadge[]>([]);
+    
 
 
     /**
@@ -186,14 +188,13 @@ const ProfilePage = () =>{
           }
         }, [user?.id]);
 
-
-
-    // ADDED: fetch earned badges for Profile tab
+    // CHANGED: fetch all badges, including locked/unearned badges
     const fetchUserBadges = useCallback(async () => {
         if (!user?.id) return;
 
         try {
-            const badges = await getUserBadges(user.id);
+            const badges = await getAllBadgesWithStatus(user.id);
+            //const badges = await getUserBadges(user.id);
             setUserBadges(badges);
         } catch (error) {
             console.error("Failed to fetch user badges:", error);
@@ -484,19 +485,22 @@ const ProfilePage = () =>{
                         showsHorizontalScrollIndicator={false}
                         contentContainerStyle={styles.badgesScrollContent}
                     >
+
                         {userBadges.length > 0 ? (
                             userBadges.map((badge) => (
                                 <BadgeCard
-                                    key={badge.id}
-                                    icon={badge.badge_definitions?.icon}
-                                    title={badge.badge_definitions?.title ?? "Badge"}
+                                    key={badge.definition.id}
+                                    icon={badge.definition.icon}
+                                    title={badge.definition.title}
                                     subtitle={
-                                        badge.earned_at
-                                            ? `Earned ${new Date(badge.earned_at).toLocaleDateString()}`
-                                            : undefined
+                                        badge.earned
+                                            ? `Earned ${new Date(badge.earned_at!).toLocaleDateString()}`
+                                            : "Locked"
                                     }
+                                    locked={!badge.earned}
                                 />
                             ))
+
                         ) : (
                             <BadgeCard
                                 icon="🏅"

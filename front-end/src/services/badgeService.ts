@@ -67,14 +67,12 @@ export async function awardBadge(
 ) {
   const badge = await getBadgeDefinitionByKey(badgeKey);
 
-  // ADDED: debug log
   console.log("✅ badge lookup:", badgeKey, badge);
 
   if (!badge) return null;
 
   const alreadyEarned = await hasUserEarnedBadge(userId, badge.id);
 
-  // ADDED: debug log
   console.log("✅ already earned:", alreadyEarned);
 
   if (alreadyEarned) return null;
@@ -94,13 +92,91 @@ export async function awardBadge(
     .single();
 
   if (error) {
-    // ADDED: debug log
     console.error("❌ awardBadge insert error:", error);
     throw error;
   }
 
-  // ADDED: debug log
   console.log("✅ badge inserted:", data);
 
   return data as UserBadgeRow;
+}
+
+/* =========================================================
+   NEW: Fetch ALL badge definitions (for locked badges)
+   ========================================================= */
+
+export async function getAllBadgeDefinitions() {
+  const { data, error } = await supabase
+    .from("badge_definitions")
+    .select("*")
+    .order("category", { ascending: true });
+
+  if (error) throw error;
+
+  return (data ?? []) as BadgeDefinition[];
+}
+
+/* =========================================================
+  NEW: Combine earned + locked badges
+   ========================================================= */
+
+export type FullBadge = {
+  definition: BadgeDefinition;
+  earned: boolean;
+  earned_at?: string;
+};
+
+export async function getAllBadgesWithStatus(userId: string): Promise<FullBadge[]> {
+  const [definitions, userBadges] = await Promise.all([
+    getAllBadgeDefinitions(),
+    getUserBadges(userId),
+  ]);
+
+  const badges = definitions.map((def) => {
+    const earned = userBadges.find((b) => b.badge_id === def.id);
+
+    return {
+      definition: def,
+      earned: !!earned,
+      earned_at: earned?.earned_at,
+    };
+  });
+
+  // ADDED: category display order for Profile badges
+  const categoryOrder = ["mood", "nutrition", "workout", "sleep", "steps"];
+
+  // ADDED: progression order based on badge key
+  const getProgressionRank = (badgeKey: string) => {
+    if (badgeKey.includes("goal_first")) return 1;
+    if (badgeKey.includes("streak_2")) return 2;
+    if (badgeKey.includes("streak_3")) return 3;
+    if (badgeKey.includes("streak_7")) return 7;
+    if (badgeKey.includes("streak_14")) return 14;
+    if (badgeKey.includes("streak_30")) return 30;
+    return 999;
+  };
+
+  // ADDED: sort by category → earned first within category → progression
+  badges.sort((a, b) => {
+    const categoryA = categoryOrder.indexOf(a.definition.category);
+    const categoryB = categoryOrder.indexOf(b.definition.category);
+
+    const safeCategoryA = categoryA === -1 ? 999 : categoryA;
+    const safeCategoryB = categoryB === -1 ? 999 : categoryB;
+
+    if (safeCategoryA !== safeCategoryB) {
+      return safeCategoryA - safeCategoryB;
+    }
+
+    if (a.earned !== b.earned) {
+      return a.earned ? -1 : 1;
+    }
+
+    return (
+      getProgressionRank(a.definition.badge_key) -
+      getProgressionRank(b.definition.badge_key)
+    );
+  });
+
+  return badges;
 }
