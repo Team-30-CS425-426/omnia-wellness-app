@@ -299,7 +299,7 @@ function MoodStress({ value = "" }: { value?: string }) {
   return (
     <MetricItem
       circleLabel={value}
-      label="Mood/Stress"
+      label="Mood"
       color="#EB5353"
       isEmoji={true}
     />
