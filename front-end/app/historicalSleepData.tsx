@@ -16,6 +16,7 @@ import { Goal } from "lucide-react-native";
 import Svg, { Circle } from "react-native-svg";
 import { getSleepGoal } from "@/src/services/sleepGoalService";
 
+
 type Mode = "W" | "M";
 
 const weekdayHeaders = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];

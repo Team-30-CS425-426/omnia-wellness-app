@@ -11,6 +11,7 @@ import { supabase } from "@/config/supabaseConfig";
 import { useUser } from "@/contexts/UserContext";
 
 import { getUserMoodGoals } from "@/src/services/moodGoalService";
+import { Goal } from "lucide-react-native";
 
 type Mode = "W" | "M";
 
@@ -534,11 +535,15 @@ export default function HistoricalMoodStressData() {
                           {d.getDate()}
                         </Text>
 
-                        <MoodGoalRing
-                          emoji={moodToEmoji(item.mood)}
-                          status={getMoodStressGoalStatus(item.mood, item.stressLevel)}
-                          size={34}
-                        />
+                        {moodStressGoalData ? (
+                          <MoodGoalRing
+                            emoji={moodToEmoji(item.mood)}
+                            status={getMoodStressGoalStatus(item.mood, item.stressLevel)}
+                            size={34}
+                          />
+                        ) : (
+                          <Text style={styles.dayEmoji}>{moodToEmoji(item.mood) || "—"}</Text>
+                        )}
                       </Pressable>
                     );
                   })}
@@ -630,11 +635,17 @@ export default function HistoricalMoodStressData() {
                           {d.getDate()}
                         </Text>
 
-                        <MoodGoalRing
-                          emoji={moodToEmoji(cell.item.mood)}
-                          status={getMoodStressGoalStatus(cell.item.mood, cell.item.stressLevel)}
-                          size={30}
-                        />
+                        {moodStressGoalData ? (
+                          <MoodGoalRing
+                            emoji={moodToEmoji(cell.item.mood)}
+                            status={getMoodStressGoalStatus(cell.item.mood, cell.item.stressLevel)}
+                            size={30}
+                          />
+                        ) : (
+                          <Text style={styles.calendarEmoji}>
+                            {moodToEmoji(cell.item.mood) || "—"}
+                          </Text>
+                        )}
                       </Pressable>
                     );
                   })}
@@ -700,56 +711,81 @@ export default function HistoricalMoodStressData() {
             <Text style={styles.showAllChevron}>›</Text>
           </Pressable>
 
-          <View style={styles.goalResultCard}>
-            <View style={styles.goalResultContent}>
-            <MoodGoalRing
-              emoji={selectedEmoji}
-              status={selectedGoalStatus}
-              size={88}
-              ringWidth={6}
-              emojiScale={0.65}
-            />
-
-              <View style={styles.goalResultTextBlock}>
-                <Text style={styles.goalResultTitle}>Daily Goal</Text>
-                <Text style={styles.goalResultSubtitle}>
-                  Mood: {selectedMoodLabel} {selectedEmoji || ""}
-                  {"\n"}
-                  Stress: {selected.stressLevel > 0 ? `${selected.stressLevel}/10` : "No log"}
-                </Text>
-
-                <Text style={styles.goalResultSmallText}>
-                  Goal:
-                  {"\n"}Mood: {moodToLabel(moodGoal)} {moodToEmoji(moodGoal)}
-                  {"\n"}Stress: {stressGoal}/10
-                </Text>
-
-                <Text style={styles.goalResultSmallText}>
-                  Status:{" "}
-                  {selectedGoalStatus === "met"
-                    ? "Met"
-                    : selectedGoalStatus === "partial"
-                    ? "Partially met"
-                    : selectedGoalStatus === "notMet"
-                    ? "Not met"
-                    : "No log"}
-                </Text>
-                              </View>
-            </View>
-
+          {!checkingGoal && !moodStressGoalData && (
             <Pressable
-              style={styles.editGoalButton}
-              onPress={() =>
-                router.push({
-                  pathname: "/screens/moodStressGoal",
-                  params: { mode: "edit" },
-                } as any)
-              }
+              style={styles.goalCard}
+              onPress={() => router.push("/screens/moodStressGoal" as any)}
             >
-              <Text style={styles.editGoalText}>Edit Goal</Text>
-              <Text style={styles.editGoalChevron}>›</Text>
+              <View style={styles.goalLeft}>
+              <Goal size={36} color="#EB5353" strokeWidth={2.5} />
+
+                <View>
+                  <Text style={styles.goalTitle}>Goals Not Set</Text>
+                  <Text style={styles.goalSubtitle}>
+                    Get started by setting a mood & stress goal
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.goalRight}>
+                <Text style={styles.goalSetText}>Set Goal</Text>
+                <Text style={styles.goalChevron}>›</Text>
+              </View>
             </Pressable>
-          </View>
+          )}
+
+          {!checkingGoal && moodStressGoalData && (
+            <View style={styles.goalResultCard}>
+              <View style={styles.goalResultContent}>
+                <MoodGoalRing
+                  emoji={selectedEmoji}
+                  status={selectedGoalStatus}
+                  size={88}
+                  ringWidth={6}
+                  emojiScale={0.65}
+                />
+
+                <View style={styles.goalResultTextBlock}>
+                  <Text style={styles.goalResultTitle}>Daily Goal</Text>
+                  <Text style={styles.goalResultSubtitle}>
+                    Mood: {selectedMoodLabel} {selectedEmoji || ""}
+                    {"\n"}
+                    Stress: {selected.stressLevel > 0 ? `${selected.stressLevel}/10` : "No log"}
+                  </Text>
+
+                  <Text style={styles.goalResultSmallText}>
+                    Goal:
+                    {"\n"}Mood: {moodToLabel(moodGoal)} {moodToEmoji(moodGoal)}
+                    {"\n"}Stress: {stressGoal}/10
+                  </Text>
+
+                  <Text style={styles.goalResultSmallText}>
+                    Status:{" "}
+                    {selectedGoalStatus === "met"
+                      ? "Met"
+                      : selectedGoalStatus === "partial"
+                      ? "Partially met"
+                      : selectedGoalStatus === "notMet"
+                      ? "Not met"
+                      : "No log"}
+                  </Text>
+                </View>
+              </View>
+
+              <Pressable
+                style={styles.editGoalButton}
+                onPress={() =>
+                  router.push({
+                    pathname: "/screens/moodStressGoal",
+                    params: { mode: "edit" },
+                  } as any)
+                }
+              >
+                <Text style={styles.editGoalText}>Edit Goal</Text>
+                <Text style={styles.editGoalChevron}>›</Text>
+              </Pressable>
+            </View>
+          )}
 
           {selectedMoodStressNote ? (
             <View style={styles.moodStressNotesCard}>
@@ -1107,5 +1143,58 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#000",
     marginLeft: 8,
+  },
+  goalCard: {
+    marginTop: 10,
+    marginHorizontal: 14,
+    backgroundColor: "white",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#E5E5EA",
+    paddingVertical: 16,
+    paddingLeft: 10,
+    paddingRight: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  
+  goalLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    flex: 1,
+    marginRight: 8,
+  },
+  goalTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#EB5353",
+  },
+  
+  goalSubtitle: {
+    fontSize: 13,
+    color: "#000",
+    marginTop: 2,
+    width: 210,
+  },
+  
+  goalRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    flexShrink: 0,
+    marginLeft: 12,
+  },
+  
+  goalSetText: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#EB5353",
+  },
+  
+  goalChevron: {
+    fontSize: 25,
+    color: "#EB5353",
   },
 });
