@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-from src.services import supabase_client
 from src.services import llm
 import json
 
@@ -27,7 +26,6 @@ def build_daily_df(data: dict) -> pd.DataFrame:
     activity = pd.DataFrame(data["activity"])
     sleep = pd.DataFrame(data["sleep"])
     stress = pd.DataFrame(data["stress"])
-
 
     #---- Stress: ---
     if not stress.empty:
@@ -81,7 +79,7 @@ def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
     
 
     # --- Hypothesis features ---
-    df["late_workout"] = df["workoutTimeMinutes"] > 1080        # workout after 8pm
+    df["late_workout"] = df["workoutTimeMinutes"] > 1200        # workout after 8pm
     df["high_calorie_day"] = df["calories"] > df["calories"].mean()
     df["well_rested"] = df["hoursSlept"] >= 6.5
     df["late_bedtime"] = df["bedTimeMinutes"] > 1380            # bed after 11pm
@@ -90,63 +88,10 @@ def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
 
     return df
 
-
-def compute_targeted_correlations(df: pd.DataFrame) -> dict:
-    """
-    Test specific hypotheses as correlation pairs.
-    Returns a dict of question -> correlation value.
-    """
-    hypotheses = {
-        "late workout → sleep quality that night":
-            (df["late_workout"].astype(float), df["sleepQuality"]),
-
-        "late workout → hours slept that night":
-            (df["late_workout"].astype(float), df["hoursSlept"]),
-
-        "workout intensity → sleep quality that night":
-            (df["intensity"], df["sleepQuality"]),
-
-        "workout intensity → hours slept that night":
-            (df["intensity"], df["hoursSlept"]),
-
-        "late bedtime → hours slept":
-            (df["bedTimeMinutes"], df["hoursSlept"]),
-
-        "calories eaten → next day workout duration":
-            (df["calories"], df["duration"].shift(-1)),
-
-        "poor sleep last night → more calories today":
-            (df["prev_sleepQuality"], df["calories"]),
-
-        "poor sleep last night → lower workout intensity today":
-            (df["prev_sleepQuality"], df["intensity"]),
-
-        "high protein → better sleep quality":
-            (df["protein"], df["sleepQuality"]),
-        
-        "meditated → lower stress that day": 
-            (df["meditated"].astype(float), df["stressLevel"]),
-            
-        "meditated → better sleep quality": 
-            (df["meditated"].astype(float), df["sleepQuality"]),
-    }
-
-    results = {}
-    for question, (x, y) in hypotheses.items():
-        # need at least 5 overlapping non-null points
-        valid = x.notna() & y.notna()
-        if valid.sum() >= 5:
-            results[question] = round(x[valid].corr(y[valid]), 2)
-        else:
-            results[question] = None  # not enough data
-
-    return results
-
-def compute_open_correlations(df: pd.DataFrame, threshold: float = 0.3) -> dict:
+def compute_open_correlations(df: pd.DataFrame, threshold: float = 0.5) -> dict:
     """
     Compute all pairwise Pearson correlations across numeric columns.
     Returns only pairs where |r| >= threshold and n >= 5 overlapping rows.
-    This surfaces relationships not captured by targeted hypotheses.
     """
     numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
 
@@ -178,7 +123,7 @@ def compute_open_correlations(df: pd.DataFrame, threshold: float = 0.3) -> dict:
     return dict(sorted(results.items(), key=lambda x: abs(x[1]), reverse=True))
 
 
-def format_for_llm(df: pd.DataFrame, correlations: dict, open_correlations:dict) -> str:
+def format_for_llm(df: pd.DataFrame, open_correlations:dict) -> str:
     """
     Build a clean prompt-ready string summarizing findings.
     """
@@ -190,25 +135,11 @@ def format_for_llm(df: pd.DataFrame, correlations: dict, open_correlations:dict)
     "",
     "Here are health pattern correlations for this user over the past 30 days:\n",
 ]
-
-    for question, value in correlations.items():
-        if value is None:
-            lines.append(f"- {question}: not enough data")
-        else:
-            direction = "positive" if value > 0 else "negative"
-            strength = (
-                "strong" if abs(value) > 0.6
-                else "moderate" if abs(value) > 0.3
-                else "weak"
-            )
-            lines.append(f"- {question}: {value} ({strength} {direction} correlation)")
-            
-            
             
     lines.append("\nOpen correlations (data-driven, all significant pairs):\n")
     for pair, value in open_correlations.items():
         direction = "positive" if value > 0 else "negative"
-        strength = "strong" if abs(value) > 0.5 else "moderate" if abs(value) > 0.25 else "weak"
+        strength = "strong" if abs(value) > 0.6 else "moderate"
         lines.append(f"- {pair}: {value} ({strength} {direction})")
 
     lines.append("\nDescriptive stats:")
@@ -232,12 +163,13 @@ def format_for_llm(df: pd.DataFrame, correlations: dict, open_correlations:dict)
     """)
     lines.append("""
         User context:
-        - A late workout is defined as any workout after 7:30pm
+        - A late workout is defined as any workout after 8:00pm
         - A late bedtime is defined as after 11pm
         - This user tends to sleep better after late workouts due to physical exhaustion
         - A positive correlation between late workout and sleep quality/hours is expected and healthy for this user
         - sleepQuality is scored 1-3 (1=poor, 3=good)
         - intensity is scored 1-3 (1=low, 3=high)
+        - stressLevel is scored 1-10 (1=low, 10 = high)
     """)
     
 
@@ -251,8 +183,7 @@ def run_correlation_pipeline(data: dict) -> str:
     """
     df = build_daily_df(data)
     df = engineer_features(df)
-    correlations = compute_targeted_correlations(df)
-    open_correlations = compute_open_correlations(df, threshold = .3)
-    prompt = format_for_llm(df, correlations, open_correlations)
+    open_correlations = compute_open_correlations(df, threshold = .5)
+    prompt = format_for_llm(df, open_correlations)
     response = llm.generate_response(prompt)
     return json.loads(response)

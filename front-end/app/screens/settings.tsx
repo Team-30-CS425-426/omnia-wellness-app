@@ -4,16 +4,17 @@ import {
   disableDailyCheckInReminder,
   loadReminderSettings,
   scheduleDailyCheckInReminder,
-} from '@/src/services/ReminderManager';
-import { Ionicons } from '@expo/vector-icons';
-import DateTimePicker from '@react-native-community/datetimepicker';
+} from "@/src/services/ReminderManager";
+import { openAppSettings } from "@/src/hooks/useHealthKit/healthAuthorization";
+import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import {
   CommonActions,
   useFocusEffect,
   useNavigation,
-} from '@react-navigation/native';
-import { Stack } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+} from "@react-navigation/native";
+import { Stack } from "expo-router";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Alert,
   Keyboard,
@@ -24,16 +25,15 @@ import {
   Switch,
   TouchableWithoutFeedback,
   View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useCameraPermissions } from 'expo-camera';
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useCameraPermissions } from "expo-camera";
 
-import { useUser } from '../../contexts/UserContext';
-import ConfirmDeleteModal from '../components/DeleteConfirmationModal';
-import ThemedText from '../components/ThemedText';
-import ThemedView from '../components/ThemedView';
-import UpdateEmailModal from '../components/updateEmailModal';
-import { openAppSettings } from '@/src/hooks/useHealthKit/healthAuthorization';
+import { useUser } from "../../contexts/UserContext";
+import ConfirmDeleteModal from "../components/DeleteConfirmationModal";
+import ThemedText from "../components/ThemedText";
+import ThemedView from "../components/ThemedView";
+import UpdateEmailModal from "../components/updateEmailModal";
 
 export default function SettingsScreen() {
   const navigation = useNavigation<any>();
@@ -48,15 +48,14 @@ export default function SettingsScreen() {
   const [draftTime, setDraftTime] = useState(new Date());
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
   const [showUpdateEmailModal, setShowUpdateEmailModal] = useState(false);
-  const [newEmailText, setNewEmailText] = useState('');
-  const [confirmNewEmailText, setConfirmNewEmailText] = useState('');
+  const [newEmailText, setNewEmailText] = useState("");
+  const [confirmNewEmailText, setConfirmNewEmailText] = useState("");
 
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
   const [cameraEnabled, setCameraEnabled] = useState(false);
-
 
   useEffect(() => {
     (async () => {
@@ -75,13 +74,12 @@ export default function SettingsScreen() {
         setHasSavedReminder(settings.enabled);
         setIsEditingReminder(false);
       } catch (e) {
-        console.warn('Failed to load reminder settings', e);
+        console.warn("Failed to load reminder settings", e);
       } finally {
         setLoading(false);
       }
     })();
   }, []);
-
 
   const refreshCameraStatus = useCallback(() => {
     const granted = !!cameraPermission?.granted;
@@ -96,8 +94,8 @@ export default function SettingsScreen() {
 
   const formatSelectedTime = (date: Date): string => {
     return date.toLocaleTimeString([], {
-      hour: 'numeric',
-      minute: '2-digit',
+      hour: "numeric",
+      minute: "2-digit",
     });
   };
 
@@ -118,6 +116,7 @@ export default function SettingsScreen() {
       } else {
         setIsEditingReminder(true);
       }
+
       return;
     }
 
@@ -127,8 +126,8 @@ export default function SettingsScreen() {
     setIsEditingReminder(false);
 
     Alert.alert(
-      'Daily reminder off',
-      'We will stop sending daily check-in reminders.'
+      "Daily reminder off",
+      "We will stop sending daily check-in reminders."
     );
   };
 
@@ -149,8 +148,8 @@ export default function SettingsScreen() {
 
     if (!id) {
       Alert.alert(
-        'Notifications disabled',
-        'We could not get permission to send notifications. Please enable notifications in Settings.'
+        "Notifications disabled",
+        "We could not get permission to send notifications. Please enable notifications in Settings."
       );
       setEnabled(false);
       setIsEditingReminder(false);
@@ -163,40 +162,39 @@ export default function SettingsScreen() {
     setIsEditingReminder(false);
 
     Alert.alert(
-      'Reminder set',
+      "Reminder set",
       `Daily check-in will happen around ${formatSelectedTime(draftTime)}.`
     );
   };
 
-
   const handleCameraToggle = async (value: boolean) => {
     if (value) {
       Alert.alert(
-        'Camera Access',
-        'Omnia uses your camera to scan food barcodes.',
+        "Camera Access",
+        "Omnia uses your camera to scan food barcodes.",
         [
           {
-            text: 'Deny',
-            style: 'cancel',
+            text: "Deny",
+            style: "cancel",
             onPress: () => {
               Alert.alert(
-                'Camera access not enabled',
-                'Barcode scanning will stay unavailable until camera access is allowed.',
-                [{ text: 'OK' }]
+                "Camera access not enabled",
+                "Barcode scanning will stay unavailable until camera access is allowed.",
+                [{ text: "OK" }]
               );
             },
           },
           {
-            text: 'Allow',
+            text: "Allow",
             onPress: async () => {
               if (cameraPermission && cameraPermission.canAskAgain === false) {
                 Alert.alert(
-                  'Enable Camera in Settings',
-                  'Camera access was previously denied. Please enable it in your device Settings to use barcode scanning.',
+                  "Enable Camera in Settings",
+                  "Camera access was previously denied. Please enable it in your device Settings to use barcode scanning.",
                   [
-                    { text: 'Cancel', style: 'cancel' },
+                    { text: "Cancel", style: "cancel" },
                     {
-                      text: 'Open Settings',
+                      text: "Open Settings",
                       onPress: () => openAppSettings(),
                     },
                   ]
@@ -211,25 +209,26 @@ export default function SettingsScreen() {
               } else {
                 setCameraEnabled(false);
                 Alert.alert(
-                  'Camera access not enabled',
-                  'Barcode scanning will stay unavailable until camera access is allowed.',
-                  [{ text: 'OK' }]
+                  "Camera access not enabled",
+                  "Barcode scanning will stay unavailable until camera access is allowed.",
+                  [{ text: "OK" }]
                 );
               }
             },
           },
         ]
       );
+
       return;
     }
 
     Alert.alert(
-      'Turn Off Camera Access',
-      'Turning off camera access will block barcode scanning. To disable it, continue in your device Settings.',
+      "Turn Off Camera Access",
+      "Turning off camera access will block barcode scanning. To disable it, continue in your device Settings.",
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: "Cancel", style: "cancel" },
         {
-          text: 'Go to Settings',
+          text: "Go to Settings",
           onPress: () => {
             openAppSettings();
           },
@@ -241,9 +240,9 @@ export default function SettingsScreen() {
   const goBackToProfile = () => {
     navigation.dispatch(
       CommonActions.navigate({
-        name: '(tabs)',
+        name: "(tabs)",
         params: {
-          screen: 'Profile',
+          screen: "Profile",
         },
       })
     );
@@ -251,20 +250,20 @@ export default function SettingsScreen() {
 
   const handleLogout = async () => {
     await logout();
-    navigation.navigate('(auth)' as never);
+    navigation.navigate("(auth)" as never);
   };
 
   const handleDeleteAccount = async () => {
     try {
       await deleteAccount();
       setShowDeleteModal(false);
-      setDeleteConfirmText('');
-      navigation.navigate('(auth)' as never);
+      setDeleteConfirmText("");
+      navigation.navigate("(auth)" as never);
     } catch (error) {
-      console.error('Error deleting account:', error);
+      console.error("Error deleting account:", error);
       setShowDeleteModal(false);
-      setDeleteConfirmText('');
-      Alert.alert('Error', 'Failed to delete account. Please try again.');
+      setDeleteConfirmText("");
+      Alert.alert("Error", "Failed to delete account. Please try again.");
     }
   };
 
@@ -272,35 +271,35 @@ export default function SettingsScreen() {
     try {
       await updateEmail(newEmailText);
       setShowUpdateEmailModal(false);
-      setNewEmailText('');
-      setConfirmNewEmailText('');
-      Alert.alert('Email successfully changed');
+      setNewEmailText("");
+      setConfirmNewEmailText("");
+      Alert.alert("Email successfully changed");
     } catch (error) {
-      console.error('Error changing email', error);
+      console.error("Error changing email", error);
       setShowUpdateEmailModal(false);
-      setNewEmailText('');
-      setConfirmNewEmailText('');
-      Alert.alert('Error, failed to change email, please try again');
+      setNewEmailText("");
+      setConfirmNewEmailText("");
+      Alert.alert("Error", "Failed to change email. Please try again.");
     }
   };
 
   const handleCloseDeleteModal = () => {
     setShowDeleteModal(false);
-    setDeleteConfirmText('');
+    setDeleteConfirmText("");
   };
 
   const handleCloseUpdateEmailModal = () => {
     setShowUpdateEmailModal(false);
-    setNewEmailText('');
-    setConfirmNewEmailText('');
+    setNewEmailText("");
+    setConfirmNewEmailText("");
   };
 
   if (loading) {
     return (
-      <SafeAreaView style={{ flex: 1 }} edges={['left', 'right', 'bottom']}>
+      <SafeAreaView style={{ flex: 1 }} edges={["left", "right", "bottom"]}>
         <Stack.Screen
           options={{
-            title: 'Settings',
+            title: "Settings",
             headerLeft: () => (
               <Pressable onPress={goBackToProfile} style={styles.backButton}>
                 <Ionicons name="chevron-back" size={24} color="black" />
@@ -317,10 +316,10 @@ export default function SettingsScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1 }} edges={['left', 'right', 'bottom']}>
+    <SafeAreaView style={{ flex: 1 }} edges={["left", "right", "bottom"]}>
       <Stack.Screen
         options={{
-          title: 'Settings',
+          title: "Settings",
           headerLeft: () => (
             <Pressable onPress={goBackToProfile} style={styles.backButton}>
               <Ionicons name="chevron-back" size={24} color="black" />
@@ -332,7 +331,7 @@ export default function SettingsScreen() {
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
           <ThemedView style={styles.container}>
@@ -368,6 +367,8 @@ export default function SettingsScreen() {
                   value={draftTime}
                   mode="time"
                   display="spinner"
+                  textColor="#000000"
+                  themeVariant="light"
                   onChange={(_, date) => {
                     if (date) setDraftTime(date);
                   }}
@@ -472,48 +473,15 @@ const styles = StyleSheet.create({
 
   sectionHeader: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#666',
+    fontWeight: "600",
+    color: "#666",
     marginBottom: 8,
   },
 
   sectionLine: {
-    width: '100%',
+    width: "100%",
     height: 1,
-    backgroundColor: '#CFCFCF',
-  },
-
-  accountCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    minHeight: 54,
-    paddingHorizontal: 20,
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#E2E2E2',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-
-  logoutText: {
-    fontSize: 17,
-    fontWeight: '500',
-    color: '#1677E6',
-  },
-
-  updateText: {
-    fontSize: 17,
-    fontWeight: '500',
-    color: '#36AE7C',
-  },
-
-  deleteText: {
-    fontSize: 17,
-    fontWeight: '500',
-    color: '#E53935',
+    backgroundColor: "#CFCFCF",
   },
 
   accountButtonGroup: {
@@ -523,13 +491,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    justifyContent: 'flex-start',
+    justifyContent: "flex-start",
     gap: 16,
   },
 
   backButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginLeft: 8,
   },
 
@@ -538,27 +506,27 @@ const styles = StyleSheet.create({
   },
 
   switchCard: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 14,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
 
   switchTitle: {
     fontSize: 17,
-    fontWeight: '500',
+    fontWeight: "500",
   },
 
   reminderCard: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 24,
     padding: 18,
     borderWidth: 1,
-    borderColor: '#ECECEC',
-    shadowColor: '#000',
+    borderColor: "#ECECEC",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.08,
     shadowRadius: 8,
@@ -566,31 +534,33 @@ const styles = StyleSheet.create({
   },
 
   reminderCardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: 12,
   },
 
   reminderCardTitle: {
     fontSize: 20,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 
   picker: {
-    alignSelf: 'center',
+    alignSelf: "center",
+    width: 320,
+    height: 180,
   },
 
   summaryCard: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 24,
     padding: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     borderWidth: 1,
-    borderColor: '#ECECEC',
-    shadowColor: '#000',
+    borderColor: "#ECECEC",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.08,
     shadowRadius: 8,
@@ -599,25 +569,58 @@ const styles = StyleSheet.create({
 
   summaryTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 
   summaryTime: {
     marginTop: 6,
     fontSize: 16,
-    color: '#777',
+    color: "#777",
   },
 
   editText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#5B5BD6',
+    fontWeight: "600",
+    color: "#5B5BD6",
+  },
+
+  accountCard: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    minHeight: 54,
+    paddingHorizontal: 20,
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#E2E2E2",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+
+  logoutText: {
+    fontSize: 17,
+    fontWeight: "500",
+    color: "#1677E6",
+  },
+
+  updateText: {
+    fontSize: 17,
+    fontWeight: "500",
+    color: "#36AE7C",
+  },
+
+  deleteText: {
+    fontSize: 17,
+    fontWeight: "500",
+    color: "#E53935",
   },
 
   settingDescription: {
     marginTop: 4,
     fontSize: 14,
-    color: '#777',
+    color: "#777",
     lineHeight: 20,
   },
 });

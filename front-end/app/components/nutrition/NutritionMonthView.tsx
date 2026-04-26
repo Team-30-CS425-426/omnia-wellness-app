@@ -20,7 +20,6 @@ type Props = {
     lineSpacingMonth: number;
     caloriesMaxValue: number;
     macrosMaxValue: number;
-    monthMarkerLabels: string[];
     hasData: boolean;
     onMonthSelect: (idx: number) => void;
 };
@@ -34,7 +33,6 @@ const NutritionMonthView = ({
     lineSpacingMonth,
     caloriesMaxValue,
     macrosMaxValue,
-    monthMarkerLabels,
     hasData,
     onMonthSelect,
 }: Props) => {
@@ -61,6 +59,9 @@ const NutritionMonthView = ({
                 <Text style={styles.cardTitle}>Calories</Text>
                 <View style={{ alignItems: 'center', paddingTop: 10 }}>
                     <LineChart
+                         endSpacing={0}
+           
+                        initialSpacing={0}
                         data={caloriesLineData}
                         color1="#5459AC"
                         dataPointsColor1="#5459AC"
@@ -83,7 +84,6 @@ const NutritionMonthView = ({
                         animationDuration={500}
                         thickness={2}
                         dataPointsRadius={0}
-                        persistPointer
                         pointerConfig={{
                             pointerStripColor: '#E5E5EA',
                             pointerStripWidth: 2,
@@ -109,14 +109,9 @@ const NutritionMonthView = ({
                             onResponderEnd: () => onMonthSelect(lastIdxRef.current),
                         }}
                     />
-
-                    {/* Month date markers */}
-                    <View style={[styles.monthLabelRow, { width: availableWidth }]}>
-                        {monthMarkerLabels.map((t, idx) => (
-                            <Text key={`cal-${t}-${idx}`} style={styles.monthLabelText}>
-                                {t || ' '}
-                            </Text>
-                        ))}
+                    <View style={[styles.dateRangeRow, { alignSelf: 'stretch', paddingLeft: 25 }]}>
+                        <Text style={styles.monthLabelText}>{caloriesLineData[0]?.date?.slice(5) ?? ''}</Text>
+                        <Text style={styles.monthLabelText}>{caloriesLineData[caloriesLineData.length - 1]?.date?.slice(5) ?? ''}</Text>
                     </View>
                 </View>
             </View>
@@ -126,6 +121,8 @@ const NutritionMonthView = ({
                 <Text style={styles.cardTitle}>Macros</Text>
                 <View style={{ alignItems: 'center', paddingTop: 10 }}>
                     <LineChart
+                        endSpacing={0}
+                        initialSpacing={0}
                         data={proteinData}
                         data2={carbsData}
                         data3={fatData}
@@ -155,7 +152,6 @@ const NutritionMonthView = ({
                         thickness={2}
                         dataPointsRadius={0}
                         yAxisLabelSuffix="g"
-                        persistPointer
                         pointerConfig={{
                             pointerStripColor: '#E5E5EA',
                             pointerStripWidth: 2,
@@ -188,16 +184,12 @@ const NutritionMonthView = ({
                         }}
                     />
 
-                    {/* Month date markers for macros */}
-                    <View style={[styles.monthLabelRow, { width: availableWidth }]}>
-                        {monthMarkerLabels.map((t, idx) => (
-                            <Text key={`macro-${t}-${idx}`} style={styles.monthLabelText}>
-                                {t || ' '}
-                            </Text>
-                        ))}
-                    </View>
 
                     {/* Legend */}
+                    <View style={[styles.dateRangeRow, { alignSelf: 'stretch', paddingLeft: 25 }]}>
+                        <Text style={styles.monthLabelText}>{caloriesLineData[0]?.date?.slice(5) ?? ''}</Text>
+                        <Text style={styles.monthLabelText}>{caloriesLineData[caloriesLineData.length - 1]?.date?.slice(5) ?? ''}</Text>
+                    </View>
                     <View style={styles.legend}>
                         <View style={styles.legendItem}>
                             <View style={[styles.legendDot, { backgroundColor: Colors.default.strongGreen }]} />
@@ -247,11 +239,10 @@ const styles = StyleSheet.create({
     legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
     legendDot: { width: 10, height: 10, borderRadius: 5 },
     legendText: { fontSize: 12, color: '#8E8E93', fontWeight: '600' },
-    monthLabelRow: {
-        marginTop: 8,
+    dateRangeRow: {
+        marginTop: 6,
         flexDirection: 'row',
         justifyContent: 'space-between',
-        paddingHorizontal: 6,
     },
     monthLabelText: { color: '#8E8E93', fontSize: 11, fontWeight: '700' },
 });
