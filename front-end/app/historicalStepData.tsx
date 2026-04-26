@@ -12,6 +12,10 @@ import {
 } from "react-native";
 import { BarChart } from "react-native-gifted-charts";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { Goal } from "lucide-react-native";
+import { useUser } from "@/contexts/UserContext";
+import { getStepsGoal } from "@/src/services/stepsGoalService";
+import Svg, { Circle } from "react-native-svg";
 
 type Mode = "W" | "M";
 
@@ -101,12 +105,103 @@ function SegmentedWM({
   );
 }
 
+function GoalProgressRing({
+  percent,
+  met,
+  size = 76,
+  strokeWidth = 9,
+  fontSize = 18,
+  showText = true,
+}: {
+  percent: number;
+  met: boolean;
+  size?: number;
+  strokeWidth?: number;
+  fontSize?: number;
+  showText?: boolean;
+}) {
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const progress = Math.min(Math.max(percent, 0), 100);
+  const strokeDashoffset = circumference - (progress / 100) * circumference;
+
+  return (
+    <View style={{ width: size, height: size }}>
+      <Svg width={size} height={size}>
+        <Circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke="#E5E5EA"
+          strokeWidth={strokeWidth}
+          fill="none"
+        />
+
+        <Circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke={met ? "#34C759" : "#FF3B30"}
+          strokeWidth={strokeWidth}
+          fill="none"
+          strokeDasharray={`${circumference} ${circumference}`}
+          strokeDashoffset={strokeDashoffset}
+          strokeLinecap="round"
+          rotation="-90"
+          origin={`${size / 2}, ${size / 2}`}
+        />
+      </Svg>
+
+      {showText && (
+        <View style={styles.ringTextCenter}>
+          <Text style={[styles.ringPercentText, { fontSize }]}>
+            {Math.round(percent)}%
+          </Text>
+        </View>
+      )}
+    </View>
+  );
+}
+
 export default function StepDetailsScreen() {
   const insets = useSafeAreaInsets();
   const health = useStepsDisplayed(true);
+  const { user } = useUser();
+  const [stepsGoalData, setStepsGoalData] = useState<{
+    steps_goal: number;
+    success_rate: number;
+  } | null>(null);
+  const [checkingGoal, setCheckingGoal] = useState(true);
 
   const [mode, setMode] = useState<Mode>("W");
   const [selectedIndex, setSelectedIndex] = useState<number>(6);
+
+  useFocusEffect(
+    useCallback(() => {
+      async function checkGoal() {
+        if (!user?.id) {
+          setStepsGoalData(null);
+          setCheckingGoal(false);
+          return;
+        }
+  
+        try {
+          setCheckingGoal(true);
+  
+          const goal = await getStepsGoal(user.id);
+  
+          setStepsGoalData(goal);
+        } catch (error) {
+          console.log("Failed to check steps goal:", error);
+          setStepsGoalData(null);
+        } finally {
+          setCheckingGoal(false);
+        }
+      }
+  
+      checkGoal();
+    }, [user?.id])
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -317,6 +412,23 @@ export default function StepDetailsScreen() {
     };
   }, []);
 
+  const goalSteps = stepsGoalData?.steps_goal ?? 0;
+  const successRate = stepsGoalData?.success_rate ?? 70;
+
+  const goalPercent =
+    goalSteps > 0 ? Math.round((displaySummary.value / goalSteps) * 100) : 0;
+
+  const goalMet = goalPercent >= successRate;
+
+  const getDayGoalPercent = (steps: number) => {
+    if (!stepsGoalData?.steps_goal) return 0;
+    return Math.round((steps / stepsGoalData.steps_goal) * 100);
+  };
+  
+  const isDayGoalMet = (steps: number) => {
+    return getDayGoalPercent(steps) >= successRate;
+  };
+
   return (
     <SafeAreaView style={styles.safe}>
       <View style={{ paddingTop: Math.max(8, insets.top * 0.2) }}>
@@ -393,9 +505,21 @@ export default function StepDetailsScreen() {
                         {d.getDate()}
                       </Text>
 
-                      <Text style={styles.dayStepsText}>
-                        {stepsCardLabel(item.value)}
-                      </Text>
+                      {stepsGoalData ? (
+                        <View style={styles.smallRingWrap}>
+                          <GoalProgressRing
+                            percent={getDayGoalPercent(item.value)}
+                            met={isDayGoalMet(item.value)}
+                            size={34}
+                            strokeWidth={4}
+                            showText={false}
+                          />
+                        </View>
+                      ) : (
+                        <Text style={styles.dayStepsText}>
+                          {stepsCardLabel(item.value)}
+                        </Text>
+                      )}
                     </Pressable>
                   );
                 })}
@@ -444,9 +568,21 @@ export default function StepDetailsScreen() {
                         {d.getDate()}
                       </Text>
 
-                      <Text style={styles.calendarStepsText}>
-                        {stepsCardLabel(cell.item.value)}
-                      </Text>
+                      {stepsGoalData ? (
+                        <View style={styles.smallRingWrap}>
+                          <GoalProgressRing
+                            percent={getDayGoalPercent(cell.item.value)}
+                            met={isDayGoalMet(cell.item.value)}
+                            size={30}
+                            strokeWidth={4}
+                            showText={false}
+                          />
+                        </View>
+                      ) : (
+                        <Text style={styles.calendarStepsText}>
+                          {stepsCardLabel(cell.item.value)}
+                        </Text>
+                      )}
                     </Pressable>
                   );
                 })}
@@ -528,6 +664,56 @@ export default function StepDetailsScreen() {
             <Text style={styles.showAllText}>Show All Data</Text>
             <Text style={styles.showAllChevron}>›</Text>
           </Pressable>
+          {!checkingGoal && !stepsGoalData && (
+            <Pressable
+              style={styles.goalCard}
+              onPress={() => router.push("/screens/stepsGoals" as any)}
+            >
+              <View style={styles.goalLeft}>
+                <Goal size={36} color="#F2B705" strokeWidth={2.5} />
+
+                <View>
+                  <Text style={styles.goalTitle}>Goals Not Set</Text>
+                  <Text style={styles.goalSubtitle}>
+                    Get started by setting some wellness goals
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.goalRight}>
+                <Text style={styles.goalSetText}>Set Goal</Text>
+                <Text style={styles.goalChevron}>›</Text>
+              </View>
+            </Pressable>
+          )}
+
+          {!checkingGoal && stepsGoalData && (
+            <View style={styles.goalResultCard}>
+              <View style={styles.goalResultContent}>
+                <GoalProgressRing percent={goalPercent} met={goalMet} />
+
+                <View style={styles.goalResultTextBlock}>
+                  <Text style={styles.goalResultTitle}>Daily Goal</Text>
+                  <Text style={styles.goalResultSubtitle}>
+                    {Math.round(displaySummary.value).toLocaleString()} /{" "}
+                    {goalSteps.toLocaleString()} steps
+                  </Text>
+                  <Text style={styles.goalResultSmallText}>
+                    Goal: {goalSteps.toLocaleString()} steps
+                  </Text>
+                </View>
+              </View>
+
+              <Pressable
+                style={styles.editGoalButton}
+                onPress={() => router.push("/screens/stepsGoals" as any)}
+              >
+                <Text style={styles.editGoalText}>Edit Goal</Text>
+                <Text style={styles.editGoalChevron}>›</Text>
+              </Pressable>
+            </View>
+          )}
+
         </ScrollView>
       </View>
     </SafeAreaView>
@@ -550,7 +736,7 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingVertical: 8,
   },
-  backChevron: { fontSize: 28, lineHeight: 28, fontWeight: "400" },
+  backChevron: { fontSize: 28, lineHeight: 28 },
   backText: { fontSize: 17, fontWeight: "500" },
   headerTitle: { fontSize: 20, fontWeight: "700", color: "#000" },
 
@@ -594,6 +780,15 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 
+  card: {
+    marginTop: 10,
+    marginHorizontal: 14,
+    backgroundColor: "white",
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#E5E5EA",
+    padding: 16,
+  },
   chartCard: {
     marginTop: 10,
     marginHorizontal: 14,
@@ -604,75 +799,59 @@ const styles = StyleSheet.create({
     padding: 16,
     overflow: "hidden",
   },
-  card: {
-    marginTop: 10,
-    marginHorizontal: 14,
-    backgroundColor: "white",
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: "#E5E5EA",
-    padding: 16,
+  cardTitle: {
+    fontSize: 16,
+    color: "#8E8E93",
+    fontWeight: "600",
+    marginBottom: 6,
   },
-  
+
   weekRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
   },
-  
   dayItem: {
     width: 42,
     borderRadius: 20,
     alignItems: "center",
     paddingVertical: 8,
   },
-  
-  dayItemSelected: {
-    backgroundColor: "#F9D923",
-  },
-  
+  dayItemSelected: { backgroundColor: "#F9D923" },
   weekdayText: {
     fontSize: 12,
     color: "#666",
     fontWeight: "500",
   },
-  
   weekdayTextSelected: {
     color: "#000",
     fontWeight: "700",
   },
-  
   dayNumber: {
     fontSize: 22,
     fontWeight: "700",
     color: "#000",
     marginTop: 2,
   },
-  
-  dayNumberSelected: {
-    color: "#000",
-  },
-  
+  dayNumberSelected: { color: "#000" },
   dayStepsText: {
     fontSize: 11,
     marginTop: 4,
     color: "#C79A00",
     fontWeight: "700",
   },
-  
+
   monthTitle: {
     fontSize: 15,
     color: "#8E8E93",
     fontWeight: "700",
     marginBottom: 12,
   },
-  
   calendarHeaderRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 8,
   },
-  
   calendarHeaderText: {
     width: "14.28%",
     textAlign: "center",
@@ -680,12 +859,10 @@ const styles = StyleSheet.create({
     color: "#8E8E93",
     fontWeight: "700",
   },
-  
   calendarGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
   },
-  
   calendarCell: {
     width: "14.28%",
     aspectRatio: 0.9,
@@ -693,36 +870,19 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: 8,
   },
-  
-  calendarDayCell: {
-    borderRadius: 14,
-  },
-  
-  calendarDayCellSelected: {
-    backgroundColor: "#F9D923",
-  },
-  
+  calendarDayCell: { borderRadius: 14 },
+  calendarDayCellSelected: { backgroundColor: "#F9D923" },
   calendarDateText: {
     fontSize: 13,
     fontWeight: "700",
     color: "#000",
     marginBottom: 4,
   },
-  
-  calendarDateTextSelected: {
-    color: "#000",
-  },
-  
+  calendarDateTextSelected: { color: "#000" },
   calendarStepsText: {
     fontSize: 10,
     color: "#C79A00",
     fontWeight: "700",
-  },
-  cardTitle: {
-    fontSize: 16,
-    color: "#8E8E93",
-    fontWeight: "600",
-    marginBottom: 6,
   },
 
   topLabel: {
@@ -731,7 +891,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     marginBottom: 2,
   },
-
   weekLabelRow: {
     marginTop: 0,
     flexDirection: "row",
@@ -743,7 +902,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "700",
   },
-
   monthLabelRow: {
     marginTop: 0,
     flexDirection: "row",
@@ -770,5 +928,127 @@ const styles = StyleSheet.create({
     borderColor: "#E5E5EA",
   },
   showAllText: { fontSize: 20, fontWeight: "400", color: "#000" },
-  showAllChevron: { fontSize: 26, color: "#C7C7CC", fontWeight: "400" },
+  showAllChevron: { fontSize: 26, color: "#C7C7CC" },
+
+  goalCard: {
+    marginTop: 10,
+    marginHorizontal: 14,
+    backgroundColor: "white",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#E5E5EA",
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  goalLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    flex: 1,
+    marginRight: 20,
+  },
+  goalTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#F2B705",
+  },
+  goalSubtitle: {
+    fontSize: 13,
+    color: "#000",
+    marginTop: 2,
+    width: 210,
+  },
+  goalRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    flexShrink: 0,
+  },
+  goalSetText: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#F2B705",
+  },
+  goalChevron: {
+    fontSize: 25,
+    color: "#F2B705",
+  },
+
+  goalResultCard: {
+    marginTop: 10,
+    marginHorizontal: 14,
+    backgroundColor: "white",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#E5E5EA",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  goalResultContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+  goalResultTextBlock: {
+    marginLeft: 12,
+    flexShrink: 1,
+  },
+  goalResultTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#555",
+  },
+  goalResultSubtitle: {
+    fontSize: 13,
+    color: "#555",
+    fontWeight: "600",
+    marginTop: 8,
+  },
+  goalResultSmallText: {
+    fontSize: 11,
+    color: "#8E8E93",
+    marginTop: 5,
+  },
+  editGoalButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginLeft: 10,
+  },
+  editGoalText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#555",
+  },
+  editGoalChevron: {
+    fontSize: 30,
+    fontWeight: "700",
+    color: "#000",
+    marginLeft: 8,
+  },
+
+  ringTextCenter: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  ringPercentText: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#555",
+  },
+  smallRingWrap: {
+    marginTop: 5,
+    alignItems: "center",
+    justifyContent: "center",
+  },
 });

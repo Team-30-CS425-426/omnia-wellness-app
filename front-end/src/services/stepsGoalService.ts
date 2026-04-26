@@ -3,7 +3,7 @@ import { supabase } from "@/config/supabaseConfig";
 export const getStepsGoal = async (userId: string) => {
   const { data, error } = await supabase
     .from("stepsgoals")
-    .select("steps_goal")
+    .select("steps_goal, success_rate")
     .eq("userid", userId)
     .maybeSingle();
 
@@ -11,13 +11,18 @@ export const getStepsGoal = async (userId: string) => {
   return data;
 };
 
-export const insertStepsGoal = async (userId: string, stepsGoal: number) => {
+export const insertStepsGoal = async (
+  userId: string,
+  stepsGoal: number,
+  successRate: number
+) => {
   const { data, error } = await supabase
     .from("stepsgoals")
     .upsert(
       {
         userid: userId,
         steps_goal: stepsGoal,
+        success_rate: successRate,
       },
       { onConflict: "userid" }
     )

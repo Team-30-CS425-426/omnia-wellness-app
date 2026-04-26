@@ -14,12 +14,14 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { useUser } from "../../contexts/UserContext";
 import { insertStepsGoal } from "../../src/services/stepsGoalService";
+import Slider from "@react-native-community/slider";
 
 export default function StepsGoalsScreen() {
   const navigation = useNavigation();
   const { user } = useUser();
 
   const [stepsGoal, setStepsGoal] = useState("");
+  const [successRate, setSuccessRate] = useState(70);
 
   useLayoutEffect(() => {
     navigation.setOptions({ headerShown: false });
@@ -39,7 +41,7 @@ export default function StepsGoalsScreen() {
     }
 
     try {
-      await insertStepsGoal(user.id, parsedSteps);
+      await insertStepsGoal(user.id, parsedSteps, successRate);
       Alert.alert("Steps Goal Saved!", `Goal: ${parsedSteps} steps`);
       setStepsGoal("");
       navigation.goBack();
@@ -65,6 +67,19 @@ export default function StepsGoalsScreen() {
           </View>
 
           <Text style={styles.pageTitle}>Set Your Steps Goal</Text>
+
+          <Text style={styles.sectionLabel}>Success Rate: {successRate}%</Text>
+          <Slider
+            style={styles.slider}
+            minimumValue={50}
+            maximumValue={100}
+            step={5}
+            value={successRate}
+            minimumTrackTintColor="#F2B705"
+            maximumTrackTintColor="#E5E5EA"
+            thumbTintColor="#F2B705"
+            onValueChange={setSuccessRate}
+          />
 
           <Text style={styles.sectionLabel}>Daily Step Goal</Text>
           <TextInput
@@ -115,4 +130,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   saveButtonText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
+  slider: {
+    width: "100%",
+    height: 40,
+    marginBottom: 20,
+  },
 });
