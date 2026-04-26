@@ -14,12 +14,14 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { useUser } from "../../contexts/UserContext";
 import { insertSleepGoal } from "../../src/services/sleepGoalService";
+import Slider from "@react-native-community/slider";
 
 export default function SleepGoalsScreen() {
   const navigation = useNavigation();
   const { user } = useUser();
 
   const [sleepGoalHours, setSleepGoalHours] = useState("");
+  const [successRate, setSuccessRate] = useState(70);
 
   useLayoutEffect(() => {
     navigation.setOptions({ headerShown: false });
@@ -39,7 +41,7 @@ export default function SleepGoalsScreen() {
     }
 
     try {
-      await insertSleepGoal(user.id, parsedHours);
+      await insertSleepGoal(user.id, parsedHours, successRate);
       Alert.alert("Sleep Goal Saved!", `Goal: ${parsedHours} hours`);
       setSleepGoalHours("");
       navigation.goBack();
@@ -65,6 +67,19 @@ export default function SleepGoalsScreen() {
           </View>
 
           <Text style={styles.pageTitle}>Set Your Sleep Goal</Text>
+
+          <Text style={styles.sectionLabel}>Success Rate: {successRate}%</Text>
+          <Slider
+            style={styles.slider}
+            minimumValue={50}
+            maximumValue={100}
+            step={5}
+            value={successRate}
+            minimumTrackTintColor="#187498"
+            maximumTrackTintColor="#E5E5EA"
+            thumbTintColor="#187498"
+            onValueChange={setSuccessRate}
+          />
 
           <Text style={styles.sectionLabel}>Hours of Sleep</Text>
           <TextInput
@@ -115,4 +130,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   saveButtonText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
+  slider: {
+    width: "100%",
+    height: 40,
+    marginBottom: 20,
+  },
 });

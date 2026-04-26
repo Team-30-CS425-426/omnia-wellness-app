@@ -675,7 +675,7 @@ export default function StepDetailsScreen() {
                 <View>
                   <Text style={styles.goalTitle}>Goals Not Set</Text>
                   <Text style={styles.goalSubtitle}>
-                    Get started by setting some wellness goals
+                    Get started by setting a step goal
                   </Text>
                 </View>
               </View>
@@ -938,7 +938,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E5E5EA",
     paddingVertical: 16,
-    paddingHorizontal: 16,
+    paddingLeft: 10,
+    paddingRight: 16,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -946,9 +947,10 @@ const styles = StyleSheet.create({
   goalLeft: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 8,
     flex: 1,
-    marginRight: 20,
+    marginRight: 8,
+
   },
   goalTitle: {
     fontSize: 18,
@@ -964,8 +966,10 @@ const styles = StyleSheet.create({
   goalRight: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "flex-end",
     gap: 4,
     flexShrink: 0,
+    paddingLeft: 16,
   },
   goalSetText: {
     fontSize: 15,
