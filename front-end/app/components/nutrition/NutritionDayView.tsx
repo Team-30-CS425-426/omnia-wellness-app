@@ -8,14 +8,19 @@
  */
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import ThemedCard from '../ThemedCard';
 import ThemedText from '../ThemedText';
 import { Colors } from '../../../constants/Colors';
 import { NutritionLogRow } from '@/src/services/nutritionService';
+import Ionicons from '@expo/vector-icons/build/Ionicons';
+import EditModal from '../editModal';
 
 type Props = {
     entries: NutritionLogRow[];
+    isCurrentDay: boolean;
+    onEditEntry: (entry: NutritionLogRow) => void;
+    onDeleteEntry: (entry: NutritionLogRow) => void;
 };
 
 /** Convert "HH:MM:SS" (24-h) to "h:MM AM/PM" */
@@ -27,8 +32,10 @@ function formatTime12h(time: string): string {
     return `${h}:${mStr} ${suffix}`;
 }
 
-const NutritionDayView = ({ entries }: Props) => {
+const NutritionDayView = ({ entries, isCurrentDay, onEditEntry, onDeleteEntry }: Props) => {
     const [expandedSet, setExpandedSet] = useState<Set<number>>(new Set());
+
+    const [selectedMeal, setselectedMeal] = useState<NutritionLogRow | null>(null);
 
     const toggleCard = (idx: number) => {
         setExpandedSet((prev) => {
@@ -56,6 +63,8 @@ const NutritionDayView = ({ entries }: Props) => {
                 const isExpanded = expandedSet.has(idx);
                 const typeLabel = entry.nutritionEventType === 2 ? 'Snack' : 'Meal';
 
+              
+
                 return (
                     <ThemedCard
                         key={entry.id ?? idx}
@@ -81,6 +90,12 @@ const NutritionDayView = ({ entries }: Props) => {
                                     color: '#FFFFFF',
                                 },
                             ]}>{typeLabel}</Text>
+
+                            {isCurrentDay && isExpanded && (
+                                <TouchableOpacity style = {{marginLeft: 10}} onPress={() => setselectedMeal(entry)}>
+                                    <Ionicons name="ellipsis-horizontal" size={16} color="black" />
+                                </TouchableOpacity>
+                            )}
                         </View>
 
                         {/* Expanded macro breakdown */}
@@ -95,6 +110,26 @@ const NutritionDayView = ({ entries }: Props) => {
                     </ThemedCard>
                 );
             })}
+
+
+              <EditModal
+                    confirmLabel = "Edit Meal"
+                    deleteLabel = "Delete Meal"
+                    isVisible = {selectedMeal !== null}
+                    onClose={() => setselectedMeal(null)}
+                    onConfirm={() => {
+                        if (selectedMeal) {
+                            onEditEntry(selectedMeal);
+                            setselectedMeal(null);
+                        }}
+                    }
+                    onDelete={() => {
+                        if (selectedMeal) {
+                            onDeleteEntry(selectedMeal);
+                            setselectedMeal(null);
+                        }
+                    }}
+                />
         </View>
     );
 };

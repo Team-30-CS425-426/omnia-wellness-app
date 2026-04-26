@@ -84,6 +84,78 @@ export async function insertNutritionLog(
 
 }
 
+
+
+export async function updateNutritionLog(
+    id: number,
+    userId: string,
+    entry: {
+      mealName: string;
+      mealType: string; // Breakfast/Lunch/Dinner/Snack
+      calories: number;
+      protein: number;
+      carbs: number;
+      fat: number;
+      mealTime: Date;
+      notes?: string;
+    }
+  ): Promise<{ success: boolean; data?: NutritionLogRow; error?: string }> {
+    try {
+      const trimmedMealName = entry.mealName.trim();
+      if (!trimmedMealName) {
+        return { success: false, error: "Meal name is required." };
+      }
+
+      const timeStr = toPgTime(entry.mealTime);
+      const nutritionEventType = mapMealTypeToEventId(entry.mealType);
+
+      const { data, error } = await supabase
+        .from("NutritionLog")
+        .update({
+          time: timeStr,
+          calories: entry.calories,
+          protein: entry.protein,
+          carbs: entry.carbs,
+          fat: entry.fat,
+          nutritionEventType,
+          mealName: trimmedMealName,
+          notes: entry.notes?.trim() || null,
+        })
+        .eq("id", id)
+        .eq("userID", userId)
+        .select("*")
+        .single();
+
+      if (error) return { success: false, error: error.message };                                                    
+   
+      return { success: true, data: data as NutritionLogRow };                                                       
+    } catch (err) {
+      return { success: false, error: String(err) };
+    }
+  }
+
+
+export async function deleteMealEntry (
+    id: number, userID: string
+): Promise<{ success: boolean; error?: string }>{
+  try{
+    const { data, error } = await supabase
+    .from("NutritionLog")
+    .delete()
+    .eq("id", id)
+    .eq("userID", userID)
+    .select();
+
+    if (error) return { success: false, error: error.message };
+    if (!data || data.length === 0) return { success: false, error: "No rows deleted — check RLS policies." };
+
+    return { success: true };
+  }
+  catch (err) {
+    return { success: false, error: String(err) };
+  }
+}
+
 /**
  * getDailyNutritionEntries
  *

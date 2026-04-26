@@ -1,6 +1,6 @@
 // code written by Alexis Mae Asuncion
 
-import React, { useState, useLayoutEffect } from "react";
+import React, { useState, useLayoutEffect, useEffect } from "react";
 import { Ionicons } from '@expo/vector-icons';
 import {
   View,
@@ -16,10 +16,10 @@ import {
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation } from "@react-navigation/native";
-import { router } from "expo-router";
+import { router, useLocalSearchParams} from "expo-router";
 
 import { useUser } from "../../contexts/UserContext";
-import { insertNutritionLog } from "../../src/services/nutritionService";
+import { insertNutritionLog, updateNutritionLog } from "../../src/services/nutritionService";
 import NutritionSuccess from "./SuccessScreens/NutritionSuccess";
 
 const MEAL_TYPES = ["Breakfast", "Lunch", "Dinner", "Snack"] as const;
@@ -53,6 +53,40 @@ const NutritionScreen = () => {
   const [successCarbs, setSuccessCarbs] = useState(0);
   const [successFat, setSuccessFat] = useState(0);
 
+  const {                                                                                                            
+      id,                                                                                                            
+      mealName: paramMealName,                                                                                       
+      calories: paramCalories,                                                                                     
+      protein: paramProtein,                                                                                       
+      carbs: paramCarbs,
+      fat: paramFat,                                                                                                 
+      notes: paramNotes,
+      nutritionEventType: paramNutritionEventType,                                                                   
+      time: paramTime                                                                                              
+  } = useLocalSearchParams<{                                                                                         
+      id?: string;                                                                                                   
+      mealName?: string;
+      calories?: string;                                                                                             
+      protein?: string;                                                                                            
+      carbs?: string;
+      fat?: string;
+      notes?: string;
+      nutritionEventType?: string;
+      time?: string;                                                                                                 
+  }>();
+  
+    useEffect(() => {                                                                                                  
+      if (id) {                                                                                                      
+          setMealName(paramMealName ?? '');                                                                          
+          setCalories(paramCalories ?? '');                                                                        
+          setProtein(paramProtein ?? '');
+          setCarbs(paramCarbs ?? '');                                                                                
+          setFat(paramFat ?? '');
+          setNotes(paramNotes ?? '');                                                                                
+          setMealType(paramNutritionEventType === '2' ? 'Snack' : 'Breakfast');
+      }                                                                                                              
+  }, [id]);
+
   // Async because we call Supabase
   const handleSave = async () => {
     // Check required fields
@@ -79,45 +113,65 @@ const NutritionScreen = () => {
       return;
     }
 
-    // Ensure user is logged in 
+    // Ensure user is logged in
     if (!user?.id) {
       Alert.alert("Error", "User not authenticated.");
       return;
     }
 
-    // Insert into Supabase NutritionLog
-    const result = await insertNutritionLog(user.id, {
-      mealName,
-      mealType,
-      calories: parsedCalories,
-      protein: parsedProtein,
-      carbs: parsedCarbs,
-      fat: parsedFat,
-      mealTime,
-      notes,
-    });
+    if (id) {
+      // Update existing entry
+      const result = await updateNutritionLog(Number(id), user.id, {
+        mealName,
+        mealType,
+        calories: parsedCalories,
+        protein: parsedProtein,
+        carbs: parsedCarbs,
+        fat: parsedFat,
+        mealTime,
+        notes,
+      });
 
-    if (result.success) {
-      // Populate success screen state
-      setSuccessMealName(mealName);
-      setSuccessMealType(mealType);
-      setSuccessCalories(parsedCalories);
-      setSuccessProtein(parsedProtein);
-      setSuccessCarbs(parsedCarbs);
-      setSuccessFat(parsedFat);
-      setSuccessVisible(true);
-
-      // Reset form
-      setMealName("");
-      setMealType(null);
-      setCalories("");
-      setProtein("");
-      setCarbs("");
-      setFat("");
-      setNotes("");
-      setMealTime(new Date());
+      if (result.success) {
+        router.back();
+      } else {
+        Alert.alert("Error", result.error || "Failed to update meal.");
+      }
     } else {
-      Alert.alert("Error", result.error || "Failed to save nutrition entry");
+      // Insert new entry
+      const result = await insertNutritionLog(user.id, {
+        mealName,
+        mealType,
+        calories: parsedCalories,
+        protein: parsedProtein,
+        carbs: parsedCarbs,
+        fat: parsedFat,
+        mealTime,
+        notes,
+      });
+
+      if (result.success) {
+        // Populate success screen state
+        setSuccessMealName(mealName);
+        setSuccessMealType(mealType);
+        setSuccessCalories(parsedCalories);
+        setSuccessProtein(parsedProtein);
+        setSuccessCarbs(parsedCarbs);
+        setSuccessFat(parsedFat);
+        setSuccessVisible(true);
+
+        // Reset form
+        setMealName("");
+        setMealType(null);
+        setCalories("");
+        setProtein("");
+        setCarbs("");
+        setFat("");
+        setNotes("");
+        setMealTime(new Date());
+      } else {
+        Alert.alert("Error", result.error || "Failed to save nutrition entry");
+      }
     }
   };
 

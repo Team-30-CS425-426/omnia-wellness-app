@@ -28,11 +28,11 @@
 //Developed by Johan Ramirez
 import React, {useState, useCallback, useMemo} from 'react'
 import { router } from 'expo-router';
-import { View, Pressable, StyleSheet, ScrollView, Dimensions, Text } from 'react-native';
+import { View, Pressable, StyleSheet, ScrollView, Dimensions, Text, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '../../constants/Colors';
 import { useUser } from '@/contexts/UserContext';
-import { getNutritionHistory, getDailyNutritionEntries, NutritionLogRow } from '@/src/services/nutritionService';
+import { getNutritionHistory, getDailyNutritionEntries, NutritionLogRow, deleteMealEntry } from '@/src/services/nutritionService';
 import { useFocusEffect } from '@react-navigation/native';
 
 import NutritionDayView from '../components/nutrition/NutritionDayView';
@@ -100,6 +100,42 @@ const HistoricalNutritionData = () => {
 
     // Individual meal entries for the Day tab
     const [dayEntries, setDayEntries] = useState<NutritionLogRow[]>([]);
+
+    const handleDeleteEntry = async (entry: NutritionLogRow) => {
+        const result = await deleteMealEntry(entry.id!, user!.id);
+        if (result.success) {
+            const [dayData, weekData, monthData, entries] = await Promise.all([
+                getNutritionHistory(user!.id, 0),
+                getNutritionHistory(user!.id, 6),
+                getNutritionHistory(user!.id, 30),
+                getDailyNutritionEntries(user!.id),
+            ]);
+            setDayCache(dayData);
+            setWeekCache(weekData);
+            setMonthCache(monthData);
+            setDayEntries(entries);
+        } else {
+            Alert.alert('Failed to delete meal entry', result.error);
+        }
+    }  
+
+
+    const handleEditEntry = (entry: NutritionLogRow) => {
+        router.push({
+            pathname: '/screens/nutrition',
+            params: {
+                id: String(entry.id),
+                mealName: entry.mealName,
+                calories: String(entry.calories),
+                protein: String(entry.protein),
+                carbs: String(entry.carbs),
+                fat: String(entry.fat),
+                nutritionEventType: String(entry.nutritionEventType),
+                notes: entry.notes ?? '',
+                time: entry.time,
+            },
+        } as any);
+    }
 
     // Fetch all three ranges + day entries in one shot when the screen gains focus
     useFocusEffect(
@@ -297,7 +333,7 @@ const HistoricalNutritionData = () => {
                                     style={styles.viewDetailsBtn}
                                     onPress={() =>
                                         router.push({
-                                            pathname: '/screens/dailyNutritionSummary',
+                                            pathname: '/screens/dailyNutritionSummary' as any,
                                             params: { date: selected.date },
                                         } as any)
                                     }
@@ -313,6 +349,9 @@ const HistoricalNutritionData = () => {
                     {mode === "D" && (
                         <NutritionDayView
                             entries={dayEntries}
+                            isCurrentDay={selected.date === new Date().toISOString().split('T')[0]}
+                            onEditEntry={handleEditEntry}
+                            onDeleteEntry={handleDeleteEntry}
                         />
                     )}
 
