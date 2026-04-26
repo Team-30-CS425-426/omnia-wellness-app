@@ -22,6 +22,8 @@ import {
   checkActivityGoalExists,
 } from "../../src/services/activityGoalService";
 
+import Slider from "@react-native-community/slider";
+
 const ActivityGoalScreen = () => {
   const navigation = useNavigation();
   const { user } = useUser();
@@ -33,6 +35,7 @@ const ActivityGoalScreen = () => {
 
   const [weeklyMinutes, setWeeklyMinutes] = useState("");
   const [daysPerWeek, setDaysPerWeek] = useState("");
+  const [successRate, setSuccessRate] = useState(70);
 
   const handleSave = async () => {
     const parsedWeeklyMinutes = parseInt(weeklyMinutes, 10);
@@ -73,6 +76,7 @@ const ActivityGoalScreen = () => {
       await insertActivityGoal(user.id, {
         weeklyMinutes: parsedWeeklyMinutes,
         daysPerWeek: parsedDaysPerWeek,
+        successRate,
       });
 
       Alert.alert(
@@ -108,6 +112,20 @@ const ActivityGoalScreen = () => {
           </View>
 
           <Text style={styles.pageTitle}>Set Your Activity Goal</Text>
+
+          <Text style={styles.sectionLabel}>Success Rate: {successRate}%</Text>
+
+          <Slider
+            style={styles.slider}
+            minimumValue={50}
+            maximumValue={100}
+            step={5}
+            value={successRate}
+            minimumTrackTintColor="#36AE7C"
+            maximumTrackTintColor="#E5E5EA"
+            thumbTintColor="#36AE7C"
+            onValueChange={setSuccessRate}
+          />
 
           <Text style={styles.sectionLabel}>Weekly Activity Minutes</Text>
           <TextInput
@@ -199,6 +217,11 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  slider: {
+    width: "100%",
+    height: 40,
+    marginBottom: 20,
   },
 });
 

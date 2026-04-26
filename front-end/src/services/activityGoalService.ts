@@ -5,6 +5,7 @@ import { supabase } from "../../config/supabaseConfig";
 export type ActivityGoalInput = {
   weeklyMinutes: number;
   daysPerWeek: number;
+  successRate: number;
 };
 
 export async function deleteActivityGoal(userId: string) {
@@ -38,6 +39,7 @@ export async function insertActivityGoal(
         userid: userId,
         weekly_minutes: activityData.weeklyMinutes,
         days_per_week: activityData.daysPerWeek,
+        success_rate: activityData.successRate,
       },
       {
         onConflict: "userid",

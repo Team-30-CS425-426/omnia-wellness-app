@@ -17,6 +17,9 @@ import { useFocusEffect } from "@react-navigation/native";
 import { useUser } from "@/contexts/UserContext";
 
 import { supabase } from "@/config/supabaseConfig";
+import { Goal } from "lucide-react-native";
+import Svg, { Circle } from "react-native-svg";
+import { getActivityGoal } from "@/src/services/activityGoalService";
 
 type Mode = "W" | "M";
 
@@ -49,6 +52,7 @@ function SegmentedWM({
     { key: "M", label: "Month" },
   ];
 
+
   return (
     <View style={styles.segmentWrap}>
       {options.map((opt) => {
@@ -69,6 +73,56 @@ function SegmentedWM({
   );
 }
 
+function GoalProgressRing({
+  percent,
+  met,
+  size = 76,
+  strokeWidth = 9,
+  fontSize = 18,
+  showText = true,
+}: {
+  percent: number;
+  met: boolean;
+  size?: number;
+  strokeWidth?: number;
+  fontSize?: number;
+  showText?: boolean;
+}) {
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const progress = Math.min(Math.max(percent, 0), 100);
+  const strokeDashoffset = circumference - (progress / 100) * circumference;
+
+  return (
+    <View style={{ width: size, height: size }}>
+      <Svg width={size} height={size}>
+        <Circle cx={size / 2} cy={size / 2} r={radius} stroke="#E5E5EA" strokeWidth={strokeWidth} fill="none" />
+        <Circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke={met ? "#34C759" : "#FF3B30"}
+          strokeWidth={strokeWidth}
+          fill="none"
+          strokeDasharray={`${circumference} ${circumference}`}
+          strokeDashoffset={strokeDashoffset}
+          strokeLinecap="round"
+          rotation="-90"
+          origin={`${size / 2}, ${size / 2}`}
+        />
+      </Svg>
+
+      {showText && (
+        <View style={styles.ringTextCenter}>
+          <Text style={[styles.ringPercentText, { fontSize }]}>
+            {Math.round(percent)}%
+          </Text>
+        </View>
+      )}
+    </View>
+  );
+}
+
 export default function HistoricalActivityData() {
   const insets = useSafeAreaInsets();
   const { user } = useUser();
@@ -78,6 +132,39 @@ export default function HistoricalActivityData() {
     { date: string; minutes: number; notes: string | null }[]
   >([]);
   const [selectedIndex, setSelectedIndex] = useState<number>(6);
+  const [activityGoalData, setActivityGoalData] = useState<{
+    weekly_minutes: number;
+    days_per_week: number;
+    success_rate: number;
+  } | null>(null);
+  
+  const [checkingGoal, setCheckingGoal] = useState(true);
+
+  useFocusEffect(
+    useCallback(() => {
+      async function checkGoal() {
+        if (!user?.id) {
+          setActivityGoalData(null);
+          setCheckingGoal(false);
+          return;
+        }
+  
+        try {
+          setCheckingGoal(true);
+  
+          const goal = await getActivityGoal(user.id);
+          setActivityGoalData(goal);
+        } catch (error) {
+          console.log("Failed to check activity goal:", error);
+          setActivityGoalData(null);
+        } finally {
+          setCheckingGoal(false);
+        }
+      }
+  
+      checkGoal();
+    }, [user?.id])
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -152,6 +239,29 @@ export default function HistoricalActivityData() {
     }
     return history[safeSelectedIndex];
   }, [history, safeSelectedIndex]);
+
+  const dailyTargetMinutes =
+    activityGoalData?.weekly_minutes && activityGoalData?.days_per_week
+      ? activityGoalData.weekly_minutes / activityGoalData.days_per_week
+      : 0;
+
+  const successRate = activityGoalData?.success_rate ?? 70;
+
+  const goalPercent =
+    dailyTargetMinutes > 0
+      ? Math.round((selected.minutes / dailyTargetMinutes) * 100)
+      : 0;
+
+  const goalMet = goalPercent >= successRate;
+
+  const getDayActivityGoalPercent = (minutes: number) => {
+    if (dailyTargetMinutes <= 0) return 0;
+    return Math.round((minutes / dailyTargetMinutes) * 100);
+  };
+
+  const isDayActivityGoalMet = (minutes: number) => {
+    return getDayActivityGoalPercent(minutes) >= successRate;
+  };
 
   const selectedDateText = useMemo(() => {
     const d = new Date(`${selected.date}T00:00:00`);
@@ -351,9 +461,21 @@ export default function HistoricalActivityData() {
                         {d.getDate()}
                       </Text>
 
-                      <Text style={styles.dayActivityText}>
-                        {activityCardLabel(item.minutes)}
-                      </Text>
+                      {activityGoalData ? (
+                        <View style={styles.smallRingWrap}>
+                          <GoalProgressRing
+                            percent={getDayActivityGoalPercent(item.minutes)}
+                            met={isDayActivityGoalMet(item.minutes)}
+                            size={34}
+                            strokeWidth={4}
+                            showText={false}
+                          />
+                        </View>
+                      ) : (
+                        <Text style={styles.dayActivityText}>
+                          {activityCardLabel(item.minutes)}
+                        </Text>
+                      )}
                     </Pressable>
                   );
                 })}
@@ -402,9 +524,21 @@ export default function HistoricalActivityData() {
                         {d.getDate()}
                       </Text>
 
-                      <Text style={styles.calendarActivityText}>
-                        {activityCardLabel(cell.item.minutes)}
-                      </Text>
+                      {activityGoalData ? (
+                        <View style={styles.smallRingWrap}>
+                          <GoalProgressRing
+                            percent={getDayActivityGoalPercent(cell.item.minutes)}
+                            met={isDayActivityGoalMet(cell.item.minutes)}
+                            size={30}
+                            strokeWidth={4}
+                            showText={false}
+                          />
+                        </View>
+                      ) : (
+                        <Text style={styles.calendarActivityText}>
+                          {activityCardLabel(cell.item.minutes)}
+                        </Text>
+                      )}
                     </Pressable>
                   );
                 })}
@@ -476,6 +610,60 @@ export default function HistoricalActivityData() {
             <Text style={styles.showAllChevron}>›</Text>
           </Pressable>
           
+          {!checkingGoal && !activityGoalData && (
+            <Pressable
+              style={styles.goalCard}
+              onPress={() => router.push("/screens/activityGoal" as any)}
+            >
+              <View style={styles.goalLeft}>
+                <Goal size={36} color="#36AE7C" strokeWidth={2.5} />
+
+                <View>
+                  <Text style={styles.goalTitle}>Goals Not Set</Text>
+                  <Text style={styles.goalSubtitle}>
+                    Get started by setting an activity goal
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.goalRight}>
+                <Text style={styles.goalSetText}>Set Goal</Text>
+                <Text style={styles.goalChevron}>›</Text>
+              </View>
+            </Pressable>
+          )}
+
+          {!checkingGoal && activityGoalData && (
+            <View style={styles.goalResultCard}>
+              <View style={styles.goalResultContent}>
+                <GoalProgressRing percent={goalPercent} met={goalMet} />
+
+                <View style={styles.goalResultTextBlock}>
+                  <Text style={styles.goalResultTitle}>Daily Goal</Text>
+                  <Text style={styles.goalResultSubtitle}>
+                    {Math.round(selected.minutes)} / {Math.round(dailyTargetMinutes)} min today
+                  </Text>
+                  <Text style={styles.goalResultSmallText}>
+                    Goal: {activityGoalData.weekly_minutes} min across{" "}
+                    {activityGoalData.days_per_week} days
+                  </Text>
+                </View>
+              </View>
+
+              <Pressable
+                style={styles.editGoalButton}
+                onPress={() =>
+                  router.push({
+                    pathname: "/screens/activityGoal",
+                    params: { mode: "edit" },
+                  } as any)
+                }
+              >
+                <Text style={styles.editGoalText}>Edit Goal</Text>
+                <Text style={styles.editGoalChevron}>›</Text>
+              </Pressable>
+            </View>
+          )}
 
           {selectedActivityNote ? (
             <View style={styles.activityNotesCard}>
@@ -702,5 +890,144 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     color: "#000",
     lineHeight: 24,
+  },
+  goalCard: {
+    marginTop: 10,
+    marginHorizontal: 14,
+    backgroundColor: "white",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#E5E5EA",
+    paddingVertical: 16,
+    paddingLeft: 10,
+    paddingRight: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  
+  goalLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    flex: 1,
+    marginRight: 8,
+  },
+  
+  goalTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#36AE7C",
+  },
+  
+  goalSubtitle: {
+    fontSize: 13,
+    color: "#000",
+    marginTop: 2,
+    width: 210,
+  },
+  
+  goalRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    flexShrink: 0,
+    marginLeft: 12,
+  },
+  
+  goalSetText: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#36AE7C",
+  },
+  
+  goalChevron: {
+    fontSize: 25,
+    color: "#36AE7C",
+  },
+  
+  goalResultCard: {
+    marginTop: 14,
+    marginHorizontal: 14,
+    backgroundColor: "white",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#E5E5EA",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  
+  goalResultContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+  
+  goalResultTextBlock: {
+    marginLeft: 12,
+    flexShrink: 1,
+  },
+  
+  goalResultTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#555",
+  },
+  
+  goalResultSubtitle: {
+    fontSize: 13,
+    color: "#555",
+    fontWeight: "600",
+    marginTop: 8,
+  },
+  
+  goalResultSmallText: {
+    fontSize: 11,
+    color: "#8E8E93",
+    marginTop: 5,
+  },
+  
+  editGoalButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginLeft: 10,
+  },
+  
+  editGoalText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#555",
+  },
+  
+  editGoalChevron: {
+    fontSize: 30,
+    fontWeight: "700",
+    color: "#000",
+    marginLeft: 8,
+  },
+  
+  ringTextCenter: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  
+  ringPercentText: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#555",
+  },
+  
+  smallRingWrap: {
+    marginTop: 5,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
