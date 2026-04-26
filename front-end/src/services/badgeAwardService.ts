@@ -61,9 +61,13 @@ export async function checkAndAwardMoodBadges(userId: string) {
     await awardBadge(userId, "mood_streak_3", getLocalDateString(), current);
   }
 
-  // optional future badge
   if (current >= 7) {
     await awardBadge(userId, "mood_streak_7", getLocalDateString(), current);
+  }
+
+  // ADDED: 30-day mood streak badge
+  if (current >= 30) {
+    await awardBadge(userId, "mood_streak_30", getLocalDateString(), current);
   }
 }
 
@@ -103,7 +107,7 @@ export async function checkAndAwardWorkoutBadges(userId: string) {
     console.log("✅ workout_goal_first award result:", result);
   }
 
-  // Keep this as current OR longest depending on your meaning.
+  // Keep this as current OR longest depending on meaning.
   // Here, 2-week workout streak means user has achieved a 2-week streak at some point.
   if (longestStreak >= 2) {
     const result = await awardBadge(
@@ -117,7 +121,7 @@ export async function checkAndAwardWorkoutBadges(userId: string) {
 }
 
 /* =========================================================
-   ADDED: Sleep badge logic (matches mood/nutrition pattern)
+   ADDED: Sleep badge logic 
    ========================================================= */
 
 export async function checkAndAwardSleepBadges(userId: string) {
@@ -150,7 +154,6 @@ export async function checkAndAwardSleepBadges(userId: string) {
     console.log("✅ sleep_streak_3 award result:", result);
   }
 
-  // OPTIONAL FUTURE BADGE (kept consistent with mood style)
   if (currentStreak >= 7) {
     const result = await awardBadge(
       userId,
@@ -163,7 +166,7 @@ export async function checkAndAwardSleepBadges(userId: string) {
 }
 
 /* =========================================================
-   ✅ ADDED: Steps badge logic
+   ADDED: Steps badge logic
    ========================================================= */
 
 export async function checkAndAwardStepsBadges(userId: string) {
@@ -206,7 +209,17 @@ export async function checkAndAwardStepsBadges(userId: string) {
     );
     console.log("✅ steps_streak_7 award result:", result);
   }
-}
 
+  // ADDED: 2-week steps streak badge
+  if (currentStreak >= 14) {
+    const result = await awardBadge(
+      userId,
+      "steps_streak_14",
+      today,
+      currentStreak
+    );
+    console.log("✅ steps_streak_14 award result:", result);
+  }
+}
 
 
