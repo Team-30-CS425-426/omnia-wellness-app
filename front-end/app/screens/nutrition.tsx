@@ -246,7 +246,6 @@ const NutritionScreen = () => {
               mode="time"
               onChange={(event, selectedDate) => {
                 if (selectedDate) setMealTime(selectedDate);
-                setShowTimePicker(false);
               }}
             />
           )}

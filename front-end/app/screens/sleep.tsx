@@ -142,7 +142,6 @@ const SleepTrackerScreen = () => {
               value={sleepStart}
               mode="time"
               onChange={(event, selectedDate) => {
-                setShowStartPicker(false);
                 if (selectedDate) setSleepStart(selectedDate);
               }}
             />
@@ -160,8 +159,8 @@ const SleepTrackerScreen = () => {
               value={wakeTime}
               mode="time"
               onChange={(event, selectedDate) => {
-                setShowWakePicker(false);
                 if (selectedDate) setWakeTime(selectedDate);
+
               }}
             />
           )}
