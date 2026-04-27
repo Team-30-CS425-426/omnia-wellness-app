@@ -15,8 +15,9 @@ import { supabase } from "@/config/supabaseConfig";
 import { Goal } from "lucide-react-native";
 import Svg, { Circle } from "react-native-svg";
 import { getSleepGoal } from "@/src/services/sleepGoalService";
-
-
+import { Colors } from "@/constants/Colors";
+import { Bed, StickyNote } from "lucide-react-native";
+import { Ionicons } from "@expo/vector-icons";
 type Mode = "W" | "M";
 
 const weekdayHeaders = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -568,7 +569,7 @@ export default function SleepDetailsScreen() {
       return {
         value: Number(d.value) || 0,
         label: `\u200B${i}`,
-        frontColor: isSelected ? "#187498" : "rgba(24,116,152,0.35)",
+        frontColor: isSelected ? Colors.default.sleepyBlue : "rgba(0,0,255,0.35)",
         onPress: () => setSelectedIndex(i),
         topLabelComponent: () =>
           mode === "W" && isSelected ? (
@@ -824,8 +825,6 @@ export default function SleepDetailsScreen() {
                 )}
               </View>
             )}
-          </View>
-
           <Pressable
             style={styles.showAllCard}
             onPress={() =>
@@ -838,9 +837,13 @@ export default function SleepDetailsScreen() {
             <Text style={styles.showAllText}>Show All Data</Text>
             <Text style={styles.showAllChevron}>›</Text>
           </Pressable>
+          </View>
 
           <View style={styles.sleepQualityCard}>
-            <Text style={styles.sleepQualityTitle}>🛏️ Sleep Quality</Text>
+          <View style={styles.sectionTitleRow}>
+            <Ionicons name="bed" size={24} color={Colors.default.sleepyBlue} />
+            <Text style={styles.sleepQualityTitle}>Sleep Quality</Text>
+          </View>
             <Text style={styles.sleepQualityValue}>{selectedSleepQualityLabel}</Text>
           </View>
 
@@ -850,7 +853,7 @@ export default function SleepDetailsScreen() {
               onPress={() => router.push("/screens/sleepGoals" as any)}
             >
               <View style={styles.goalLeft}>
-                <Goal size={36} color="#187498" strokeWidth={2.5} />
+                <Goal size={36} color= {Colors.default.sleepyBlue} strokeWidth={2.5} />
 
                 <View>
                   <Text style={styles.goalTitle}>Goals Not Set</Text>
@@ -896,7 +899,10 @@ export default function SleepDetailsScreen() {
 
           {selectedSleepNote ? (
             <View style={styles.sleepNotesCard}>
-              <Text style={styles.sleepNotesTitle}>Notes</Text>
+              <View style={styles.sectionTitleRow}>
+                <Ionicons name="document-text" size={24} color={Colors.default.sleepyBlue} style={{ marginTop: 0 }} />
+                <Text style={styles.sleepNotesTitle}>Notes</Text>
+              </View>
               <Text style={styles.sleepNotesText}>{selectedSleepNote}</Text>
             </View>
           ) : null}
@@ -1029,7 +1035,7 @@ const styles = StyleSheet.create({
   daySleepText: {
     fontSize: 11,
     marginTop: 4,
-    color: "#187498",
+    color: Colors.default.sleepyBlue,
     fontWeight: "700",
   },
 
@@ -1079,13 +1085,13 @@ const styles = StyleSheet.create({
   },
   calendarSleepText: {
     fontSize: 10,
-    color: "#187498",
+    color: Colors.default.sleepyBlue,
     fontWeight: "700",
   },
 
   topLabel: {
     fontSize: 10,
-    color: "#187498",
+    color: Colors.default.sleepyBlue,
     fontWeight: "700",
     marginBottom: 2,
   },
@@ -1116,16 +1122,15 @@ const styles = StyleSheet.create({
 
   showAllCard: {
     marginTop: 14,
-    marginHorizontal: 14,
-    backgroundColor: "white",
-    borderRadius: 16,
+    paddingTop: 14,
     paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: 4,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    borderWidth: 1,
-    borderColor: "#E5E5EA",
+    borderTopWidth: 1,
+    borderTopColor: "#E5E5EA",
+    backgroundColor: "transparent",
   },
   showAllText: { fontSize: 20, fontWeight: "400", color: "#000" },
   showAllChevron: { fontSize: 26, color: "#C7C7CC", fontWeight: "400" },
@@ -1143,8 +1148,7 @@ const styles = StyleSheet.create({
   sleepQualityTitle: {
     fontSize: 20,
     fontWeight: "700",
-    color: "#187498",
-    marginBottom: 14,
+    color: Colors.default.sleepyBlue,
   },
   
   sleepQualityValue: {
@@ -1157,7 +1161,6 @@ const styles = StyleSheet.create({
   sleepNotesCard: {
     marginTop: 14,
     marginHorizontal: 14,
-    marginBottom: 8,
     backgroundColor: "white",
     borderRadius: 20,
     borderWidth: 1,
@@ -1169,7 +1172,7 @@ const styles = StyleSheet.create({
   sleepNotesTitle: {
     fontSize: 20,
     fontWeight: "700",
-    color: "#187498",
+    color: Colors.default.sleepyBlue,
     marginBottom: 10,
   },
 
@@ -1206,7 +1209,7 @@ const styles = StyleSheet.create({
   goalTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#187498",
+    color: Colors.default.sleepyBlue,
   },
   
   goalSubtitle: {
@@ -1227,12 +1230,12 @@ const styles = StyleSheet.create({
   goalSetText: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#187498",
+    color: Colors.default.sleepyBlue,
   },
   
   goalChevron: {
     fontSize: 25,
-    color: "#187498",
+    color: Colors.default.sleepyBlue,
   },
   goalResultCard: {
     marginTop: 14,
@@ -1262,19 +1265,19 @@ const styles = StyleSheet.create({
   goalResultTitle: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#555",
+    color: "#000",
   },
   
   goalResultSubtitle: {
     fontSize: 13,
-    color: "#555",
+    color: "#000",
     fontWeight: "600",
     marginTop: 8,
   },
   
   goalResultSmallText: {
     fontSize: 11,
-    color: "#8E8E93",
+    color: "#666",
     marginTop: 5,
   },
   
@@ -1287,12 +1290,12 @@ const styles = StyleSheet.create({
   editGoalText: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#555",
+    color: "#000",
   },
   
   editGoalChevron: {
     fontSize: 30,
-    fontWeight: "700",
+    fontWeight: "500",
     color: "#000",
     marginLeft: 8,
   },
@@ -1310,11 +1313,17 @@ const styles = StyleSheet.create({
   ringPercentText: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#555",
+    color: "#000",
   },
   smallRingWrap: {
     marginTop: 5,
     alignItems: "center",
     justifyContent: "center",
+  },
+  sectionTitleRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8,
+    marginBottom: 10,
   },
 });

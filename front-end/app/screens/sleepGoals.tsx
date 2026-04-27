@@ -15,6 +15,8 @@ import { useNavigation } from "@react-navigation/native";
 import { useUser } from "../../contexts/UserContext";
 import { insertSleepGoal } from "../../src/services/sleepGoalService";
 import Slider from "@react-native-community/slider";
+import { Colors } from "@/constants/Colors";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function SleepGoalsScreen() {
   const navigation = useNavigation();
@@ -57,16 +59,21 @@ export default function SleepGoalsScreen() {
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.container}>
-          <View style={styles.header}>
-            <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-              <Text style={styles.backArrow}>{"←"}</Text>
+        <View style={styles.header}>
+          <View style={{ width: 70, alignItems: "flex-start" }}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+            >
+              <Ionicons name="chevron-back" size={24} color="black" />
               <Text style={styles.backText}>Back</Text>
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>Sleep Goal</Text>
-            <View style={{ width: 60 }} />
           </View>
 
-          <Text style={styles.pageTitle}>Set Your Sleep Goal</Text>
+          <Text style={styles.pageTitle}>Sleep Goal</Text>
+
+          <View style={{ width: 70 }} />
+        </View>
 
           <Text style={styles.sectionLabel}>Success Rate: {successRate}%</Text>
           <Slider
@@ -75,9 +82,9 @@ export default function SleepGoalsScreen() {
             maximumValue={100}
             step={5}
             value={successRate}
-            minimumTrackTintColor="#187498"
+            minimumTrackTintColor={Colors.default.sleepyBlue}
             maximumTrackTintColor="#E5E5EA"
-            thumbTintColor="#187498"
+            thumbTintColor={Colors.default.sleepyBlue}
             onValueChange={setSuccessRate}
           />
 
@@ -106,14 +113,24 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingTop: 40,
-    paddingBottom: 10,
+    paddingTop: 50,
+    paddingBottom: 22,
   },
-  backButton: { flexDirection: "row", alignItems: "center" },
+  backButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginLeft: -6,
+  },
   backArrow: { fontSize: 22, fontWeight: "600", marginRight: 6 },
-  backText: { fontSize: 18 },
+  backText: { fontSize: 17 },
   headerTitle: { fontSize: 20, fontWeight: "bold", textAlign: "center", flex: 1 },
-  pageTitle: { textAlign: "center", fontSize: 22, fontWeight: "bold", marginBottom: 20 },
+  pageTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: Colors.default.sleepyBlue,
+    textAlign: "center",
+    flex: 1,
+  },
   sectionLabel: { fontSize: 16, fontWeight: "500", marginVertical: 10 },
   input: {
     borderWidth: 1,
@@ -124,7 +141,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   saveButton: {
-    backgroundColor: "#007AFF",
+    backgroundColor: Colors.default.sleepyBlue,
     padding: 15,
     borderRadius: 12,
     alignItems: "center",

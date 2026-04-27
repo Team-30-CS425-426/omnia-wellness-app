@@ -5,8 +5,10 @@ import {
   StyleSheet, Animated, Easing,
 } from 'react-native';
 import AnimatedBackground from '../../components/AnimateBackground';
+import { Colors } from '@/constants/Colors';
 
-const PURPLE = '#2c02a0';
+
+const SLEEPY_BLUE = Colors.default.sleepyBlue;
 
 interface Props {
   visible: boolean;
@@ -122,7 +124,7 @@ const styles = StyleSheet.create({
   },
   header: {
     fontSize: 20, fontWeight: '600',
-    color: PURPLE,
+    color: SLEEPY_BLUE,
   },
   screen: {
     flex: 1,
@@ -135,7 +137,7 @@ const styles = StyleSheet.create({
   },
   iconCircle: {
     width: 72, height: 72, borderRadius: 36,
-    backgroundColor: PURPLE,
+    backgroundColor: SLEEPY_BLUE,
     justifyContent: 'center', alignItems: 'center',
     marginBottom: 14,
   },
@@ -146,9 +148,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around', alignItems: 'center',
     paddingVertical: 16,
     borderTopWidth: 1.5, borderBottomWidth: 1.5,
-    borderColor: '#f0e6fa', marginBottom: 18,
+    borderColor: '#EAF0FF', marginBottom: 18,
   },
-  divider: { width: 1, height: 36, backgroundColor: '#f0e6fa' },
+  divider: { width: 1, height: 36, backgroundColor: '#EAF0FF' },
   stat:    { alignItems: 'center' },
   statValue: { fontSize: 20, fontWeight: '700', color: '#0a0a0a' },
   statLabel: {
@@ -159,15 +161,15 @@ const styles = StyleSheet.create({
   barSection: { width: '100%', marginBottom: 22 },
   barHeader:  { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
   barLabel:   { fontSize: 12, color: '#888' },
-  barValue:   { fontSize: 12, fontWeight: '600', color: PURPLE },
-  barTrack:   { width: '100%', height: 6, backgroundColor: '#f0e6fa', borderRadius: 4, overflow: 'hidden' },
-  barFill:    { height: '100%', backgroundColor: PURPLE, borderRadius: 4 },
+  barValue:   { fontSize: 12, fontWeight: '600', color: SLEEPY_BLUE },
+  barTrack:   { width: '100%', height: 6, backgroundColor: '#EAF0FF', borderRadius: 4, overflow: 'hidden' },
+  barFill:    { height: '100%', backgroundColor: SLEEPY_BLUE, borderRadius: 4 },
 
   primaryBtn: {
-    width: '100%', backgroundColor: PURPLE,
+    width: '100%', backgroundColor: SLEEPY_BLUE,
     borderRadius: 12, padding: 14, alignItems: 'center', marginBottom: 8,
   },
   primaryBtnText:   { color: '#fff', fontWeight: '700', fontSize: 16 },
-  secondaryBtn:     { width: '100%', backgroundColor: '#f0e6fa', borderRadius: 12, padding: 12, alignItems: 'center' },
-  secondaryBtnText: { color: PURPLE, fontWeight: '600', fontSize: 14 },
+  secondaryBtn:     { width: '100%', backgroundColor: '#EAF0FF', borderRadius: 12, padding: 12, alignItems: 'center' },
+  secondaryBtnText: { color: SLEEPY_BLUE, fontWeight: '600', fontSize: 14 },
 });

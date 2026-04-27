@@ -18,6 +18,7 @@ import DashboardGoalRing from "../DashboardGoalRing";
 import { getActivityGoal } from "@/src/services/activityGoalService";
 
 import { EntryContext } from "./dashboard";
+import { Colors } from "@/constants/Colors";
 
 interface MetricsProps {
   style?: StyleProp<ViewStyle>;
@@ -250,7 +251,7 @@ export function Metrics({ style, health, onStepsPress }: MetricsProps) {
               label="Sleep"
               valueText={getSleepRingText(Number(sleepToday), sleepGoalHours)}
               progress={clampProgress(Number(sleepToday), sleepGoalHours)}
-              color="#187498"
+              color={Colors.default.sleepyBlue}
               onPress={() =>
                 router.push({
                   pathname: "/historicalSleepData",
@@ -367,7 +368,7 @@ function MetricItem({ circleLabel, label, color, isEmoji = false }: MetricItemPr
 }
 
 function Sleep({ value = "" }: { value?: string }) {
-  return <MetricItem circleLabel={value} label="Sleep" color="#187498" />;
+  return <MetricItem circleLabel={value} label="Sleep" color={Colors.default.sleepyBlue} />;
 }
 
 function Activity({ value = "" }: { value?: string }) {

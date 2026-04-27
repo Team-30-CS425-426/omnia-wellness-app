@@ -19,7 +19,7 @@ interface Option {
 const OPTIONS: Option[] = [
   { label: 'Workout', icon: 'barbell', color: Colors.default.strongGreen },
   { label: 'Mood & Stress', icon: 'happy-outline', color: Colors.default.candyRed },
-  { label: 'Sleep', icon: 'bed-outline', color: Colors.default.darkPurple},
+  { label: 'Sleep', icon: 'bed-outline', color: Colors.default.sleepyBlue },
   { label: 'Nutrition', icon: 'restaurant-outline', color: Colors.default.successGreen },
   { label: 'Habits', icon: 'checkmark-circle-outline', color: Colors.default.primaryBlue },
 ];
@@ -59,7 +59,7 @@ const AddMenuButton = () => {
             {OPTIONS.map((item, index) => (
               <TouchableOpacity
                 key={index}
-                style={styles.gridItem}
+                style={[styles.gridItem, item.label === "Sleep" && styles.sleepGridItem,]}
                 onPress={() => {
                   setModalVisible(false);
 
@@ -138,6 +138,11 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontSize: 14,
     textAlign: 'center',
+  },
+  sleepGridItem: {
+    backgroundColor: "#EAF0FF",
+    borderWidth: 1,
+    borderColor: Colors.default.sleepyBlue,
   },
 });
 

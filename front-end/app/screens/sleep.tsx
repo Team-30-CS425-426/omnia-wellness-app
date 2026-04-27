@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation } from "@react-navigation/native";
+import { router } from "expo-router";
 import SleepSuccess from "./SuccessScreens/SleepSuccess";
 
 import { useUser } from "../../contexts/UserContext";
@@ -28,6 +29,8 @@ import { refreshSleepStreak } from "../../src/services/sleepStreakService";
 
 // ADDED: import sleep badge awarding
 import { checkAndAwardSleepBadges } from "../../src/services/badgeAwardService";
+import { Colors } from "@/constants/Colors";
+import { Ionicons } from "@expo/vector-icons";
 
 const SLEEP_QUALITIES = ["Excellent", "Good", "Fair", "Poor", "Very Poor"] as const;
 type SleepQuality = (typeof SLEEP_QUALITIES)[number];
@@ -118,20 +121,21 @@ const SleepTrackerScreen = () => {
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View style={styles.container}>
-            <View style={styles.header}>
+          <View style={styles.header}>
+            <View style={{ width: 70, alignItems: "flex-start" }}>
               <TouchableOpacity
                 style={styles.backButton}
                 onPress={() => navigation.goBack()}
               >
-                <Text style={styles.backArrow}>{"←"}</Text>
+                <Ionicons name="chevron-back" size={24} color="black" />
                 <Text style={styles.backText}>Back</Text>
               </TouchableOpacity>
-  
-              <Text style={styles.headerTitle}>Sleep Tracker</Text>
-              <View style={{ width: 60 }} />
             </View>
-  
+
             <Text style={styles.pageTitle}>Log Your Sleep</Text>
+
+            <View style={{ width: 70 }} />
+          </View>
   
             <Text style={styles.sectionLabel}>Sleep Start</Text>
             <TouchableOpacity
@@ -151,7 +155,7 @@ const SleepTrackerScreen = () => {
                 value={sleepStart}
                 mode="time"
                 onChange={(event, selectedDate) => {
-                  setShowStartPicker(false);
+                  
                   if (selectedDate) setSleepStart(selectedDate);
                 }}
               />
@@ -175,7 +179,7 @@ const SleepTrackerScreen = () => {
                 value={wakeTime}
                 mode="time"
                 onChange={(event, selectedDate) => {
-                  setShowWakePicker(false);
+                  
                   if (selectedDate) setWakeTime(selectedDate);
                 }}
               />
@@ -224,7 +228,7 @@ const SleepTrackerScreen = () => {
             onClose={() => setShowSuccess(false)}
             onViewHistory={() => {
               setShowSuccess(false);
-              navigation.goBack();
+              router.push("/historicalSleepData" as any);
             }}
           />
         </View>
@@ -245,37 +249,26 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingTop: 40,
-    paddingBottom: 10,
+    paddingTop: 50,
+    paddingBottom: 22,
   },
 
   backButton: {
     flexDirection: "row",
     alignItems: "center",
-  },
-
-  backArrow: {
-    fontSize: 22,
-    fontWeight: "600",
-    marginRight: 6,
+    marginLeft: -6,
   },
 
   backText: {
-    fontSize: 18,
-  },
-
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    textAlign: "center",
-    flex: 1,
+    fontSize: 17,
   },
 
   pageTitle: {
-    textAlign: "center",
     fontSize: 22,
     fontWeight: "bold",
-    marginBottom: 20,
+    color: Colors.default.sleepyBlue,
+    textAlign: "center",
+    flex: 1,
   },
 
   sectionLabel: {
@@ -310,8 +303,8 @@ const styles = StyleSheet.create({
   },
 
   qualitySelected: {
-    backgroundColor: "#E8E0FF",
-    borderColor: "#2c02a0",
+    backgroundColor: "#EAF0FF",
+    borderColor: Colors.default.sleepyBlue,
   },
 
   notesInput: {
@@ -325,7 +318,7 @@ const styles = StyleSheet.create({
   },
 
   saveButton: {
-    backgroundColor: "#2c02a0",
+    backgroundColor: Colors.default.sleepyBlue,
     padding: 15,
     borderRadius: 12,
     alignItems: "center",

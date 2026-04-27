@@ -66,7 +66,7 @@ export const getIconColor = (goalType: GoalType) => {
           case 'nutrition':
             return Colors.default.strongGreen;
           case 'sleep':
-            return Colors.default.darkPurple;
+            return Colors.default.sleepyBlue;
           case 'steps':
                 return Colors.default.yellowOrange;
           case 'physical-activity':
@@ -143,11 +143,11 @@ export const GOAL_CONFIGS: Record<GoalType, GoalConfig> = {
         label: 'Sleep Goal',
         icon: 'bed',
         color: Colors.default.white,
-        textColor: '#187498',
+        textColor: Colors.default.sleepyBlue,
         route: '/screens/sleepGoals',
         renderDetails: (goal) => (
             <View style={goalDetailStyles.goalDetails}>
-                <ThemedText style={[goalDetailStyles.goalText, { color: Colors.default.berryBlue }]}>
+                <ThemedText style={[goalDetailStyles.goalText, { color: Colors.default.sleepyBlue }]}>
                     Goal: {goal.sleep_goal_hours}h
                 </ThemedText>
             </View>

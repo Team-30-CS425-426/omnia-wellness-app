@@ -87,7 +87,10 @@ const SetGoalModal: React.FC<SetGoalModalProps> = ({
           {GOAL_OPTIONS.map((option) => (
             <TouchableOpacity
               key={option.type}
-              style={styles.gridItem}
+              style={[
+                styles.gridItem,
+                option.type === "sleep" && styles.sleepGridItem,
+              ]}
               onPress={() => handleSelect(option.type)}
             >
               <Ionicons 
@@ -145,6 +148,11 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     color: '#000000',
     textAlign: 'center',
+  },
+  sleepGridItem: {
+    backgroundColor: "#EAF0FF",
+    borderWidth: 1.5,
+    borderColor: Colors.default.sleepyBlue,
   },
 });
 

@@ -47,6 +47,12 @@ export const Colors = {
 
   yellowOrange: "#F0B617",
 
-  hotPink: "#FF46A2"
+  hotPink: "#FF46A2",
+
+  sleepyBlue: "#0000FF",
+
+  ActivityGreen: "#1e7e34",
+
+  OrangySteps: "#F59E0B"
   }
 };
