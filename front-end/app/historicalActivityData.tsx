@@ -20,6 +20,8 @@ import { supabase } from "@/config/supabaseConfig";
 import { Goal } from "lucide-react-native";
 import Svg, { Circle } from "react-native-svg";
 import { getActivityGoal } from "@/src/services/activityGoalService";
+import { Colors } from "@/constants/Colors";
+import { Ionicons } from "@expo/vector-icons";
 
 type Mode = "W" | "M";
 
@@ -369,7 +371,7 @@ export default function HistoricalActivityData() {
       return {
         value: Number(d.minutes) || 0,
         label,
-        frontColor: isSelected ? "#36AE7C" : "rgba(54,174,124,0.35)",
+        frontColor: isSelected ? Colors.default.ActivityGreen : "rgba(21,154,52,0.35)",
         onPress: () => setSelectedIndex(i),
 
         // top labels only on Week
@@ -594,10 +596,7 @@ export default function HistoricalActivityData() {
                 )}
               </View>
             )}
-          </View>
-
-          {/* Show All Data */}
-          <Pressable
+            <Pressable
             style={styles.showAllCard}
             onPress={() =>
               router.push({
@@ -609,6 +608,9 @@ export default function HistoricalActivityData() {
             <Text style={styles.showAllText}>Show All Data</Text>
             <Text style={styles.showAllChevron}>›</Text>
           </Pressable>
+          </View>
+
+          
           
           {!checkingGoal && !activityGoalData && (
             <Pressable
@@ -616,7 +618,7 @@ export default function HistoricalActivityData() {
               onPress={() => router.push("/screens/activityGoal" as any)}
             >
               <View style={styles.goalLeft}>
-                <Goal size={36} color="#36AE7C" strokeWidth={2.5} />
+                <Goal size={36} color= {Colors.default.ActivityGreen} strokeWidth={2.5} />
 
                 <View>
                   <Text style={styles.goalTitle}>Goals Not Set</Text>
@@ -667,7 +669,14 @@ export default function HistoricalActivityData() {
 
           {selectedActivityNote ? (
             <View style={styles.activityNotesCard}>
-              <Text style={styles.activityNotesTitle}>Notes</Text>
+              <View style={styles.sectionTitleRow}>
+                <Ionicons
+                  name="document-text"
+                  size={24}
+                  color={Colors.default.ActivityGreen}
+                />
+                <Text style={styles.activityNotesTitle}>Notes</Text>
+              </View>
               <Text style={styles.activityNotesText}>{selectedActivityNote}</Text>
             </View>
           ) : null}
@@ -775,7 +784,7 @@ const styles = StyleSheet.create({
   dayActivityText: {
     fontSize: 11,
     marginTop: 4,
-    color: "#36AE7C",
+    color: Colors.default.ActivityGreen,
     fontWeight: "700",
   },
   
@@ -834,13 +843,18 @@ const styles = StyleSheet.create({
   
   calendarActivityText: {
     fontSize: 10,
-    color: "#36AE7C",
+    color: Colors.default.ActivityGreen,
     fontWeight: "700",
   },
 
   cardTitle: { fontSize: 16, color: "#8E8E93", fontWeight: "600", marginBottom: 6 },
 
-  topLabel: { fontSize: 10, color: "#187498", fontWeight: "700", marginBottom: 2 },
+  topLabel: {
+    fontSize: 10,
+    color: Colors.default.ActivityGreen,
+    fontWeight: "700",
+    marginBottom: 2,
+  },
 
   monthLabelRow: {
     marginTop: 8,
@@ -852,16 +866,15 @@ const styles = StyleSheet.create({
 
   showAllCard: {
     marginTop: 14,
-    marginHorizontal: 14,
-    backgroundColor: "white",
-    borderRadius: 16,
+    paddingTop: 14,
     paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: 4,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    borderWidth: 1,
-    borderColor: "#E5E5EA",
+    borderTopWidth: 1,
+    borderTopColor: "#E5E5EA",
+    backgroundColor: "transparent",
   },
   showAllText: { fontSize: 20, fontWeight: "400", color: "#000" },
   showAllChevron: { fontSize: 26, color: "#C7C7CC", fontWeight: "400" },
@@ -881,8 +894,7 @@ const styles = StyleSheet.create({
   activityNotesTitle: {
     fontSize: 20,
     fontWeight: "700",
-    color: "#36AE7C",
-    marginBottom: 10,
+    color: Colors.default.ActivityGreen,
   },
   
   activityNotesText: {
@@ -917,7 +929,7 @@ const styles = StyleSheet.create({
   goalTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#36AE7C",
+    color: Colors.default.ActivityGreen,
   },
   
   goalSubtitle: {
@@ -938,12 +950,12 @@ const styles = StyleSheet.create({
   goalSetText: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#36AE7C",
+    color: Colors.default.ActivityGreen,
   },
   
   goalChevron: {
     fontSize: 25,
-    color: "#36AE7C",
+    color: Colors.default.ActivityGreen,
   },
   
   goalResultCard: {
@@ -974,19 +986,19 @@ const styles = StyleSheet.create({
   goalResultTitle: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#555",
+    color: "#000",
   },
   
   goalResultSubtitle: {
     fontSize: 13,
-    color: "#555",
+    color: "#000",
     fontWeight: "600",
     marginTop: 8,
   },
   
   goalResultSmallText: {
     fontSize: 11,
-    color: "#8E8E93",
+    color: "#666",
     marginTop: 5,
   },
   
@@ -999,12 +1011,12 @@ const styles = StyleSheet.create({
   editGoalText: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#555",
+    color: "#000",
   },
   
   editGoalChevron: {
     fontSize: 30,
-    fontWeight: "700",
+    fontWeight: "500",
     color: "#000",
     marginLeft: 8,
   },
@@ -1022,12 +1034,18 @@ const styles = StyleSheet.create({
   ringPercentText: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#555",
+    color: "#000",
   },
   
   smallRingWrap: {
     marginTop: 5,
     alignItems: "center",
     justifyContent: "center",
+  },
+  sectionTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 10,
   },
 });

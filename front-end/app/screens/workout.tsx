@@ -26,6 +26,9 @@ import {
 import { Dropdown } from "react-native-element-dropdown";
 import { useNavigation } from "@react-navigation/native";
 
+import { Colors } from "@/constants/Colors";
+import { Ionicons } from "@expo/vector-icons";
+
 const WorkoutScreen = () => {
   const navigation = useNavigation();
   const { user } = useUser();
@@ -154,19 +157,20 @@ const WorkoutScreen = () => {
         <View style={styles.container}>
           {/* Header */}
           <View style={styles.header}>
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => navigation.goBack()}
-            >
-              <Text style={styles.backArrow}>{"←"}</Text>
-              <Text style={styles.backText}>Back</Text>
-            </TouchableOpacity>
+            <View style={{ width: 70, alignItems: "flex-start" }}>
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => navigation.goBack()}
+              >
+                <Ionicons name="chevron-back" size={24} color="black" />
+                <Text style={styles.backText}>Back</Text>
+              </TouchableOpacity>
+            </View>
 
-            <Text style={styles.headerTitle}>Workout Tracker</Text>
-            <View style={{ width: 60 }} />
+            <Text style={styles.pageTitle}>Log Your Workout</Text>
+
+            <View style={{ width: 70 }} />
           </View>
-
-          <Text style={styles.pageTitle}>Log Your Workout</Text>
 
           {/* Workout Type */}
           <Text style={styles.sectionLabel}>Workout Type</Text>
@@ -261,37 +265,26 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingTop: 40,
-    paddingBottom: 10,
+    paddingTop: 50,
+    paddingBottom: 22,
   },
 
   backButton: {
     flexDirection: "row",
     alignItems: "center",
-  },
-
-  backArrow: {
-    fontSize: 22,
-    fontWeight: "600",
-    marginRight: 6,
+    marginLeft: -6,
   },
 
   backText: {
-    fontSize: 18,
-  },
-
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    textAlign: "center",
-    flex: 1,
+    fontSize: 17,
   },
 
   pageTitle: {
-    textAlign: "center",
     fontSize: 22,
     fontWeight: "bold",
-    marginBottom: 20,
+    color: Colors.default.ActivityGreen,
+    textAlign: "center",
+    flex: 1,
   },
 
   sectionLabel: {
@@ -357,8 +350,8 @@ const styles = StyleSheet.create({
   },
 
   intensitySelected: {
-    backgroundColor: "#E8F8F0",
-    borderColor: "#36AE7C"
+    backgroundColor: "#EAF7EF",
+    borderColor: Colors.default.ActivityGreen,
   },
 
   intensityText: {
@@ -376,7 +369,7 @@ const styles = StyleSheet.create({
   },
 
   saveButton: {
-    backgroundColor: "#36AE7C",
+    backgroundColor: Colors.default.ActivityGreen,
     padding: 15,
     borderRadius: 12,
     alignItems: "center",

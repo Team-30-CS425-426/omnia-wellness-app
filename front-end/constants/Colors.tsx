@@ -51,7 +51,7 @@ export const Colors = {
 
   sleepyBlue: "#0000FF",
 
-  ActivityGreen: "#1e7e34",
+  ActivityGreen: "#159A34",
 
   OrangySteps: "#F59E0B"
   }

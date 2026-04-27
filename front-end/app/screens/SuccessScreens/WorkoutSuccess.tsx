@@ -6,13 +6,14 @@ import {
 } from 'react-native';
 import Svg, { Path } from "react-native-svg";
 import AnimatedBackground from '../../components/AnimateBackground'; // adjust path as needed
+import { Colors } from "@/constants/Colors";
 
 const { width: W, height: H } = Dimensions.get('window');
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const STROKE_LENGTH = 1200; // approximate path length — tweak if needed
 
-const BLUE = '#36AE7C';
+const ACTIVITY_GREEN = Colors.default.ActivityGreen;
 
 const workoutOptions: Record<string, string> = {
   '1': 'Running', '2': 'Strength Training', '3': 'Core / Ab Training',
@@ -150,7 +151,7 @@ const styles = StyleSheet.create({
   },
   header:{
     fontSize: 20, fontWeight: '600',
-    color: BLUE
+    color: ACTIVITY_GREEN
   },
   screen: {
     flex: 1,
@@ -163,13 +164,13 @@ const styles = StyleSheet.create({
   },
   iconCircle: {
     width: 72, height: 72, borderRadius: 36,
-    backgroundColor: BLUE,
+    backgroundColor: ACTIVITY_GREEN,
     justifyContent: 'center', alignItems: 'center',
     marginBottom: 14,
   },
   eyebrow: {
     fontSize: 11, fontWeight: '600',
-    letterSpacing: 1.8, color: BLUE,
+    letterSpacing: 1.8, color: ACTIVITY_GREEN,
     textTransform: 'uppercase', marginBottom: 4,
   },
   workoutName: {
@@ -183,9 +184,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around', alignItems: 'center',
     paddingVertical: 16,
     borderTopWidth: 1.5, borderBottomWidth: 1.5,
-    borderColor: '#e8f0fe', marginBottom: 18,
+    borderColor: '#EAF7EF', marginBottom: 18,
   },
-  divider: { width: 1, height: 36, backgroundColor: '#e8f0fe' },
+  divider: { width: 1, height: 36, backgroundColor: '#EAF7EF' },
   stat:    { alignItems: 'center' },
   statValue: { fontSize: 20, fontWeight: '700', color: '#0a0a0a' },
   statLabel: {
@@ -196,15 +197,15 @@ const styles = StyleSheet.create({
   barSection: { width: '100%', marginBottom: 22 },
   barHeader:  { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
   barLabel:   { fontSize: 12, color: '#888' },
-  barValue:   { fontSize: 12, fontWeight: '600', color: BLUE },
-  barTrack:   { width: '100%', height: 6, backgroundColor: '#e8f0fe', borderRadius: 4, overflow: 'hidden' },
-  barFill:    { height: '100%', backgroundColor: BLUE, borderRadius: 4 },
+  barValue:   { fontSize: 12, fontWeight: '600', color: ACTIVITY_GREEN },
+  barTrack:   { width: '100%', height: 6, backgroundColor: '#EAF7EF', borderRadius: 4, overflow: 'hidden' },
+  barFill:    { height: '100%', backgroundColor: ACTIVITY_GREEN, borderRadius: 4 },
 
   primaryBtn: {
-    width: '100%', backgroundColor: BLUE,
+    width: '100%', backgroundColor: ACTIVITY_GREEN,
     borderRadius: 12, padding: 14, alignItems: 'center', marginBottom: 8,
   },
   primaryBtnText:   { color: '#fff', fontWeight: '700', fontSize: 16 },
-  secondaryBtn:     { width: '100%', backgroundColor: '#e8f0fe', borderRadius: 12, padding: 12, alignItems: 'center' },
-  secondaryBtnText: { color: BLUE, fontWeight: '600', fontSize: 14 },
+  secondaryBtn:     { width: '100%', backgroundColor: '#EAF7EF', borderRadius: 12, padding: 12, alignItems: 'center' },
+  secondaryBtnText: { color: ACTIVITY_GREEN, fontWeight: '600', fontSize: 14 },
 });

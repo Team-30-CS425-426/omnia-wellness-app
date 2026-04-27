@@ -279,7 +279,7 @@ export function Metrics({ style, health, onStepsPress }: MetricsProps) {
               label="Activity"
               valueText={getActivityRingText(Number(activity), activityGoalMinutes)}
               progress={clampProgress(Number(activity), activityGoalMinutes)}
-              color="#36AE7C"
+              color={Colors.default.ActivityGreen}
               onPress={() =>
                 router.push({
                   pathname: "/historicalActivityData",
@@ -305,7 +305,7 @@ export function Metrics({ style, health, onStepsPress }: MetricsProps) {
               label="Steps"
               valueText={getStepsRingText(stepsToday, stepsGoal)}
               progress={clampProgress(stepsToday, stepsGoal)}
-              color="#F9D923"
+              color={Colors.default.OrangySteps}
               onPress={
                 onStepsPress ??
                 (() =>
@@ -372,11 +372,11 @@ function Sleep({ value = "" }: { value?: string }) {
 }
 
 function Activity({ value = "" }: { value?: string }) {
-  return <MetricItem circleLabel={value} label="Activity" color="#36AE7C" />;
+  return <MetricItem circleLabel={value} label="Activity" color={Colors.default.ActivityGreen} />;
 }
 
 function Steps({ value = "" }: { value?: string }) {
-  return <MetricItem circleLabel={value} label="Steps" color="#F9D923" />;
+  return <MetricItem circleLabel={value} label="Steps" color={Colors.default.OrangySteps} />;
 }
 
 function MoodStress({ value = "" }: { value?: string }) {

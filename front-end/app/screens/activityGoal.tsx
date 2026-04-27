@@ -23,6 +23,8 @@ import {
 } from "../../src/services/activityGoalService";
 
 import Slider from "@react-native-community/slider";
+import { Colors } from "@/constants/Colors";
+import { Ionicons } from "@expo/vector-icons";
 
 const ActivityGoalScreen = () => {
   const navigation = useNavigation();
@@ -99,19 +101,21 @@ const ActivityGoalScreen = () => {
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.container}>
-          <View style={styles.header}>
+        <View style={styles.header}>
+          <View style={{ width: 70, alignItems: "flex-start" }}>
             <TouchableOpacity
               style={styles.backButton}
               onPress={() => navigation.goBack()}
             >
-              <Text style={styles.backArrow}>{"←"}</Text>
+              <Ionicons name="chevron-back" size={24} color="black" />
               <Text style={styles.backText}>Back</Text>
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>Activity Tracker</Text>
-            <View style={{ width: 60 }} />
           </View>
 
-          <Text style={styles.pageTitle}>Set Your Activity Goal</Text>
+          <Text style={styles.pageTitle}>Activity Goal</Text>
+
+          <View style={{ width: 70 }} />
+        </View>
 
           <Text style={styles.sectionLabel}>Success Rate: {successRate}%</Text>
 
@@ -121,9 +125,9 @@ const ActivityGoalScreen = () => {
             maximumValue={100}
             step={5}
             value={successRate}
-            minimumTrackTintColor="#36AE7C"
+            minimumTrackTintColor={Colors.default.ActivityGreen}
             maximumTrackTintColor="#E5E5EA"
-            thumbTintColor="#36AE7C"
+            thumbTintColor={Colors.default.ActivityGreen}
             onValueChange={setSuccessRate}
           />
 
@@ -166,32 +170,23 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingTop: 40,
-    paddingBottom: 10,
+    paddingTop: 50,
+    paddingBottom: 22,
   },
   backButton: {
     flexDirection: "row",
     alignItems: "center",
-  },
-  backArrow: {
-    fontSize: 22,
-    fontWeight: "600",
-    marginRight: 6,
+    marginLeft: -6,
   },
   backText: {
-    fontSize: 18,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    textAlign: "center",
-    flex: 1,
+    fontSize: 17,
   },
   pageTitle: {
-    textAlign: "center",
     fontSize: 22,
     fontWeight: "bold",
-    marginBottom: 20,
+    color: Colors.default.ActivityGreen,
+    textAlign: "center",
+    flex: 1,
   },
   sectionLabel: {
     fontSize: 16,
@@ -207,7 +202,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   saveButton: {
-    backgroundColor: "#007AFF",
+    backgroundColor: Colors.default.ActivityGreen,
     padding: 15,
     borderRadius: 12,
     alignItems: "center",
