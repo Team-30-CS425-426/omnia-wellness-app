@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
     mealName: {
         fontWeight: '600',
         fontSize: 16,
-        color: Colors.default.successGreen,
+        color: '#5ec9c3',
         flex: 1,
     },
     logTime: {

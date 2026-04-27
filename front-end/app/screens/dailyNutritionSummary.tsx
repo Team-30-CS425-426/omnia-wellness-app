@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUser } from '@/contexts/UserContext';
 import { getNutritionHistory, getDailyNutritionEntries, NutritionLogRow, deleteMealEntry } from '@/src/services/nutritionService';
 import { useFocusEffect } from '@react-navigation/native';
+import { Colors } from "../../constants/Colors"
 
 
 import NutritionDayView from '../components/nutrition/NutritionDayView';
@@ -182,7 +183,7 @@ const styles = StyleSheet.create({
     totalBlock: { paddingHorizontal: 14, paddingTop: 14, paddingBottom: 6 },
     totalLabel: { fontSize: 13, color: '#8E8E93', fontWeight: '700', letterSpacing: 0.5 },
     totalRow: { flexDirection: 'row', alignItems: 'baseline' },
-    totalNumber: { fontSize: 52, fontWeight: '800', color: '#5459AC' },
+    totalNumber: { fontSize: 52, fontWeight: '800', color: Colors.default.blueTeal },
     totalUnit: { fontSize: 20, color: '#8E8E93', fontWeight: '600', marginLeft: 6 },
     totalDate: { fontSize: 16, color: '#8E8E93', fontWeight: '600', marginTop: 2 },
 });

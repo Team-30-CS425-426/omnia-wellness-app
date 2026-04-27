@@ -194,7 +194,7 @@ function Nutrition({ calories = 0, protein = 0, carbs = 0, fat = 0 }: NutritionP
                 <Text style={{
                     fontSize: 18, 
                     fontWeight: 'bold', 
-                    color: "#52357B",
+                    color: Colors.default.extraDarkBlueTeal,
                     marginBottom: 10 
                 }}>
                     Nutrition
@@ -207,7 +207,7 @@ function Nutrition({ calories = 0, protein = 0, carbs = 0, fat = 0 }: NutritionP
                     </View>
                     
                     <View style={styles.progressBarTrack}>
-                        <View style={[styles.progressBarFill, { width: `${calorieProgressPercent}%`, backgroundColor: "#52357B"}]} />
+                        <View style={[styles.progressBarFill, { width: `${calorieProgressPercent}%`, backgroundColor: Colors.default.mediumTeal}]} />
                     </View>
                     <Spacer height={10} />
 
@@ -216,7 +216,7 @@ function Nutrition({ calories = 0, protein = 0, carbs = 0, fat = 0 }: NutritionP
                         <Text style={styles.value}>{protein}g / {proteinGoal}g</Text>
                     </View>
                     <View style={styles.progressBarTrack}>
-                        <View style={[styles.progressBarFill, { width: `${proteinProgressPercent}%`, backgroundColor: "#5459AC" }]} />
+                        <View style={[styles.progressBarFill, { width: `${proteinProgressPercent}%`, backgroundColor: "#3e91a0" }]} />
                     </View>
                     <Spacer height={10} />
 
@@ -234,7 +234,7 @@ function Nutrition({ calories = 0, protein = 0, carbs = 0, fat = 0 }: NutritionP
                         <Text style={styles.value}>{fat}g / {fatGoal}g</Text>
                     </View>
                     <View style={styles.progressBarTrack}>
-                        <View style={[styles.progressBarFill, { width: `${fatProgressPercent}%`, backgroundColor: "#B2D8CE" }]} />
+                        <View style={[styles.progressBarFill, { width: `${fatProgressPercent}%`, backgroundColor: "#6bb19e" }]} />
                     </View>
                 </View>
             </View>
@@ -354,13 +354,13 @@ function ActiveEnergy({ caloriesBurned = 0 }: ActiveEnergyProps) {
 const styles = StyleSheet.create({
     label: {
         fontSize: 12,
-        color: Colors.default.berryBlue,
+        color: Colors.default.extraDarkBlueTeal,
         opacity: 0.8
     },
     value: {
         fontSize: 12,
         fontWeight: '600',
-        color: Colors.default.berryBlue,
+        color: Colors.default.extraDarkBlueTeal,
     },
     progressBarTrack: {
         height: 8,

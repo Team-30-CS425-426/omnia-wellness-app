@@ -394,8 +394,8 @@ const styles = StyleSheet.create({
   },
 
   mealSelected: {
-    backgroundColor: "#E8F8ED",
-    borderColor: "#34C759"
+    backgroundColor: '#5ec9c452',
+    borderColor: '#5ec9c3'
   },
 
   input: { 
@@ -443,7 +443,7 @@ const styles = StyleSheet.create({
   },
 
   saveButton: {
-    backgroundColor: "#34C759",
+    backgroundColor: '#5ec9c3',
     padding: 15,
     borderRadius: 12,
     alignItems: "center"

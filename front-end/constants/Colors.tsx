@@ -49,6 +49,18 @@ export const Colors = {
 
   yellowOrange: "#F0B617",
 
-  hotPink: "#FF46A2"
+  hotPink: "#FF46A2",
+
+  lightTeal: "#D1EEEA",
+
+  mediumTeal: "#A1D7D6",
+
+  darkTeal: "#79BBC3",
+
+  blueTeal: "#599BAE",
+
+  darkBlueTeal: "#3F7994",
+
+  extraDarkBlueTeal: "#2A5674"
   }
 };

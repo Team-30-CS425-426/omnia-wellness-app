@@ -63,8 +63,8 @@ const NutritionMonthView = ({
            
                         initialSpacing={0}
                         data={caloriesLineData}
-                        color1="#5459AC"
-                        dataPointsColor1="#5459AC"
+                        color1="#5ec9c3"
+                        dataPointsColor1="#6c9993"
                         width={availableWidth}
                         height={240}
                         spacing={lineSpacingMonth}
@@ -100,7 +100,7 @@ const NutritionMonthView = ({
                                 return (
                                     <View style={styles.tooltipContainer}>
                                         <Text style={styles.tooltipTitle}>{dateLabel}</Text>
-                                        <Text style={[styles.tooltipValue, { color: '#5459AC' }]}>
+                                        <Text style={[styles.tooltipValue, { color:Colors.default.extraDarkBlueTeal }]}>
                                             {Math.round(items[0]?.value ?? 0)} cal
                                         </Text>
                                     </View>
