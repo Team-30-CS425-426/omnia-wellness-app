@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
 
   listContainer: {
     //alignItems: "center",
-    gap: 0,
+    gap: 12,
   },
 
   emptyCard: {
@@ -297,12 +297,13 @@ const styles = StyleSheet.create({
   },
 
   habitCard: {
-    width: 375,
-    paddingVertical: 16,
+    width: "100%",
+    paddingVertical: 18,
     paddingHorizontal: 16,
     borderRadius: 22,
     //alignSelf: "center",
-    marginBottom: 0,
+    marginBottom: 12,
+    minHeight: 90,
   },
 
   completedHabitCard: {
@@ -311,7 +312,7 @@ const styles = StyleSheet.create({
 
   row: {
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
   },
 
   checkboxContainer: {
@@ -322,6 +323,7 @@ const styles = StyleSheet.create({
   textContainer: {
     flex: 1,
     justifyContent: "center",
+    gap: 6,
   },
 
   habitName: {
@@ -349,9 +351,9 @@ const styles = StyleSheet.create({
   badge: {
     alignSelf: "flex-start",
     backgroundColor: "#F3ECFF",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
   },
 
   completedBadge: {

@@ -63,6 +63,8 @@ const AddMenuButton = () => {
                   styles.gridItem,
                   item.label === "Sleep" && styles.sleepGridItem,
                   item.label === "Workout" && styles.activityGridItem,
+                  item.label === "Mood & Stress" && styles.moodGridItem,
+                  item.label === "Habits" && styles.habitGridItem,
                 ]}
                 onPress={() => {
                   setModalVisible(false);
@@ -144,7 +146,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   sleepGridItem: {
-    backgroundColor: "#EAF0FF",
+    backgroundColor: "#F0EDFF",
     borderWidth: 1,
     borderColor: Colors.default.sleepyBlue,
   },
@@ -152,6 +154,16 @@ const styles = StyleSheet.create({
     backgroundColor: "#EAF7EF",
     borderWidth: 1,
     borderColor: Colors.default.ActivityGreen,
+  },
+  moodGridItem: {
+    backgroundColor: "#FDECEC",
+    borderWidth: 1,
+    borderColor: Colors.default.candyRed,
+  },
+  habitGridItem: {
+    backgroundColor: "#EAF2FF",
+    borderWidth: 1,
+    borderColor: Colors.default.primaryBlue,
   },
 });
 

@@ -91,6 +91,8 @@ const SetGoalModal: React.FC<SetGoalModalProps> = ({
                 styles.gridItem,
                 option.type === "sleep" && styles.sleepGridItem,
                 option.type === "physical-activity" && styles.activityGridItem,
+                option.type === "steps" && styles.stepsGridItem,
+                option.type === "mood" && styles.moodGridItem,
               ]}
               onPress={() => handleSelect(option.type)}
             >
@@ -151,7 +153,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   sleepGridItem: {
-    backgroundColor: "#EAF0FF",
+    backgroundColor: "#F0EDFF",
     borderWidth: 1.5,
     borderColor: Colors.default.sleepyBlue,
   },
@@ -159,6 +161,16 @@ const styles = StyleSheet.create({
     backgroundColor: "#EAF7EF",
     borderWidth: 1.5,
     borderColor: Colors.default.ActivityGreen,
+  },
+  stepsGridItem: {
+    backgroundColor: "#FFF7E6", // soft orange background
+    borderWidth: 1.5,
+    borderColor: Colors.default.OrangySteps,
+  },
+  moodGridItem: {
+    backgroundColor: "#FDECEC", // soft red background
+    borderWidth: 1.5,
+    borderColor: Colors.default.candyRed,
   },
 });
 

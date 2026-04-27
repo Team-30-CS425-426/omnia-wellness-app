@@ -1,23 +1,22 @@
-import React, { useCallback, useMemo, useState } from "react";
+import { supabase } from "@/config/supabaseConfig";
+import { Colors } from "@/constants/Colors";
+import { getSleepGoal } from "@/src/services/sleepGoalService";
+import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
 import { router } from "expo-router";
+import { Goal } from "lucide-react-native";
+import React, { useCallback, useMemo, useState } from "react";
 import {
+  Dimensions,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
-  Dimensions,
 } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { BarChart } from "react-native-gifted-charts";
-import { useFocusEffect } from "@react-navigation/native";
-import { supabase } from "@/config/supabaseConfig";
-import { Goal } from "lucide-react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle } from "react-native-svg";
-import { getSleepGoal } from "@/src/services/sleepGoalService";
-import { Colors } from "@/constants/Colors";
-import { Bed, StickyNote } from "lucide-react-native";
-import { Ionicons } from "@expo/vector-icons";
 type Mode = "W" | "M";
 
 const weekdayHeaders = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -569,7 +568,7 @@ export default function SleepDetailsScreen() {
       return {
         value: Number(d.value) || 0,
         label: `\u200B${i}`,
-        frontColor: isSelected ? Colors.default.sleepyBlue : "rgba(0,0,255,0.35)",
+        frontColor: isSelected ? Colors.default.sleepyBlue : "rgba(44,2,160,0.35)",
         onPress: () => setSelectedIndex(i),
         topLabelComponent: () =>
           mode === "W" && isSelected ? (

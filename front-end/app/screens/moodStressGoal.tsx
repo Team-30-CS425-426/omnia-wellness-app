@@ -23,6 +23,8 @@ import {
   checkMoodGoalExists,
 } from "../../src/services/moodGoalService";
 
+import { Colors } from "@/constants/Colors";
+
 const MOODS = [
   { value: 1, label: "Very Low", emoji: "😞" },
   { value: 2, label: "Low", emoji: "🙁" },
@@ -118,19 +120,21 @@ const MoodStressGoalScreen = () => {
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.container}>
-          <View style={styles.header}>
+        <View style={styles.header}>
+          <View style={{ width: 70, alignItems: "flex-start" }}>
             <TouchableOpacity
               style={styles.backButton}
               onPress={() => navigation.goBack()}
             >
-              <Text style={styles.backArrow}>{"←"}</Text>
+              <Ionicons name="chevron-back" size={24} color="black" />
               <Text style={styles.backText}>Back</Text>
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>Mood & Stress Goal</Text>
-            <View style={{ width: 60 }} />
           </View>
 
-          <Text style={styles.pageTitle}>Set Your Mood Goal</Text>
+          <Text style={styles.pageTitle}>Mood & Stress Goal</Text>
+
+          <View style={{ width: 70 }} />
+        </View>
 
           <Text style={styles.sectionLabel}>Target Mood</Text>
           <View style={styles.moodContainer}>
@@ -211,12 +215,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingTop: 40,
-    paddingBottom: 10,
+    paddingTop: 50,
+    paddingBottom: 22,
   },
   backButton: {
     flexDirection: "row",
     alignItems: "center",
+    marginLeft: -12,
   },
   backArrow: {
     fontSize: 22,
@@ -224,7 +229,7 @@ const styles = StyleSheet.create({
     marginRight: 6,
   },
   backText: {
-    fontSize: 18,
+    fontSize: 17,
   },
   headerTitle: {
     fontSize: 20,
@@ -233,10 +238,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   pageTitle: {
-    textAlign: "center",
     fontSize: 22,
     fontWeight: "bold",
-    marginBottom: 20,
+    color: Colors.default.candyRed,
+    textAlign: "center",
+    flex: 1,
+    marginLeft: 9,
   },
   sectionLabel: {
     fontSize: 16,
@@ -269,8 +276,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
   selectedMoodButton: {
-    borderColor: "#007AFF",
-    backgroundColor: "#EAF3FF",
+    borderColor: Colors.default.candyRed,
+    backgroundColor: "#FDECEC",
   },
   moodEmoji: {
     fontSize: 28,
@@ -283,7 +290,7 @@ const styles = StyleSheet.create({
   },
   selectedMoodLabel: {
     fontWeight: "600",
-    color: "#007AFF",
+    color: Colors.default.candyRed,
   },
   stressStepperContainer: {
     flexDirection: "row",
@@ -302,7 +309,7 @@ const styles = StyleSheet.create({
     color: "#000",
   },
   saveButton: {
-    backgroundColor: "#007AFF",
+    backgroundColor: Colors.default.candyRed,
     padding: 15,
     borderRadius: 12,
     alignItems: "center",

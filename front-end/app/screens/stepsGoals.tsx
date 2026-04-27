@@ -15,6 +15,8 @@ import { useNavigation } from "@react-navigation/native";
 import { useUser } from "../../contexts/UserContext";
 import { insertStepsGoal } from "../../src/services/stepsGoalService";
 import Slider from "@react-native-community/slider";
+import { Colors } from "@/constants/Colors";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function StepsGoalsScreen() {
   const navigation = useNavigation();
@@ -57,16 +59,21 @@ export default function StepsGoalsScreen() {
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.container}>
-          <View style={styles.header}>
-            <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-              <Text style={styles.backArrow}>{"←"}</Text>
+        <View style={styles.header}>
+          <View style={{ width: 70, alignItems: "flex-start" }}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+            >
+              <Ionicons name="chevron-back" size={24} color="black" />
               <Text style={styles.backText}>Back</Text>
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>Steps Goal</Text>
-            <View style={{ width: 60 }} />
           </View>
 
-          <Text style={styles.pageTitle}>Set Your Steps Goal</Text>
+          <Text style={styles.pageTitle}>Steps Goal</Text>
+
+          <View style={{ width: 70 }} />
+        </View>
 
           <Text style={styles.sectionLabel}>Success Rate: {successRate}%</Text>
           <Slider
@@ -75,9 +82,9 @@ export default function StepsGoalsScreen() {
             maximumValue={100}
             step={5}
             value={successRate}
-            minimumTrackTintColor="#F2B705"
+            minimumTrackTintColor={Colors.default.OrangySteps}
             maximumTrackTintColor="#E5E5EA"
-            thumbTintColor="#F2B705"
+            thumbTintColor={Colors.default.OrangySteps}
             onValueChange={setSuccessRate}
           />
 
@@ -102,18 +109,13 @@ export default function StepsGoalsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, backgroundColor: "#fff" },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingTop: 40,
-    paddingBottom: 10,
+  pageTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: Colors.default.OrangySteps,
+    textAlign: "center",
+    flex: 1,
   },
-  backButton: { flexDirection: "row", alignItems: "center" },
-  backArrow: { fontSize: 22, fontWeight: "600", marginRight: 6 },
-  backText: { fontSize: 18 },
-  headerTitle: { fontSize: 20, fontWeight: "bold", textAlign: "center", flex: 1 },
-  pageTitle: { textAlign: "center", fontSize: 22, fontWeight: "bold", marginBottom: 20 },
   sectionLabel: { fontSize: 16, fontWeight: "500", marginVertical: 10 },
   input: {
     borderWidth: 1,
@@ -124,7 +126,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   saveButton: {
-    backgroundColor: "#007AFF",
+    backgroundColor: Colors.default.OrangySteps,
     padding: 15,
     borderRadius: 12,
     alignItems: "center",
@@ -134,5 +136,22 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 40,
     marginBottom: 20,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingTop: 50,
+    paddingBottom: 22,
+  },
+  
+  backButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginLeft: -6,
+  },
+  
+  backText: {
+    fontSize: 17,
   },
 });

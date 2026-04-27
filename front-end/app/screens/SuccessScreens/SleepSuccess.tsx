@@ -148,9 +148,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around', alignItems: 'center',
     paddingVertical: 16,
     borderTopWidth: 1.5, borderBottomWidth: 1.5,
-    borderColor: '#EAF0FF', marginBottom: 18,
+    borderColor: '#F0EDFF', marginBottom: 18,
   },
-  divider: { width: 1, height: 36, backgroundColor: '#EAF0FF' },
+  divider: { width: 1, height: 36, backgroundColor: '##F0EDFF' },
   stat:    { alignItems: 'center' },
   statValue: { fontSize: 20, fontWeight: '700', color: '#0a0a0a' },
   statLabel: {
@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
   barHeader:  { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
   barLabel:   { fontSize: 12, color: '#888' },
   barValue:   { fontSize: 12, fontWeight: '600', color: SLEEPY_BLUE },
-  barTrack:   { width: '100%', height: 6, backgroundColor: '#EAF0FF', borderRadius: 4, overflow: 'hidden' },
+  barTrack:   { width: '100%', height: 6, backgroundColor: '#F0EDFF', borderRadius: 4, overflow: 'hidden' },
   barFill:    { height: '100%', backgroundColor: SLEEPY_BLUE, borderRadius: 4 },
 
   primaryBtn: {
@@ -170,6 +170,6 @@ const styles = StyleSheet.create({
     borderRadius: 12, padding: 14, alignItems: 'center', marginBottom: 8,
   },
   primaryBtnText:   { color: '#fff', fontWeight: '700', fontSize: 16 },
-  secondaryBtn:     { width: '100%', backgroundColor: '#EAF0FF', borderRadius: 12, padding: 12, alignItems: 'center' },
+  secondaryBtn:     { width: '100%', backgroundColor: '#F0EDFF', borderRadius: 12, padding: 12, alignItems: 'center' },
   secondaryBtnText: { color: SLEEPY_BLUE, fontWeight: '600', fontSize: 14 },
 });

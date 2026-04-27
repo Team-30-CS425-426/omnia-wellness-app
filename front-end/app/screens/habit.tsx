@@ -18,6 +18,8 @@ import HabitSuccess from "./SuccessScreens/HabitSuccess";
 
 import { useUser } from "../../contexts/UserContext";
 import { insertHabit } from "../../src/services/habitService";
+import { Colors } from "@/constants/Colors";
+import { Ionicons } from "@expo/vector-icons";
 
 const FREQUENCY_OPTIONS = ["Daily", "Weekly", "Monthly"] as const;
 
@@ -78,19 +80,20 @@ const HabitTrackerScreen = () => {
           <View style={styles.container}>
             {/* Header */}
             <View style={styles.header}>
-              <TouchableOpacity
-                style={styles.backButton}
-                onPress={() => navigation.goBack()}
-              >
-                <Text style={styles.backArrow}>{"←"}</Text>
-                <Text style={styles.backText}>Back</Text>
-              </TouchableOpacity>
-              <Text style={styles.headerTitle}>Habit Tracker</Text>
-              <View style={{ width: 60 }} />
-            </View>
+              <View style={{ width: 70, alignItems: "flex-start" }}>
+                <TouchableOpacity
+                  style={styles.backButton}
+                  onPress={() => navigation.goBack()}
+                >
+                  <Ionicons name="chevron-back" size={24} color="black" />
+                  <Text style={styles.backText}>Back</Text>
+                </TouchableOpacity>
+              </View>
 
-            {/* Page Title */}
-            <Text style={styles.pageTitle}>Log Your Habit</Text>
+              <Text style={styles.pageTitle}>Log Habit</Text>
+
+              <View style={{ width: 70 }} />
+            </View>
 
             {/* Habit Name */}
             <Text style={styles.sectionLabel}>Habit Name</Text>
@@ -166,13 +169,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingTop: 40,
-    paddingBottom: 10,
+    paddingTop: 50,
+    paddingBottom: 22,
   },
 
   backButton: {
     flexDirection: "row",
     alignItems: "center",
+    marginLeft: -6,
   },
 
   backArrow: {
@@ -182,7 +186,7 @@ const styles = StyleSheet.create({
   },
 
   backText: {
-    fontSize: 18,
+    fontSize: 17,
   },
 
   headerTitle: {
@@ -193,10 +197,11 @@ const styles = StyleSheet.create({
   },
 
   pageTitle: {
-    textAlign: "center",
     fontSize: 22,
     fontWeight: "bold",
-    marginBottom: 20,
+    color: Colors.default.primaryBlue,
+    textAlign: "center",
+    flex: 1,
   },
 
   sectionLabel: {
@@ -230,12 +235,12 @@ const styles = StyleSheet.create({
   },
 
   frequencySelected: {
-    backgroundColor: "#E0F0FF",
-    borderColor: "#007AFF",
+    backgroundColor: "#EAF2FF",
+    borderColor: Colors.default.primaryBlue,
   },
 
   saveButton: {
-    backgroundColor: "#007AFF",
+    backgroundColor: Colors.default.primaryBlue,
     padding: 15,
     borderRadius: 12,
     alignItems: "center",

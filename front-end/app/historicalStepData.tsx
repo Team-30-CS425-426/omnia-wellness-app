@@ -16,6 +16,7 @@ import { Goal } from "lucide-react-native";
 import { useUser } from "@/contexts/UserContext";
 import { getStepsGoal } from "@/src/services/stepsGoalService";
 import Svg, { Circle } from "react-native-svg";
+import { Colors } from "@/constants/Colors";
 
 type Mode = "W" | "M";
 
@@ -394,7 +395,7 @@ export default function StepDetailsScreen() {
       return {
         value: Number(d.value) || 0,
         label: `\u200B${i}`,
-        frontColor: isSelected ? "#F9D923" : "rgba(249,217,35,0.35)",
+        frontColor: isSelected ? Colors.default.OrangySteps : "rgba(245,158,11,0.35)",
         onPress: () => setSelectedIndex(i),
         topLabelComponent: () =>
           mode === "W" && isSelected ? (
@@ -650,27 +651,28 @@ export default function StepDetailsScreen() {
                 )}
               </View>
             )}
+            <Pressable
+              style={styles.showAllCard}
+              onPress={() =>
+                router.push({
+                  pathname: "/step-all-data",
+                  params: { mode },
+                } as any)
+              }
+            >
+              <Text style={styles.showAllText}>Show All Data</Text>
+              <Text style={styles.showAllChevron}>›</Text>
+            </Pressable>
           </View>
 
-          <Pressable
-            style={styles.showAllCard}
-            onPress={() =>
-              router.push({
-                pathname: "/step-all-data",
-                params: { mode },
-              } as any)
-            }
-          >
-            <Text style={styles.showAllText}>Show All Data</Text>
-            <Text style={styles.showAllChevron}>›</Text>
-          </Pressable>
+          
           {!checkingGoal && !stepsGoalData && (
             <Pressable
               style={styles.goalCard}
               onPress={() => router.push("/screens/stepsGoals" as any)}
             >
               <View style={styles.goalLeft}>
-                <Goal size={36} color="#F2B705" strokeWidth={2.5} />
+              <Goal size={36} color={Colors.default.OrangySteps} strokeWidth={2.5} />
 
                 <View>
                   <Text style={styles.goalTitle}>Goals Not Set</Text>
@@ -837,7 +839,7 @@ const styles = StyleSheet.create({
   dayStepsText: {
     fontSize: 11,
     marginTop: 4,
-    color: "#C79A00",
+    color: Colors.default.OrangySteps,
     fontWeight: "700",
   },
 
@@ -881,13 +883,13 @@ const styles = StyleSheet.create({
   calendarDateTextSelected: { color: "#000" },
   calendarStepsText: {
     fontSize: 10,
-    color: "#C79A00",
+    color: Colors.default.OrangySteps,
     fontWeight: "700",
   },
 
   topLabel: {
     fontSize: 10,
-    color: "#F9D923",
+    color: Colors.default.OrangySteps,
     fontWeight: "700",
     marginBottom: 2,
   },
@@ -916,19 +918,22 @@ const styles = StyleSheet.create({
 
   showAllCard: {
     marginTop: 14,
-    marginHorizontal: 14,
-    backgroundColor: "white",
-    borderRadius: 16,
+    paddingTop: 14,
     paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: 4,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    borderWidth: 1,
-    borderColor: "#E5E5EA",
+    borderTopWidth: 1,
+    borderTopColor: "#E5E5EA",
+    backgroundColor: "transparent",
   },
   showAllText: { fontSize: 20, fontWeight: "400", color: "#000" },
-  showAllChevron: { fontSize: 26, color: "#C7C7CC" },
+  showAllChevron: {
+    fontSize: 26,
+    color: "#C7C7CC",
+    fontWeight: "400",
+  },
 
   goalCard: {
     marginTop: 10,
@@ -955,7 +960,7 @@ const styles = StyleSheet.create({
   goalTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#F2B705",
+    color: Colors.default.OrangySteps,
   },
   goalSubtitle: {
     fontSize: 13,
@@ -974,15 +979,15 @@ const styles = StyleSheet.create({
   goalSetText: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#F2B705",
+    color: Colors.default.OrangySteps,
   },
   goalChevron: {
     fontSize: 25,
-    color: "#F2B705",
+    color: Colors.default.OrangySteps,
   },
 
   goalResultCard: {
-    marginTop: 10,
+    marginTop: 14,
     marginHorizontal: 14,
     backgroundColor: "white",
     borderRadius: 16,
@@ -1006,17 +1011,17 @@ const styles = StyleSheet.create({
   goalResultTitle: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#555",
+    color: "#000",
   },
   goalResultSubtitle: {
     fontSize: 13,
-    color: "#555",
+    color: "#000",
     fontWeight: "600",
     marginTop: 8,
   },
   goalResultSmallText: {
     fontSize: 11,
-    color: "#8E8E93",
+    color: "#666",
     marginTop: 5,
   },
   editGoalButton: {
@@ -1027,11 +1032,11 @@ const styles = StyleSheet.create({
   editGoalText: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#555",
+    color: "#000",
   },
   editGoalChevron: {
     fontSize: 30,
-    fontWeight: "700",
+    fontWeight: "500",
     color: "#000",
     marginLeft: 8,
   },
@@ -1048,7 +1053,7 @@ const styles = StyleSheet.create({
   ringPercentText: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#555",
+    color: "#000",
   },
   smallRingWrap: {
     marginTop: 5,

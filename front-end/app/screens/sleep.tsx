@@ -303,7 +303,7 @@ const styles = StyleSheet.create({
   },
 
   qualitySelected: {
-    backgroundColor: "#EAF0FF",
+    backgroundColor: "#F0EDFF",
     borderColor: Colors.default.sleepyBlue,
   },
 

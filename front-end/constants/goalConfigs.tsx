@@ -68,7 +68,7 @@ export const getIconColor = (goalType: GoalType) => {
           case 'sleep':
             return Colors.default.sleepyBlue;
           case 'steps':
-                return Colors.default.yellowOrange;
+            return Colors.default.OrangySteps;
           case 'physical-activity':
             return Colors.default.ActivityGreen;
           case 'mood':
@@ -158,16 +158,16 @@ export const GOAL_CONFIGS: Record<GoalType, GoalConfig> = {
         label: 'Steps Goal',
         icon: 'walk',
         color: Colors.default.white,
-        textColor: '#F9C958',
+        textColor: Colors.default.OrangySteps,
         route: '/screens/stepsGoals',
         renderDetails: (goal) => (
             <View style={goalDetailStyles.goalDetails}>
-                <ThemedText style={[goalDetailStyles.goalText, { color: Colors.default.testYellow }]}>
-                    Goal: {goal.steps_goal}
-                </ThemedText>
+            <ThemedText style={[goalDetailStyles.goalText, { color: Colors.default.OrangySteps }]}>
+                Goal: {goal.steps_goal}
+            </ThemedText>
             </View>
         )
-    },
+        },
 
     // PHYSICAL ACTIVITY GOAL — implemented
     // Will display weekly activity minutes and days per week once the workout goal screen is built.
@@ -195,7 +195,7 @@ export const GOAL_CONFIGS: Record<GoalType, GoalConfig> = {
     label: 'Mood Goal',
     icon: 'happy',
     color: Colors.default.white,
-    textColor: Colors.default.mustardYellow,
+    textColor: Colors.default.candyRed,
     route: '/screens/moodStressGoal',
     renderDetails: (goal) => {
         const moodLabel =
@@ -208,13 +208,13 @@ export const GOAL_CONFIGS: Record<GoalType, GoalConfig> = {
 
         return (
             <View style={goalDetailStyles.goalDetails}>
-                <ThemedText style={[goalDetailStyles.goalText, { color: Colors.default.mustardYellow }]}>
+                <ThemedText style={[goalDetailStyles.goalText, { color: Colors.default.candyRed }]}>
                     Mood: {moodLabel}
                 </ThemedText>
-                <ThemedText style={[goalDetailStyles.goalText, { color: Colors.default.mustardYellow }]}>
+                <ThemedText style={[goalDetailStyles.goalText, { color: Colors.default.candyRed }]}>
                     Stress: ≤ {goal.target_stress_level || 0}/10
                 </ThemedText>
-                <ThemedText style={[goalDetailStyles.goalText, { color: Colors.default.mustardYellow, width: '100%' }]}>
+                <ThemedText style={[goalDetailStyles.goalText, { color: Colors.default.candyRed, width: '100%' }]}>
                     Check-ins: {goal.daily_checkins || 0}/day
                 </ThemedText>
             </View>

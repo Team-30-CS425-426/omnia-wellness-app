@@ -28,6 +28,8 @@ import { refreshMoodStreak } from "../../src/services/moodStreakService"; // cha
 // ADDED: import badge awarding
 import { checkAndAwardMoodBadges } from "../../src/services/badgeAwardService";
 
+import { Colors } from "@/constants/Colors";
+
 const MOODS = [
   { label: "Very Low", emoji: "😞" },
   { label: "Low", emoji: "🙁" },
@@ -131,21 +133,20 @@ const MoodStressScreen = () => {
           <View style={styles.container}>
             {/* Custom Header */}
             <View style={styles.header}>
-              <TouchableOpacity
-                style={styles.backButton}
-                onPress={() => navigation.goBack()}
-              >
-                <Text style={styles.backArrow}>←</Text>
-                <Text style={styles.backText}>Back</Text>
-              </TouchableOpacity>
+              <View style={{ width: 70, alignItems: "flex-start" }}>
+                <TouchableOpacity
+                  style={styles.backButton}
+                  onPress={() => navigation.goBack()}
+                >
+                  <Ionicons name="chevron-back" size={24} color="black" />
+                  <Text style={styles.backText}>Back</Text>
+                </TouchableOpacity>
+              </View>
 
-              <Text style={styles.headerTitle}>Mood & Stress</Text>
+              <Text style={styles.pageTitle}>Log Mood & Stress</Text>
 
-              <View style={{ width: 60 }}>{/* Layout balancer */}</View>
+              <View style={{ width: 70 }} />
             </View>
-
-            {/* Page Title */}
-            <Text style={styles.pageTitle}>Log Your Mood & Stress</Text>
 
             {/* Mood Selector */}
             <Text style={styles.sectionLabel}>Select Your Mood</Text>
@@ -216,13 +217,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingTop: 40,
-    paddingBottom: 10,
+    paddingTop: 50,
+    paddingBottom: 22,
   },
 
   backButton: {
     flexDirection: "row",
     alignItems: "center",
+    marginLeft: -6,
   },
 
   backArrow: {
@@ -232,7 +234,7 @@ const styles = StyleSheet.create({
   },
 
   backText: {
-    fontSize: 18,
+    fontSize: 17,
   },
 
   headerTitle: {
@@ -243,10 +245,11 @@ const styles = StyleSheet.create({
   },
 
   pageTitle: {
-    textAlign: "center",
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: "bold",
-    marginBottom: 20,
+    color: Colors.default.candyRed,
+    textAlign: "center",
+    flex: 1,
   },
 
   sectionLabel: {
@@ -269,8 +272,8 @@ const styles = StyleSheet.create({
   },
 
   moodSelected: {
-    backgroundColor: "#FEE8E8",
-    borderColor: "#EB5353",
+    backgroundColor: "#FDECEC",
+    borderColor: Colors.default.candyRed,
     borderWidth: 1,
   },
 
@@ -307,7 +310,7 @@ const styles = StyleSheet.create({
   },
 
   saveButton: {
-    backgroundColor: "#EB5353",
+    backgroundColor: Colors.default.candyRed,
     padding: 15,
     borderRadius: 12,
     alignItems: "center",

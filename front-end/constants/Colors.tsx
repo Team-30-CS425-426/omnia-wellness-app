@@ -49,7 +49,7 @@ export const Colors = {
 
   hotPink: "#FF46A2",
 
-  sleepyBlue: "#0000FF",
+  sleepyBlue: "#2c02a0",
 
   ActivityGreen: "#159A34",
 

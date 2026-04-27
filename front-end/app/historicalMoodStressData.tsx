@@ -12,6 +12,8 @@ import { useUser } from "@/contexts/UserContext";
 
 import { getUserMoodGoals } from "@/src/services/moodGoalService";
 import { Goal } from "lucide-react-native";
+import { Colors } from "@/constants/Colors";
+import { Ionicons } from "@expo/vector-icons";
 
 type Mode = "W" | "M";
 
@@ -374,7 +376,7 @@ export default function HistoricalMoodStressData() {
       return {
         value: Number(item.stressLevel) || 0,
         label: item.date.slice(5),
-        frontColor: isSelected ? "#EB5353" : "rgba(235,83,83,0.35)",
+        frontColor: isSelected ? Colors.default.candyRed : "rgba(235,83,83,0.35)",
         onPress: () => setSelectedIndex(originalIndex),
         topLabelComponent: () =>
           item.stressLevel > 0 ? <Text style={styles.topLabel}>{item.stressLevel}</Text> : null,
@@ -449,7 +451,7 @@ export default function HistoricalMoodStressData() {
       return {
         value: Number(item.stressLevel) || 0,
         label: `\u200B${index}`, // unique invisible label
-        frontColor: isSelected ? "#EB5353" : "rgba(235,83,83,0.35)",
+        frontColor: isSelected ? Colors.default.candyRed : "rgba(235,83,83,0.35)",
         onPress: () => setSelectedIndex(index),
       };
     });
@@ -589,6 +591,18 @@ export default function HistoricalMoodStressData() {
                     labelsDistanceFromXaxis={8}
                   />
                 </View>
+                <Pressable
+                  style={styles.showAllCard}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/moodStress-all-data",
+                      params: { mode },
+                    } as any)
+                  }
+                >
+                  <Text style={styles.showAllText}>Show All Data</Text>
+                  <Text style={styles.showAllChevron}>›</Text>
+                </Pressable>
               </View>
             </>
           )}
@@ -698,26 +712,13 @@ export default function HistoricalMoodStressData() {
             </>
           )}
 
-          <Pressable
-            style={styles.showAllCard}
-            onPress={() =>
-              router.push({
-                pathname: "/moodStress-all-data",
-                params: { mode },
-              } as any)
-            }
-          >
-            <Text style={styles.showAllText}>Show All Data</Text>
-            <Text style={styles.showAllChevron}>›</Text>
-          </Pressable>
-
           {!checkingGoal && !moodStressGoalData && (
             <Pressable
               style={styles.goalCard}
               onPress={() => router.push("/screens/moodStressGoal" as any)}
             >
               <View style={styles.goalLeft}>
-              <Goal size={36} color="#EB5353" strokeWidth={2.5} />
+              <Goal size={36} color={Colors.default.candyRed} strokeWidth={2.5} />
 
                 <View>
                   <Text style={styles.goalTitle}>Goals Not Set</Text>
@@ -748,9 +749,9 @@ export default function HistoricalMoodStressData() {
                 <View style={styles.goalResultTextBlock}>
                   <Text style={styles.goalResultTitle}>Daily Goal</Text>
                   <Text style={styles.goalResultSubtitle}>
-                    Mood: {selectedMoodLabel} {selectedEmoji || ""}
-                    {"\n"}
-                    Stress: {selected.stressLevel > 0 ? `${selected.stressLevel}/10` : "No log"}
+                    Log:
+                    {"\n"}Mood: {selectedMoodLabel} {selectedEmoji || ""}
+                    {"\n"}Stress: {selected.stressLevel > 0 ? `${selected.stressLevel}/10` : "No log"}
                   </Text>
 
                   <Text style={styles.goalResultSmallText}>
@@ -789,10 +790,18 @@ export default function HistoricalMoodStressData() {
 
           {selectedMoodStressNote ? (
             <View style={styles.moodStressNotesCard}>
-              <Text style={styles.moodStressNotesTitle}>Notes</Text>
+              <View style={styles.sectionTitleRow}>
+                <Ionicons
+                  name="document-text"
+                  size={24}
+                  color={Colors.default.candyRed}
+                />
+                <Text style={styles.moodStressNotesTitle}>Notes</Text>
+              </View>
+
               <Text style={styles.moodStressNotesText}>{selectedMoodStressNote}</Text>
             </View>
-            ) : null}
+          ) : null}
         </ScrollView>
       </View>
     </SafeAreaView>
@@ -1027,16 +1036,15 @@ const styles = StyleSheet.create({
 
   showAllCard: {
     marginTop: 14,
-    marginHorizontal: 14,
-    backgroundColor: "white",
-    borderRadius: 16,
+    paddingTop: 14,
     paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: 4,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    borderWidth: 1,
-    borderColor: "#E5E5EA",
+    borderTopWidth: 1,
+    borderTopColor: "#E5E5EA",
+    backgroundColor: "transparent",
   },
   showAllText: {
     fontSize: 20,
@@ -1064,8 +1072,7 @@ const styles = StyleSheet.create({
   moodStressNotesTitle: {
     fontSize: 20,
     fontWeight: "700",
-    color: "#EB5353",
-    marginBottom: 10,
+    color: Colors.default.candyRed,
   },
   
   moodStressNotesText: {
@@ -1110,19 +1117,19 @@ const styles = StyleSheet.create({
   goalResultTitle: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#555",
+    color: "#000",
   },
   
   goalResultSubtitle: {
-    fontSize: 13,
-    color: "#555",
+    fontSize: 11,
+    color: "#000",
     fontWeight: "600",
     marginTop: 8,
   },
   
   goalResultSmallText: {
     fontSize: 11,
-    color: "#8E8E93",
+    color: "#666",
     marginTop: 5,
   },
   
@@ -1135,12 +1142,12 @@ const styles = StyleSheet.create({
   editGoalText: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#555",
+    color: "#000",
   },
   
   editGoalChevron: {
     fontSize: 30,
-    fontWeight: "700",
+    fontWeight: "500",
     color: "#000",
     marginLeft: 8,
   },
@@ -1169,7 +1176,7 @@ const styles = StyleSheet.create({
   goalTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#EB5353",
+    color: Colors.default.candyRed,
   },
   
   goalSubtitle: {
@@ -1190,11 +1197,18 @@ const styles = StyleSheet.create({
   goalSetText: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#EB5353",
+    color: Colors.default.candyRed,
   },
   
   goalChevron: {
     fontSize: 25,
-    color: "#EB5353",
+    color: Colors.default.candyRed,
   },
+  sectionTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 10,
+  },
+  
 });
