@@ -349,7 +349,7 @@ const HistoricalNutritionData = () => {
                     {mode === "D" && (
                         <NutritionDayView
                             entries={dayEntries}
-                            isCurrentDay={selected.date === new Date().toISOString().split('T')[0]}
+                            isCurrentDay={selected.date === new Date().toLocaleDateString('en-CA')}     
                             onEditEntry={handleEditEntry}
                             onDeleteEntry={handleDeleteEntry}
                         />

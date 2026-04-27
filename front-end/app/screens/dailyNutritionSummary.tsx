@@ -154,7 +154,7 @@ const DailyNutritionSummary = () => {
 
                     <NutritionDayView
                         entries={dayEntries}
-                        isCurrentDay={!dateParam || dateParam === new Date().toISOString().split('T')[0]}
+                        isCurrentDay={!dateParam || dateParam === new Date().toLocaleDateString('en-CA')}
                         onEditEntry={handleEditEntry}
                         onDeleteEntry={handleDeleteEntry}
                     />
