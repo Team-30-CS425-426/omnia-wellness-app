@@ -186,7 +186,7 @@ function GoalProgressRing({
       {showText && (
         <View style={styles.ringTextCenter}>
           <Text style={[styles.ringPercentText, { fontSize }]}>
-            {Math.round(percent)}%
+          {Math.round(progress)}%
           </Text>
         </View>
       )}
@@ -590,16 +590,16 @@ export default function SleepDetailsScreen() {
   const successRate = sleepGoalData?.success_rate ?? 70;
 
   const goalPercent =
-    sleepGoalMinutes > 0
-      ? Math.round((displaySummary.value / sleepGoalMinutes) * 100)
-      : 0;
+  sleepGoalMinutes > 0
+    ? Math.min(Math.round((displaySummary.value / sleepGoalMinutes) * 100), 100)
+    : 0;
 
   const goalMet = goalPercent >= successRate;
   const getDaySleepGoalPercent = (minutes: number) => {
     if (!sleepGoalData?.sleep_goal_hours) return 0;
   
     const goalMinutes = sleepGoalData.sleep_goal_hours * 60;
-    return Math.round((minutes / goalMinutes) * 100);
+    return Math.min(Math.round((minutes / goalMinutes) * 100), 100);
   };
   
   const isDaySleepGoalMet = (minutes: number) => {
@@ -609,14 +609,20 @@ export default function SleepDetailsScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <View style={{ paddingTop: Math.max(8, insets.top * 0.2) }}>
-        <View style={styles.header}>
+      <View style={styles.header}>
           <Pressable onPress={() => router.back()} style={styles.headerLeft}>
             <Text style={styles.backChevron}>‹</Text>
             <Text style={styles.backText}>Back</Text>
           </Pressable>
 
-          <Text style={styles.headerTitle}>Sleep</Text>
-          <View style={{ width: 60 }} />
+          <Text style={styles.headerTitle}>Sleep Data</Text>
+
+          <Pressable
+            onPress={() => router.push("/screens/sleep" as any)}
+            style={styles.headerRight}
+          >
+            <Text style={styles.plusText}>+</Text>
+          </Pressable>
         </View>
 
         <ScrollView
@@ -919,17 +925,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
   },
   headerLeft: {
+    width: 90,
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    paddingVertical: 8,
   },
   backChevron: { fontSize: 28, lineHeight: 28, fontWeight: "400" },
   backText: { fontSize: 17, fontWeight: "500" },
-  headerTitle: { fontSize: 20, fontWeight: "700", color: "#000" },
+  headerTitle: {
+    flex: 1,
+    textAlign: "center",
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#000",
+  },
 
   segmentWrap: {
     height: 38,
@@ -988,7 +999,9 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     borderWidth: 1,
     borderColor: "#E5E5EA",
-    padding: 16,
+    paddingTop: 16,
+    paddingHorizontal: 16,
+    paddingBottom: 8,
     overflow: "hidden",
   },
 
@@ -1120,9 +1133,9 @@ const styles = StyleSheet.create({
   },
 
   showAllCard: {
-    marginTop: 14,
-    paddingTop: 14,
-    paddingVertical: 12,
+    marginTop: 8,
+    paddingTop: 10,
+    paddingBottom: 4,
     paddingHorizontal: 4,
     flexDirection: "row",
     alignItems: "center",
@@ -1324,5 +1337,18 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     gap: 8,
     marginBottom: 10,
+  },
+  headerRight: {
+    width: 90,
+    alignItems: "flex-end",
+    justifyContent: "center",
+    paddingRight: 9,
+  },
+  
+  plusText: {
+    fontSize: 31,
+    fontWeight: "400",
+    color: "#000",
+    lineHeight: 34,
   },
 });

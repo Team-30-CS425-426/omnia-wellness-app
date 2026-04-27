@@ -117,7 +117,7 @@ function GoalProgressRing({
       {showText && (
         <View style={styles.ringTextCenter}>
           <Text style={[styles.ringPercentText, { fontSize }]}>
-            {Math.round(percent)}%
+          {Math.round(progress)}%
           </Text>
         </View>
       )}
@@ -250,15 +250,15 @@ export default function HistoricalActivityData() {
   const successRate = activityGoalData?.success_rate ?? 70;
 
   const goalPercent =
-    dailyTargetMinutes > 0
-      ? Math.round((selected.minutes / dailyTargetMinutes) * 100)
-      : 0;
+  dailyTargetMinutes > 0
+    ? Math.min(Math.round((selected.minutes / dailyTargetMinutes) * 100), 100)
+    : 0;
 
   const goalMet = goalPercent >= successRate;
 
   const getDayActivityGoalPercent = (minutes: number) => {
     if (dailyTargetMinutes <= 0) return 0;
-    return Math.round((minutes / dailyTargetMinutes) * 100);
+    return Math.min(Math.round((minutes / dailyTargetMinutes) * 100), 100);
   };
 
   const isDayActivityGoalMet = (minutes: number) => {
@@ -402,7 +402,13 @@ export default function HistoricalActivityData() {
           </Pressable>
 
           <Text style={styles.headerTitle}>Activity Data</Text>
-          <View style={{ width: 60 }} />
+
+          <Pressable
+            onPress={() => router.push("/screens/workout" as any)}
+            style={styles.headerRight}
+          >
+            <Text style={styles.plusText}>+</Text>
+          </Pressable>
         </View>
 
         <ScrollView
@@ -694,12 +700,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
   },
-  headerLeft: { flexDirection: "row", alignItems: "center", gap: 6, paddingVertical: 8 },
+  headerLeft: {
+    width: 90,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingVertical: 8,
+  },
   backChevron: { fontSize: 28, lineHeight: 28, fontWeight: "400" },
   backText: { fontSize: 17, fontWeight: "500" },
-  headerTitle: { fontSize: 20, fontWeight: "700", color: "#000" },
+  headerTitle: {
+    flex: 1,
+    textAlign: "center",
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#000",
+  },
 
   segmentWrap: {
     height: 38,
@@ -728,7 +745,9 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     borderWidth: 1,
     borderColor: "#E5E5EA",
-    padding: 16,
+    paddingTop: 16,
+    paddingHorizontal: 16,
+    paddingBottom: 8,
     overflow: "hidden",
   },
 
@@ -865,9 +884,9 @@ const styles = StyleSheet.create({
   monthLabelText: { color: "#8E8E93", fontSize: 11, fontWeight: "700" },
 
   showAllCard: {
-    marginTop: 14,
-    paddingTop: 14,
-    paddingVertical: 12,
+    marginTop: 8,
+    paddingTop: 10,
+    paddingBottom: 4,
     paddingHorizontal: 4,
     flexDirection: "row",
     alignItems: "center",
@@ -1047,5 +1066,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
     marginBottom: 10,
+  },
+  headerRight: {
+    width: 90,
+    alignItems: "flex-end",
+    justifyContent: "center",
+    paddingRight: 9,
+  },
+  plusText: {
+    fontSize: 31,
+    fontWeight: "400",
+    color: "#000",
+    lineHeight: 34,
   },
 });

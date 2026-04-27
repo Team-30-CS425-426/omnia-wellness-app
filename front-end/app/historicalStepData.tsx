@@ -156,7 +156,7 @@ function GoalProgressRing({
       {showText && (
         <View style={styles.ringTextCenter}>
           <Text style={[styles.ringPercentText, { fontSize }]}>
-            {Math.round(percent)}%
+          {Math.round(progress)}%
           </Text>
         </View>
       )}
@@ -417,13 +417,15 @@ export default function StepDetailsScreen() {
   const successRate = stepsGoalData?.success_rate ?? 70;
 
   const goalPercent =
-    goalSteps > 0 ? Math.round((displaySummary.value / goalSteps) * 100) : 0;
+    goalSteps > 0
+      ? Math.min(Math.round((displaySummary.value / goalSteps) * 100), 100)
+      : 0;
 
   const goalMet = goalPercent >= successRate;
 
   const getDayGoalPercent = (steps: number) => {
     if (!stepsGoalData?.steps_goal) return 0;
-    return Math.round((steps / stepsGoalData.steps_goal) * 100);
+    return Math.min(Math.round((steps / stepsGoalData.steps_goal) * 100), 100);
   };
   
   const isDayGoalMet = (steps: number) => {
@@ -439,8 +441,9 @@ export default function StepDetailsScreen() {
             <Text style={styles.backText}>Back</Text>
           </Pressable>
 
-          <Text style={styles.headerTitle}>Steps</Text>
-          <View style={{ width: 60 }} />
+          <Text style={styles.headerTitle}>Steps Data</Text>
+
+          <View style={styles.headerRight} />
         </View>
 
         <ScrollView
@@ -730,9 +733,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
   },
   headerLeft: {
+    width: 90,
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
@@ -740,7 +743,13 @@ const styles = StyleSheet.create({
   },
   backChevron: { fontSize: 28, lineHeight: 28 },
   backText: { fontSize: 17, fontWeight: "500" },
-  headerTitle: { fontSize: 20, fontWeight: "700", color: "#000" },
+  headerTitle: {
+    flex: 1,
+    textAlign: "center",
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#000",
+  },
 
   segmentWrap: {
     height: 38,
@@ -798,7 +807,9 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     borderWidth: 1,
     borderColor: "#E5E5EA",
-    padding: 16,
+    paddingTop: 16,
+    paddingHorizontal: 16,
+    paddingBottom: 8,
     overflow: "hidden",
   },
   cardTitle: {
@@ -917,9 +928,9 @@ const styles = StyleSheet.create({
   },
 
   showAllCard: {
-    marginTop: 14,
-    paddingTop: 14,
-    paddingVertical: 12,
+    marginTop: 8,
+    paddingTop: 10,
+    paddingBottom: 4,
     paddingHorizontal: 4,
     flexDirection: "row",
     alignItems: "center",
@@ -1059,5 +1070,11 @@ const styles = StyleSheet.create({
     marginTop: 5,
     alignItems: "center",
     justifyContent: "center",
+  },
+  headerRight: {
+    width: 90,
+    alignItems: "flex-end",
+    justifyContent: "center",
+    paddingRight: 9,
   },
 });

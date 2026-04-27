@@ -543,20 +543,19 @@ export default function ActiveEnergyScreen() {
                 )}
               </View>
             )}
+            <Pressable
+              style={styles.showAllCard}
+              onPress={() =>
+                router.push({
+                  pathname: "/activeEnergy-all-data",
+                  params: { mode },
+                } as any)
+              }
+            >
+              <Text style={styles.showAllText}>Show All Data</Text>
+              <Text style={styles.showAllChevron}>›</Text>
+            </Pressable>
           </View>
-
-          <Pressable
-            style={styles.showAllCard}
-            onPress={() =>
-              router.push({
-                pathname: "/activeEnergy-all-data",
-                params: { mode },
-              } as any)
-            }
-          >
-            <Text style={styles.showAllText}>Show All Data</Text>
-            <Text style={styles.showAllChevron}>›</Text>
-          </Pressable>
 
           <View style={styles.highlightsSection}>
             <Text style={styles.highlightsTitle}>Highlights</Text>
@@ -658,7 +657,9 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     borderWidth: 1,
     borderColor: "#E5E5EA",
-    padding: 16,
+    paddingTop: 16,
+    paddingHorizontal: 16,
+    paddingBottom: 8,
     overflow: "hidden",
   },
   cardTitle: {
@@ -701,17 +702,16 @@ const styles = StyleSheet.create({
   },
 
   showAllCard: {
-    marginTop: 14,
-    marginHorizontal: 14,
-    backgroundColor: "white",
-    borderRadius: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    marginTop: 8,
+    paddingTop: 10,
+    paddingBottom: 4,
+    paddingHorizontal: 4,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    borderWidth: 1,
-    borderColor: "#E5E5EA",
+    borderTopWidth: 1,
+    borderTopColor: "#E5E5EA",
+    backgroundColor: "transparent",
   },
   showAllText: { fontSize: 20, fontWeight: "400", color: "#000" },
   showAllChevron: { fontSize: 26, color: "#C7C7CC", fontWeight: "400" },

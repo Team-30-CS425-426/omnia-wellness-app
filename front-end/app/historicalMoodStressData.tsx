@@ -472,7 +472,13 @@ export default function HistoricalMoodStressData() {
           </Pressable>
 
           <Text style={styles.headerTitle}>Mood & Stress</Text>
-          <View style={{ width: 60 }} />
+
+          <Pressable
+            onPress={() => router.push("/screens/moodStress" as any)}
+            style={styles.headerRight}
+          >
+            <Text style={styles.plusText}>+</Text>
+          </Pressable>
         </View>
 
         <ScrollView
@@ -696,11 +702,11 @@ export default function HistoricalMoodStressData() {
                     isAnimated
                     animationDuration={250}
                     hideOrigin
-                    xAxisLabelsHeight={18}
-                    labelsDistanceFromXaxis={8}
+                    xAxisLabelsHeight={2}
+                    labelsDistanceFromXaxis={2}
                   />
 
-                  <View style={[styles.monthLabelRow, { width: availableWidth }]}>
+                                    <View style={[styles.monthLabelRow, { width: availableWidth }]}>
                     {monthMarkerLabels.map((t, idx) => (
                       <Text key={`${t}-${idx}`} style={styles.monthLabelText}>
                         {t || " "}
@@ -708,6 +714,19 @@ export default function HistoricalMoodStressData() {
                     ))}
                   </View>
                 </View>
+
+                <Pressable
+                  style={styles.showAllCard}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/moodStress-all-data",
+                      params: { mode },
+                    } as any)
+                  }
+                >
+                  <Text style={styles.showAllText}>Show All Data</Text>
+                  <Text style={styles.showAllChevron}>›</Text>
+                </Pressable>
               </View>
             </>
           )}
@@ -819,9 +838,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
   },
   headerLeft: {
+    width: 90,
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
@@ -839,6 +858,8 @@ const styles = StyleSheet.create({
     color: "#000",
   },
   headerTitle: {
+    flex: 1,
+    textAlign: "center",
     fontSize: 20,
     fontWeight: "700",
     color: "#000",
@@ -1035,9 +1056,9 @@ const styles = StyleSheet.create({
   },
 
   showAllCard: {
-    marginTop: 14,
-    paddingTop: 14,
-    paddingVertical: 12,
+    marginTop: 8,
+    paddingTop: 10,
+    paddingBottom: 0,
     paddingHorizontal: 4,
     flexDirection: "row",
     alignItems: "center",
@@ -1209,6 +1230,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
     marginBottom: 10,
+  },
+  headerRight: {
+    width: 90,
+    alignItems: "flex-end",
+    justifyContent: "center",
+    paddingRight: 9,
+  },
+  
+  plusText: {
+    fontSize: 31,
+    fontWeight: "400",
+    color: "#000",
+    lineHeight: 34,
   },
   
 });
