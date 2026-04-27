@@ -20,7 +20,7 @@ const OPTIONS: Option[] = [
   { label: 'Workout', icon: 'barbell', color: Colors.default.strongGreen },
   { label: 'Mood & Stress', icon: 'happy-outline', color: Colors.default.candyRed },
   { label: 'Sleep', icon: 'bed-outline', color: Colors.default.darkPurple},
-  { label: 'Nutrition', icon: 'restaurant-outline', color: "#5ec9c3" },
+  { label: 'Nutrition', icon: 'restaurant-outline', color: Colors.default.FINALTEAL },
   { label: 'Habits', icon: 'checkmark-circle-outline', color: Colors.default.primaryBlue },
 ];
 

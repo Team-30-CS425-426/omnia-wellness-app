@@ -61,6 +61,8 @@ export const Colors = {
 
   darkBlueTeal: "#3F7994",
 
-  extraDarkBlueTeal: "#2A5674"
+  extraDarkBlueTeal: "#2A5674",
+
+  FINALTEAL: '#5ec9c3'
   }
 };

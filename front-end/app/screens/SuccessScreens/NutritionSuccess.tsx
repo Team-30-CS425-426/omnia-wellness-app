@@ -5,8 +5,9 @@ import {
   StyleSheet, Animated, Easing,
 } from 'react-native';
 import AnimatedBackground from '../../components/AnimateBackground';
+import { Colors } from "../../../constants/Colors"
 
-const GREEN = '#5ec9c3';
+const GREEN = Colors.default.FINALTEAL;
 
 interface Props {
   visible: boolean;

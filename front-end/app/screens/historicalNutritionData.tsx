@@ -252,7 +252,7 @@ const HistoricalNutritionData = () => {
             return {
                 value: d.calories,
                 label: d.date.slice(5),
-                frontColor: isSelected ? "#5ec9c3" : "#5ec9c45e",
+                frontColor: isSelected ? Colors.default.FINALTEAL : "#5ec9c45e",
                 onPress: () => setSelectedBarIndex(selectedBarIndex === i ? null : i),
                 topLabelComponent: () => (
                     <Text style={styles.topLabel}>{Math.round(d.calories || 0)}</Text>
@@ -409,7 +409,7 @@ const styles = StyleSheet.create({
     totalBlock: { paddingHorizontal: 14, paddingTop: 14, paddingBottom: 6 },
     totalLabel: { fontSize: 13, color: "#8E8E93", fontWeight: "700", letterSpacing: 0.5 },
     totalRow: { flexDirection: "row", alignItems: "baseline" },
-    totalNumber: { fontSize: 52, fontWeight: "800", color: '#5ec9c3' },
+    totalNumber: { fontSize: 52, fontWeight: "800", color: Colors.default.FINALTEAL },
     totalUnit: { fontSize: 20, color: "#8E8E93", fontWeight: "600", marginLeft: 6 },
     viewDetailsBtn: {
         marginLeft: 'auto',
@@ -417,7 +417,7 @@ const styles = StyleSheet.create({
         paddingVertical: 6,
         paddingHorizontal: 12,
         borderRadius: 16,
-        backgroundColor: '#5ec9c3',
+        backgroundColor: Colors.default.FINALTEAL,
     },
     viewDetailsTxt: {
         fontSize: 13,

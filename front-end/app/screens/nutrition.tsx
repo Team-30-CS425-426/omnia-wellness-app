@@ -21,6 +21,7 @@ import { router, useLocalSearchParams} from "expo-router";
 import { useUser } from "../../contexts/UserContext";
 import { insertNutritionLog, updateNutritionLog } from "../../src/services/nutritionService";
 import NutritionSuccess from "./SuccessScreens/NutritionSuccess";
+import { Colors } from "../../constants/Colors"
 
 const MEAL_TYPES = ["Breakfast", "Lunch", "Dinner", "Snack"] as const;
 type MealType = (typeof MEAL_TYPES)[number];
@@ -395,7 +396,7 @@ const styles = StyleSheet.create({
 
   mealSelected: {
     backgroundColor: '#5ec9c452',
-    borderColor: '#5ec9c3'
+    borderColor: Colors.default.FINALTEAL
   },
 
   input: { 
@@ -443,7 +444,7 @@ const styles = StyleSheet.create({
   },
 
   saveButton: {
-    backgroundColor: '#5ec9c3',
+    backgroundColor: Colors.default.FINALTEAL,
     padding: 15,
     borderRadius: 12,
     alignItems: "center"
