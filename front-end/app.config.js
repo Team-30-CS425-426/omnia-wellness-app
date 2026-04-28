@@ -4,6 +4,7 @@ require('dotenv').config({ path: './utils/.env.local' });
 
 
 const plugins = [
+  "expo-web-browser",
   "expo-router",
   "expo-notifications",
   "@react-native-community/datetimepicker",
