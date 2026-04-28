@@ -269,7 +269,7 @@ const styles = StyleSheet.create({
     fontFamily: "timesnewroman",
     fontWeight: "bold",
     fontSize: 20,
-    marginBottom: 6,
+    marginBottom: 0,
   },
 
   centered: {
@@ -280,7 +280,8 @@ const styles = StyleSheet.create({
 
   listContainer: {
     //alignItems: "center",
-    gap: 12,
+    gap: 2,
+    marginTop: -5,
   },
 
   emptyCard: {
@@ -298,12 +299,12 @@ const styles = StyleSheet.create({
 
   habitCard: {
     width: "100%",
-    paddingVertical: 18,
+    paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 22,
     //alignSelf: "center",
-    marginBottom: 12,
-    minHeight: 90,
+    marginBottom: 0,
+    minHeight: 70,
   },
 
   completedHabitCard: {
@@ -323,7 +324,7 @@ const styles = StyleSheet.create({
   textContainer: {
     flex: 1,
     justifyContent: "center",
-    gap: 6,
+    gap: 3,
   },
 
   habitName: {
@@ -352,7 +353,7 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
     backgroundColor: "#F3ECFF",
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 4,
     borderRadius: 20,
   },
 

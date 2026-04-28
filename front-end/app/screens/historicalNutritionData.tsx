@@ -174,11 +174,13 @@ const HistoricalNutritionData = () => {
 
     // DYNAMIC BAR SIZING — calculates bar width and spacing so bars fill the screen
     const screenWidth = Dimensions.get('window').width;
-    const yAxisLabelWidth = 40;   // approximate space for y-axis number labels
-    const chartPadding = 20;      // horizontal padding around the chart
+    const cardMarginH = 14;
+    const cardPadding = 16;
+    const yAxisLabelWidth = 40;
+    const cardInnerWidth = screenWidth - cardMarginH * 2 - cardPadding * 2;
     const numBars = nutritionHistory.length || 1;
-    const availableWidth = screenWidth - yAxisLabelWidth - chartPadding;
-    const spacing = mode === "W" ? 14 : 6;
+    const availableWidth = cardInnerWidth - yAxisLabelWidth;
+        const spacing = mode === "W" ? 14 : 6;
     const barWidth = Math.max(6, Math.floor((availableWidth - spacing * (numBars + 1)) / numBars));
 
     const maxCaloriesFromData = nutritionHistory.reduce(
