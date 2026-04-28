@@ -178,9 +178,18 @@ const styles = StyleSheet.create({
         backgroundColor: 'white',
         borderRadius: 18,
         borderWidth: 1,
-        borderColor: '#E5E5EA',
+        borderColor: '#D0D3D8',
         padding: 16,
-        overflow: 'hidden',
+    
+        //  REMOVE overflow
+        // overflow: 'hidden',
+    
+        //  ADD STRONG SHADOW
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.18,
+        shadowRadius: 10,
+        elevation: 4,
     },
     cardTitle: { fontSize: 16, color: '#8E8E93', fontWeight: '600', marginBottom: 6 },
     noData: { color: '#8E8E93', paddingTop: 10 },

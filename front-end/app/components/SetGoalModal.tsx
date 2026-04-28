@@ -89,6 +89,7 @@ const SetGoalModal: React.FC<SetGoalModalProps> = ({
               key={option.type}
               style={[
                 styles.gridItem,
+                option.type === "nutrition" && styles.nutritionGridItem,
                 option.type === "sleep" && styles.sleepGridItem,
                 option.type === "physical-activity" && styles.activityGridItem,
                 option.type === "steps" && styles.stepsGridItem,
@@ -171,6 +172,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#FDECEC", // soft red background
     borderWidth: 1.5,
     borderColor: Colors.default.candyRed,
+  },
+  nutritionGridItem: {
+    backgroundColor: "#5ec9c333",
+    borderWidth: 1.5,
+    borderColor: Colors.default.FINALTEAL,
   },
 });
 

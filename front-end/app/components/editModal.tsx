@@ -41,13 +41,18 @@ interface EditModalProps {
   onClose: () => void;
   onConfirm: () => void;
   onDelete: () => void;
+  confirmLabel?: string;
+  deleteLabel?: string;
 }
 
 const EditModal: React.FC<EditModalProps> = ({
   isVisible,
   onClose,
   onConfirm,
-  onDelete
+  onDelete,
+  confirmLabel = "Edit Goal",
+  deleteLabel = "Delete Goal"
+
 }) => {
     const handleYes = () => {
         onConfirm();
@@ -76,10 +81,10 @@ const EditModal: React.FC<EditModalProps> = ({
         
         <View style={[styles.grid, { marginHorizontal: 20, gap: 10 }]}>
             <TouchableOpacity style={styles.yesButton} onPress={handleYes}>
-            <ThemedText style={styles.buttonText}>Edit Goal</ThemedText>
+            <ThemedText style={styles.buttonText}>{confirmLabel}</ThemedText>
             </TouchableOpacity>
             <TouchableOpacity style={styles.noButton} onPress={handleDelete}>
-            <ThemedText style={styles.buttonText}>Delete Goal</ThemedText>
+            <ThemedText style={styles.buttonText}>{deleteLabel}</ThemedText>
             </TouchableOpacity>
         </View>
       </View>

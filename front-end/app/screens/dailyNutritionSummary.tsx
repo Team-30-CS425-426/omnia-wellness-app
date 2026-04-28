@@ -7,11 +7,13 @@
 
 import React, { useState, useCallback, useMemo } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
-import { View, Pressable, StyleSheet, ScrollView, Text } from 'react-native';
+import { View, Pressable, StyleSheet, ScrollView, Text, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUser } from '@/contexts/UserContext';
-import { getNutritionHistory, getDailyNutritionEntries, NutritionLogRow } from '@/src/services/nutritionService';
+import { getNutritionHistory, getDailyNutritionEntries, NutritionLogRow, deleteMealEntry } from '@/src/services/nutritionService';
 import { useFocusEffect } from '@react-navigation/native';
+import { Colors } from "../../constants/Colors"
+
 
 import NutritionDayView from '../components/nutrition/NutritionDayView';
 
@@ -67,6 +69,43 @@ const DailyNutritionSummary = () => {
         return nutritionHistory[nutritionHistory.length - 1];
     }, [nutritionHistory, dateParam]);
 
+    const handleEditEntry = (entry: NutritionLogRow) => {
+        router.push({
+            pathname: '/screens/nutrition',
+            params: {
+                id: String(entry.id),
+                mealName: entry.mealName,
+                calories: String(entry.calories),
+                protein: String(entry.protein),
+                carbs: String(entry.carbs),
+                fat: String(entry.fat),
+                nutritionEventType: String(entry.nutritionEventType),
+                notes: entry.notes ?? '',
+                time: entry.time,
+            },
+        } as any);
+    };
+
+    const handleDeleteEntry = async (entry: NutritionLogRow) => {
+        const result = await deleteMealEntry(entry.id!, user!.id);
+        if (result.success) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const target = new Date(targetDate);
+            target.setHours(0, 0, 0, 0);
+            const diffDays = Math.max(0, Math.round((today.getTime() - target.getTime()) / 86400000));
+
+            const [data, entries] = await Promise.all([
+                getNutritionHistory(user!.id, diffDays),
+                getDailyNutritionEntries(user!.id, targetDate),
+            ]);
+            setNutritionHistory(data);
+            setDayEntries(entries);
+        } else {
+            Alert.alert('Failed to delete meal entry', result.error);
+        }
+    };
+
     const dateText = useMemo(() => {
         if (!dayRecord.date) return '';
         const d = new Date(`${dayRecord.date}T00:00:00`);
@@ -95,6 +134,7 @@ const DailyNutritionSummary = () => {
                     }}>
                         <Text style={[styles.headerTitle, { textAlign: 'center' }]}>
                             Daily Summary
+                            
                         </Text>
                     </View>
                     <View style={{ width: 60 }} />
@@ -115,6 +155,9 @@ const DailyNutritionSummary = () => {
 
                     <NutritionDayView
                         entries={dayEntries}
+                        isCurrentDay={!dateParam || dateParam === new Date().toLocaleDateString('en-CA')}
+                        onEditEntry={handleEditEntry}
+                        onDeleteEntry={handleDeleteEntry}
                     />
                 </ScrollView>
             </View>
@@ -140,7 +183,7 @@ const styles = StyleSheet.create({
     totalBlock: { paddingHorizontal: 14, paddingTop: 14, paddingBottom: 6 },
     totalLabel: { fontSize: 13, color: '#8E8E93', fontWeight: '700', letterSpacing: 0.5 },
     totalRow: { flexDirection: 'row', alignItems: 'baseline' },
-    totalNumber: { fontSize: 52, fontWeight: '800', color: '#5459AC' },
+    totalNumber: { fontSize: 52, fontWeight: '800', color: Colors.default.blueTeal },
     totalUnit: { fontSize: 20, color: '#8E8E93', fontWeight: '600', marginLeft: 6 },
     totalDate: { fontSize: 16, color: '#8E8E93', fontWeight: '600', marginTop: 2 },
 });

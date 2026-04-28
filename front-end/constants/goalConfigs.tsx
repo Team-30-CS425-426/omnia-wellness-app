@@ -64,7 +64,7 @@ export interface GoalConfig {
 export const getIconColor = (goalType: GoalType) => {
         switch (goalType) {
           case 'nutrition':
-            return Colors.default.strongGreen;
+            return Colors.default.FINALTEAL;
           case 'sleep':
             return Colors.default.sleepyBlue;
           case 'steps':
@@ -118,20 +118,20 @@ export const GOAL_CONFIGS: Record<GoalType, GoalConfig> = {
         label: 'Nutrition Goal',
         icon: 'restaurant',
         color: Colors.default.white,
-        textColor: Colors.default.berryPurple,
+        textColor: Colors.default.CompTeal,
         route: '/screens/nutritionGoal',
         renderDetails: (goal) => (
             <View style={goalDetailStyles.goalDetails}>
-                <ThemedText style={[goalDetailStyles.goalText, { color: Colors.default.successGreen }]}>
+                <ThemedText style={[goalDetailStyles.goalText, { color: Colors.default.CompTeal}]}>
                     Calories: {goal.calorie_goal}
                 </ThemedText>
-                <ThemedText style={[goalDetailStyles.goalText, { color: Colors.default.successGreen }]}>
+                <ThemedText style={[goalDetailStyles.goalText, { color: Colors.default.CompTeal}]}>
                     Protein: {goal.protein_goal}g
                 </ThemedText>
-                <ThemedText style={[goalDetailStyles.goalText, { color: Colors.default.successGreen }]}>
+                <ThemedText style={[goalDetailStyles.goalText, { color: Colors.default.CompTeal}]}>
                     Carbs: {goal.carb_goal}g
                 </ThemedText>
-                <ThemedText style={[goalDetailStyles.goalText, { color: Colors.default.successGreen }]}>
+                <ThemedText style={[goalDetailStyles.goalText, { color: Colors.default.CompTeal}]}>
                     Fat: {goal.fat_goal}g
                 </ThemedText>
             </View>

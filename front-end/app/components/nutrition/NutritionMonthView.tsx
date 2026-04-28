@@ -63,8 +63,8 @@ const NutritionMonthView = ({
            
                         initialSpacing={0}
                         data={caloriesLineData}
-                        color1="#5459AC"
-                        dataPointsColor1="#5459AC"
+                        color1="#5ec9c3"
+                        dataPointsColor1="#6c9993"
                         width={availableWidth}
                         height={240}
                         spacing={lineSpacingMonth}
@@ -100,7 +100,7 @@ const NutritionMonthView = ({
                                 return (
                                     <View style={styles.tooltipContainer}>
                                         <Text style={styles.tooltipTitle}>{dateLabel}</Text>
-                                        <Text style={[styles.tooltipValue, { color: '#5459AC' }]}>
+                                        <Text style={[styles.tooltipValue, { color:Colors.default.extraDarkBlueTeal }]}>
                                             {Math.round(items[0]?.value ?? 0)} cal
                                         </Text>
                                     </View>
@@ -219,9 +219,18 @@ const styles = StyleSheet.create({
         backgroundColor: 'white',
         borderRadius: 18,
         borderWidth: 1,
-        borderColor: '#E5E5EA',
+        borderColor: '#D0D3D8',
         padding: 16,
-        overflow: 'hidden',
+    
+        // REMOVE THIS
+        // overflow: 'hidden',
+    
+        // ADD THIS
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.18,
+        shadowRadius: 10,
+        elevation: 4,
     },
     cardTitle: { fontSize: 16, color: '#8E8E93', fontWeight: '600', marginBottom: 6 },
     noData: { color: '#8E8E93', paddingTop: 10 },

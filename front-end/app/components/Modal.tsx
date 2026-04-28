@@ -20,7 +20,7 @@ const OPTIONS: Option[] = [
   { label: 'Workout', icon: 'barbell', color: Colors.default.ActivityGreen },
   { label: 'Mood & Stress', icon: 'happy-outline', color: Colors.default.candyRed },
   { label: 'Sleep', icon: 'bed-outline', color: Colors.default.sleepyBlue },
-  { label: 'Nutrition', icon: 'restaurant-outline', color: Colors.default.successGreen },
+  { label: 'Nutrition', icon: 'restaurant-outline', color: Colors.default.FINALTEAL },
   { label: 'Habits', icon: 'checkmark-circle-outline', color: Colors.default.primaryBlue },
 ];
 
@@ -65,6 +65,7 @@ const AddMenuButton = () => {
                   item.label === "Workout" && styles.activityGridItem,
                   item.label === "Mood & Stress" && styles.moodGridItem,
                   item.label === "Habits" && styles.habitGridItem,
+                  item.label === "Nutrition" && styles.nutritionGridItem,
                 ]}
                 onPress={() => {
                   setModalVisible(false);
@@ -164,6 +165,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#EAF2FF",
     borderWidth: 1,
     borderColor: Colors.default.primaryBlue,
+  },
+  nutritionGridItem: {
+    backgroundColor: "#5ec9c333",
+    borderWidth: 1,
+    borderColor: Colors.default.FINALTEAL,
   },
 });
 

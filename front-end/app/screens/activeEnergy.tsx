@@ -591,7 +591,7 @@ export default function ActiveEnergyScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: "#F2F2F7" },
+  safe: { flex: 1, backgroundColor: "#FFFFFF" },
 
   header: {
     height: 56,
@@ -656,11 +656,16 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: "#E5E5EA",
+    borderColor: "#D0D3D8",
     paddingTop: 16,
     paddingHorizontal: 16,
     paddingBottom: 8,
-    overflow: "hidden",
+  
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    elevation: 4,
   },
   cardTitle: {
     fontSize: 16,
@@ -733,8 +738,14 @@ const styles = StyleSheet.create({
     paddingTop: 14,
     paddingBottom: 14,
     borderWidth: 1,
-    borderColor: "#E5E5EA",
+    borderColor: "#DADDE3",
     marginBottom: 14,
+  
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    elevation: 4,
   },
 
   highlightHeaderOrange: {

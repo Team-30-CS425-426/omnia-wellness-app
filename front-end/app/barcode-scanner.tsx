@@ -19,6 +19,7 @@ import { useUser } from '../contexts/UserContext';
 
 import { mapMealTypeToEventId } from '@/src/services/nutritionService';
 import * as Linking from 'expo-linking';
+import { Colors } from "@/constants/Colors";
 
 type ScannedMealItem = {
   localId: string;
@@ -700,7 +701,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   saveModalButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: Colors.default.FINALTEAL,
     paddingVertical: 16,
     borderRadius: 14,
     alignItems: 'center',
@@ -810,7 +811,7 @@ const styles = StyleSheet.create({
   
   dropdownOptionTextSelected: {
     fontWeight: '700',
-    color: '#007AFF',
+    color: Colors.default.CompTeal,
   },
   dropdownMenu: {
     backgroundColor: '#fff',
@@ -866,7 +867,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 10,
-    backgroundColor: '#007AFF',
+    backgroundColor: Colors.default.FINALTEAL,
   },
   
   permissionPrimaryButtonText: {

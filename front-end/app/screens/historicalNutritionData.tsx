@@ -28,12 +28,12 @@
 //Developed by Johan Ramirez
 import React, {useState, useCallback, useMemo } from 'react'
 import { router } from 'expo-router';
-import { View, Text, Pressable, StyleSheet, ScrollView, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { View, Pressable, StyleSheet, ScrollView, Dimensions, Text, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '../../constants/Colors';
 import { useUser } from '@/contexts/UserContext';
-import { getNutritionHistory, getDailyNutritionEntries, NutritionLogRow } from '@/src/services/nutritionService';
+import { getNutritionHistory, getDailyNutritionEntries, NutritionLogRow, deleteMealEntry } from '@/src/services/nutritionService';
 import { useFocusEffect } from '@react-navigation/native';
 
 import NutritionDayView from '../components/nutrition/NutritionDayView';
@@ -102,6 +102,42 @@ const HistoricalNutritionData = () => {
 
     // Individual meal entries for the Day tab
     const [dayEntries, setDayEntries] = useState<NutritionLogRow[]>([]);
+
+    const handleDeleteEntry = async (entry: NutritionLogRow) => {
+        const result = await deleteMealEntry(entry.id!, user!.id);
+        if (result.success) {
+            const [dayData, weekData, monthData, entries] = await Promise.all([
+                getNutritionHistory(user!.id, 0),
+                getNutritionHistory(user!.id, 6),
+                getNutritionHistory(user!.id, 30),
+                getDailyNutritionEntries(user!.id),
+            ]);
+            setDayCache(dayData);
+            setWeekCache(weekData);
+            setMonthCache(monthData);
+            setDayEntries(entries);
+        } else {
+            Alert.alert('Failed to delete meal entry', result.error);
+        }
+    }  
+
+
+    const handleEditEntry = (entry: NutritionLogRow) => {
+        router.push({
+            pathname: '/screens/nutrition',
+            params: {
+                id: String(entry.id),
+                mealName: entry.mealName,
+                calories: String(entry.calories),
+                protein: String(entry.protein),
+                carbs: String(entry.carbs),
+                fat: String(entry.fat),
+                nutritionEventType: String(entry.nutritionEventType),
+                notes: entry.notes ?? '',
+                time: entry.time,
+            },
+        } as any);
+    }
 
     // Fetch all three ranges + day entries in one shot when the screen gains focus
     useFocusEffect(
@@ -216,7 +252,7 @@ const HistoricalNutritionData = () => {
             return {
                 value: d.calories,
                 label: d.date.slice(5),
-                frontColor: isSelected ? "#5459AC" : "rgba(84,89,172,0.35)",
+                frontColor: isSelected ? Colors.default.FINALTEAL : "#5ec9c45e",
                 onPress: () => setSelectedBarIndex(selectedBarIndex === i ? null : i),
                 topLabelComponent: () => (
                     <Text style={styles.topLabel}>{Math.round(d.calories || 0)}</Text>
@@ -250,19 +286,19 @@ const HistoricalNutritionData = () => {
             <View style={{ flex: 2, paddingTop: Math.max(8, insets.top) }}>
                 {/* Header */}
                 <View style={styles.header}>
-                    <Pressable onPress={() => router.back()} style={styles.headerLeft}>
-                        <Text style={styles.backChevron}>‹</Text>
-                        <Text style={styles.backText}>Back</Text>
-                    </Pressable>
-                    <View pointerEvents="none" style={{
-                        position: 'absolute',
-                        left: 0,
-                        right: 0,
-                    }}>
-                        <Text style={[styles.headerTitle, { textAlign: 'center' }]}>
-                            Nutrition Data
-                        </Text>
-                    </View>
+                <Pressable onPress={() => router.back()} style={styles.headerLeft}>
+                    <Text style={styles.backChevron}>‹</Text>
+                    <Text style={styles.backText}>Back</Text>
+                </Pressable>
+
+                <Text style={styles.headerTitle}>Nutrition Data</Text>
+
+                <Pressable
+                    onPress={() => router.push("/screens/nutrition" as any)}
+                    style={styles.headerRight}
+                >
+                    <Text style={styles.plusText}>+</Text>
+                </Pressable>
                 </View>
 
                 <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
@@ -286,7 +322,7 @@ const HistoricalNutritionData = () => {
                                     style={styles.viewDetailsBtn}
                                     onPress={() =>
                                         router.push({
-                                            pathname: '/screens/dailyNutritionSummary',
+                                            pathname: '/screens/dailyNutritionSummary' as any,
                                             params: { date: selected.date },
                                         } as any)
                                     }
@@ -302,6 +338,9 @@ const HistoricalNutritionData = () => {
                     {mode === "D" && (
                         <NutritionDayView
                             entries={dayEntries}
+                            isCurrentDay={selected.date === new Date().toLocaleDateString('en-CA')}     
+                            onEditEntry={handleEditEntry}
+                            onDeleteEntry={handleDeleteEntry}
                         />
                     )}
 
@@ -358,21 +397,49 @@ const styles = StyleSheet.create({
         fontSize : 24,
     },
     header: {
-        width: '100%',
-        paddingHorizontal: 25,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'flex-start',
-        height: 50,
+        height: 56,
+        paddingHorizontal: 14,
+        flexDirection: "row",
+        alignItems: "center",
     },
-    headerLeft: { flexDirection: "row", alignItems: "center", gap: 6, paddingVertical: 8 },
-    backChevron: { fontSize: 28, lineHeight: 28, fontWeight: "400" },
+    headerLeft: {
+        width: 90,
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+        paddingVertical: 8,
+    },
+    headerRight: {
+        width: 90,
+        alignItems: "flex-end",
+        justifyContent: "center",
+        paddingRight: 6,
+      },
+      
+      plusText: {
+        fontSize: 31,
+        fontWeight: "400",
+        color: "#000",
+        lineHeight: 34,
+      },
+      
+    backChevron: {
+        fontSize: 28,
+        lineHeight: 28,
+        fontWeight: "400",
+      },
     backText: { fontSize: 17, fontWeight: "500" },
-    headerTitle: { fontSize: 20, fontWeight: "700", color: "#000" },
+    headerTitle: {
+        flex: 1,
+        textAlign: "center",
+        fontSize: 20,
+        fontWeight: "700",
+        color: "#000",
+    },
     totalBlock: { paddingHorizontal: 14, paddingTop: 14, paddingBottom: 6 },
     totalLabel: { fontSize: 13, color: "#8E8E93", fontWeight: "700", letterSpacing: 0.5 },
     totalRow: { flexDirection: "row", alignItems: "baseline" },
-    totalNumber: { fontSize: 52, fontWeight: "800", color: "#5459AC" },
+    totalNumber: { fontSize: 52, fontWeight: "800", color: Colors.default.FINALTEAL },
     totalUnit: { fontSize: 20, color: "#8E8E93", fontWeight: "600", marginLeft: 6 },
     viewDetailsBtn: {
         marginLeft: 'auto',
@@ -380,15 +447,15 @@ const styles = StyleSheet.create({
         paddingVertical: 6,
         paddingHorizontal: 12,
         borderRadius: 16,
-        backgroundColor: '#F2F2F7',
+        backgroundColor: Colors.default.FINALTEAL,
     },
     viewDetailsTxt: {
         fontSize: 13,
         fontWeight: '600',
-        color: Colors.default.berryBlue,
+        color: Colors.default.white,
     },
     totalDate: { fontSize: 16, color: "#8E8E93", fontWeight: "600", marginTop: 2 },
-    topLabel: { fontSize: 10, color: Colors.default.berryPurple, fontWeight: "700", marginBottom: 2 },
+    topLabel: { fontSize: 10, color: Colors.default.extraDarkBlueTeal, fontWeight: "700", marginBottom: 2 },
     // Segment toggle styles
     segmentWrap: {
         height: 38,

@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/config/supabaseConfig";
 import { useUser } from "@/contexts/UserContext";
+import { useFocusEffect } from "@react-navigation/native";
 
 interface NutritionStats {
     calories: number;
@@ -66,6 +67,13 @@ export function useNutritionStats() {
             setIsLoading(false);
         }
     }
+
+    // Re-fetch when the screen regains focus (e.g. after editing/deleting a meal)
+    useFocusEffect(
+        useCallback(() => {
+            if (user) fetchNutritionData();
+        }, [user])
+    );
 
     useEffect(() => {
         if (!user) {

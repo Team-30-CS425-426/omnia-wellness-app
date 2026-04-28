@@ -1,5 +1,7 @@
 // code written by Alexis Mae Asuncion
-import React, { useState, useLayoutEffect } from "react";
+
+import React, { useState, useLayoutEffect, useEffect } from "react";
+import { Ionicons } from '@expo/vector-icons';
 import {
   View,
   StyleSheet,
@@ -11,15 +13,16 @@ import {
   TouchableWithoutFeedback,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation } from "@react-navigation/native";
-import { router } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
+import { router, useLocalSearchParams} from "expo-router";
 
 import { useUser } from "../../contexts/UserContext";
-import { insertNutritionLog } from "../../src/services/nutritionService";
+import { insertNutritionLog, updateNutritionLog } from "../../src/services/nutritionService";
 import NutritionSuccess from "./SuccessScreens/NutritionSuccess";
+import { Colors } from "../../constants/Colors"
 
 // nutrition streak refresh
 import { refreshNutritionStreak } from "../../src/services/nutritionStreakService";
@@ -56,6 +59,40 @@ const NutritionScreen = () => {
   const [successProtein, setSuccessProtein] = useState(0);
   const [successCarbs, setSuccessCarbs] = useState(0);
   const [successFat, setSuccessFat] = useState(0);
+
+  const {                                                                                                            
+      id,                                                                                                            
+      mealName: paramMealName,                                                                                       
+      calories: paramCalories,                                                                                     
+      protein: paramProtein,                                                                                       
+      carbs: paramCarbs,
+      fat: paramFat,                                                                                                 
+      notes: paramNotes,
+      nutritionEventType: paramNutritionEventType,                                                                   
+      time: paramTime                                                                                              
+  } = useLocalSearchParams<{                                                                                         
+      id?: string;                                                                                                   
+      mealName?: string;
+      calories?: string;                                                                                             
+      protein?: string;                                                                                            
+      carbs?: string;
+      fat?: string;
+      notes?: string;
+      nutritionEventType?: string;
+      time?: string;                                                                                                 
+  }>();
+  
+    useEffect(() => {                                                                                                  
+      if (id) {                                                                                                      
+          setMealName(paramMealName ?? '');                                                                          
+          setCalories(paramCalories ?? '');                                                                        
+          setProtein(paramProtein ?? '');
+          setCarbs(paramCarbs ?? '');                                                                                
+          setFat(paramFat ?? '');
+          setNotes(paramNotes ?? '');                                                                                
+          setMealType(paramNutritionEventType === '2' ? 'Snack' : 'Breakfast');
+      }                                                                                                              
+  }, [id]);
 
   // Async because we call Supabase
   const resetForm = () => {
@@ -96,53 +133,67 @@ const NutritionScreen = () => {
       return;
     }
 
+    // Ensure user is logged in
     if (!user?.id) {
       Alert.alert("Error", "User not authenticated.");
       return;
     }
 
     const trimmedMealName = mealName.trim();
-    const trimmedNotes = notes.trim();
+const trimmedNotes = notes.trim();
 
-    const result = await insertNutritionLog(user.id, {
-      mealName: trimmedMealName,
-      mealType,
-      calories: parsedCalories,
-      protein: parsedProtein,
-      carbs: parsedCarbs,
-      fat: parsedFat,
-      mealTime,
-      notes,
-    });
+if (id) {
+  const result = await updateNutritionLog(Number(id), user.id, {
+    mealName: trimmedMealName,
+    mealType,
+    calories: parsedCalories,
+    protein: parsedProtein,
+    carbs: parsedCarbs,
+    fat: parsedFat,
+    mealTime,
+    notes: trimmedNotes,
+  });
 
-    if (result.success) {
-      // Populate success screen state
-      setSuccessMealName(mealName);
-      setSuccessMealType(mealType);
-      setSuccessCalories(parsedCalories);
-      setSuccessProtein(parsedProtein);
-      setSuccessCarbs(parsedCarbs);
-      setSuccessFat(parsedFat);
-      setSuccessVisible(true);
+  if (result.success) {
+    router.back();
+  } else {
+    Alert.alert("Error", result.error || "Failed to update meal.");
+  }
+} else {
+  const result = await insertNutritionLog(user.id, {
+    mealName: trimmedMealName,
+    mealType,
+    calories: parsedCalories,
+    protein: parsedProtein,
+    carbs: parsedCarbs,
+    fat: parsedFat,
+    mealTime,
+    notes: trimmedNotes,
+  });
 
-      // CHANGED: reset form immediately
-      resetForm();
+  if (result.success) {
+    setSuccessMealName(trimmedMealName);
+    setSuccessMealType(mealType);
+    setSuccessCalories(parsedCalories);
+    setSuccessProtein(parsedProtein);
+    setSuccessCarbs(parsedCarbs);
+    setSuccessFat(parsedFat);
+    setSuccessVisible(true);
 
-      // CHANGED: refresh streak in background, then award badges
-      refreshNutritionStreak(user.id)
-        .then(() => {
-          // ADDED: award nutrition badges after streak refresh
-          return checkAndAwardNutritionBadges(user.id);
-        })
-        .catch((error) => {
-          console.error("Failed to refresh nutrition streak / badges:", error);
-        });
+    resetForm();
+
+    refreshNutritionStreak(user.id)
+      .then(() => checkAndAwardNutritionBadges(user.id))
+      .catch((error) => {
+        console.error("Failed to refresh nutrition streak / badges:", error);
+      });
     } else {
       Alert.alert("Error", result.error || "Failed to save nutrition entry");
     }
+  }
   };
-
-  return (
+  
+    return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -163,19 +214,25 @@ const NutritionScreen = () => {
           }}
         />
       ) : (
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View style={styles.container}>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <ScrollView
+          style={styles.container}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
           {/* Header */}
           <View style={styles.header}>
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => navigation.goBack()}
-            >
-              <Text style={styles.backArrow}>{"←"}</Text>
-              <Text style={styles.backText}>Back</Text>
-            </TouchableOpacity>
+            <View style={{ width: 70, alignItems: "flex-start" }}>
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => navigation.goBack()}
+              >
+                <Ionicons name="chevron-back" size={24} color="black" />
+                <Text style={styles.backText}>Back</Text>
+              </TouchableOpacity>
+            </View>
 
-            <Text style={styles.headerTitle}>Nutrition Tracker</Text>
+            <Text style={styles.headerTitle}>Log Your Meal</Text>
 
             <TouchableOpacity
               style={styles.barcodeButton}
@@ -185,8 +242,6 @@ const NutritionScreen = () => {
             </TouchableOpacity>
           </View>
 
-          {/* Page Title */}
-          <Text style={styles.pageTitle}>Log Your Meal</Text>
 
           {/* Meal Name */}
           <Text style={styles.sectionLabel}>Meal Name</Text>
@@ -302,7 +357,7 @@ const NutritionScreen = () => {
           <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
             <Text style={styles.saveButtonText}>Save Meal</Text>
           </TouchableOpacity>
-        </View>
+          </ScrollView>
       </TouchableWithoutFeedback>
       )}
     </KeyboardAvoidingView>
@@ -312,7 +367,6 @@ const NutritionScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
     backgroundColor: "#fff",
   },
 
@@ -320,34 +374,30 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingTop: 40,
-    paddingBottom: 10,
+    paddingTop: 50,
+    paddingBottom: 22,
   },
 
   backButton: {
     flexDirection: "row",
     alignItems: "center",
+    marginLeft: -6,
   },
   
   barcodeButton: {
-    width: 60,
+    width: 70,
     alignItems: "flex-end",
     justifyContent: "center",
   },
-  
-  backArrow: {
-    fontSize: 22,
-    fontWeight: "600",
-    marginRight: 6,
-  },
 
   backText: {
-    fontSize: 18,
+    fontSize: 17,
   },
 
   headerTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: "bold",
+    color: Colors.default.CompTeal,
     textAlign: "center",
     flex: 1,
   },
@@ -383,8 +433,8 @@ const styles = StyleSheet.create({
   },
 
   mealSelected: {
-    backgroundColor: "#E8F8ED",
-    borderColor: "#34C759",
+    backgroundColor: '#5ec9c452',
+    borderColor: Colors.default.FINALTEAL
   },
 
   input: {
@@ -432,7 +482,7 @@ const styles = StyleSheet.create({
   },
 
   saveButton: {
-    backgroundColor: "#34C759",
+    backgroundColor: Colors.default.FINALTEAL,
     padding: 15,
     borderRadius: 12,
     alignItems: "center",
@@ -442,6 +492,10 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 60,
   },
 });
 

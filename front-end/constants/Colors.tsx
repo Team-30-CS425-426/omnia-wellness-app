@@ -53,6 +53,22 @@ export const Colors = {
 
   ActivityGreen: "#159A34",
 
-  OrangySteps: "#F59E0B"
+  OrangySteps: "#F59E0B",
+
+  lightTeal: "#D1EEEA",
+
+  mediumTeal: "#A1D7D6",
+
+  darkTeal: "#79BBC3",
+
+  blueTeal: "#599BAE",
+
+  darkBlueTeal: "#3F7994",
+
+  extraDarkBlueTeal: "#2A5674",
+
+  FINALTEAL: '#5ec9c3',
+
+  CompTeal:'#4FB3AD',
   }
 };

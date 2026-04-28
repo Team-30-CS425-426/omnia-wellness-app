@@ -5,8 +5,9 @@ import {
   StyleSheet, Animated, Easing,
 } from 'react-native';
 import AnimatedBackground from '../../components/AnimateBackground';
+import { Colors } from "../../../constants/Colors"
 
-const GREEN = '#34C759';
+const GREEN = Colors.default.FINALTEAL;
 
 interface Props {
   visible: boolean;
@@ -182,6 +183,6 @@ const styles = StyleSheet.create({
     borderRadius: 12, padding: 14, alignItems: 'center', marginBottom: 8,
   },
   primaryBtnText:   { color: '#fff', fontWeight: '700', fontSize: 16 },
-  secondaryBtn:     { width: '100%', backgroundColor: '#e8f5e9', borderRadius: 12, padding: 12, alignItems: 'center' },
+  secondaryBtn:     { width: '100%', backgroundColor: '#5ec9c44d', borderRadius: 12, padding: 12, alignItems: 'center' },
   secondaryBtnText: { color: GREEN, fontWeight: '600', fontSize: 14 },
 });

@@ -42,6 +42,8 @@ import { useLocalSearchParams } from 'expo-router';
 import { useUser } from "../../contexts/UserContext";
 
 import { insertNutritionGoal, checkNutritionGoalExists } from "../../src/services/nutritionGoalService";
+import { Ionicons } from "@expo/vector-icons";
+import { Colors } from "../../constants/Colors";
 
 const NutritionScreen = () => {
   
@@ -152,16 +154,17 @@ const NutritionScreen = () => {
         <View style={styles.container}>
           {/* Header */}
           <View style={styles.header}>
-            <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-              <Text style={styles.backArrow}>{"←"}</Text>
-              <Text style={styles.backText}>Back</Text>
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Nutrition Tracker</Text>
-            <View style={{ width: 60 }} />
-          </View>
+            <View style={{ width: 70, alignItems: "flex-start" }}>
+              <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+                <Ionicons name="chevron-back" size={24} color="black" />
+                <Text style={styles.backText}>Back</Text>
+              </TouchableOpacity>
+            </View>
 
-          {/* Page Title */}
-          <Text style={styles.pageTitle}>Set Your Nutrition Goal</Text>
+            <Text style={styles.headerTitle}>Set Nutrition Goal</Text>
+
+            <View style={{ width: 70 }} />
+          </View>
 
           {/* Calories */}
           <Text style={styles.sectionLabel}>Calories</Text>
@@ -231,13 +234,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingTop: 40,
-    paddingBottom: 10,
+    paddingTop: 50,
+    paddingBottom: 22,
   },
 
-  backButton: { 
-    flexDirection: "row", 
-    alignItems: "center" 
+  backButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginLeft: -6,
   },
 
   backArrow: { 
@@ -247,15 +251,16 @@ const styles = StyleSheet.create({
   },
 
   backText: { 
-    fontSize: 18 
+    fontSize: 17 
   },
 
-  headerTitle: { 
-    fontSize: 20, 
-    fontWeight: "bold", 
-    textAlign: "center", 
-    flex: 1 
-  },
+  headerTitle: {
+  fontSize: 22,
+  fontWeight: "bold",
+  color: Colors.default.CompTeal,
+  textAlign: "center",
+  flex: 1,
+},
 
   pageTitle: { 
     textAlign: "center", 
@@ -297,11 +302,11 @@ const styles = StyleSheet.create({
     marginBottom: 5 
   },
 
-  saveButton: { 
-    backgroundColor: "#007AFF", 
-    padding: 15, 
-    borderRadius: 12, 
-    alignItems: "center" 
+  saveButton: {
+    backgroundColor: Colors.default.FINALTEAL,
+    padding: 15,
+    borderRadius: 12,
+    alignItems: "center",
   },
 
   saveButtonText: { 
@@ -309,6 +314,7 @@ const styles = StyleSheet.create({
     fontSize: 16, 
     fontWeight: "bold" 
   },
+  
 
 });
 export default NutritionScreen;
