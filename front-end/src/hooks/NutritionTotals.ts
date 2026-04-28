@@ -85,9 +85,15 @@ export function useNutritionStats() {
 
         // Set up real-time subscription
         console.log('Setting up subscription for user:', user.id);
+
+        supabase
+        .getChannels()
+        .filter((ch) => ch.topic === `realtime:nutrition-updates-${user.id}`)
+        .forEach((ch) => supabase.removeChannel(ch));
+
         const channel = supabase
-            .channel('nutrition-updates')
-            .on(
+        .channel(`nutrition-updates-${user.id}`)
+        .on(
                 'postgres_changes',
                 {
                     event: '*',
